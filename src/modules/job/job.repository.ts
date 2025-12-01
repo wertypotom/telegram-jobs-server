@@ -21,7 +21,7 @@ export class JobRepository {
   }
 
   async findWithFilters(options: JobFilterOptions): Promise<{ jobs: IJobDocument[]; total: number }> {
-    const { stack, level, isRemote, limit = 20, offset = 0 } = options;
+    const { stack, level, isRemote, jobFunction, excludedTitles, locationType, limit = 20, offset = 0 } = options;
 
     const query: any = { status: 'parsed' };
 
@@ -35,6 +35,36 @@ export class JobRepository {
 
     if (isRemote !== undefined) {
       query['parsedData.isRemote'] = isRemote;
+    }
+
+    // Job Function filter
+    if (jobFunction) {
+      query['parsedData.jobTitle'] = { $regex: jobFunction, $options: 'i' };
+    }
+
+    // Excluded Titles filter
+    if (excludedTitles && excludedTitles.length > 0) {
+      query['parsedData.jobTitle'] = {
+        ...query['parsedData.jobTitle'],
+        $not: { $regex: excludedTitles.join('|'), $options: 'i' },
+      };
+    }
+
+    // Location Type filter
+    if (locationType && locationType.length > 0) {
+      const locationConditions: any[] = [];
+      
+      if (locationType.includes('remote')) {
+        locationConditions.push({ 'parsedData.isRemote': true });
+      }
+      if (locationType.includes('on-site') || locationType.includes('hybrid')) {
+        // On-site and hybrid are both non-remote
+        locationConditions.push({ 'parsedData.isRemote': { $ne: true } });
+      }
+      
+      if (locationConditions.length > 0) {
+        query.$or = locationConditions;
+      }
     }
 
     const [jobs, total] = await Promise.all([

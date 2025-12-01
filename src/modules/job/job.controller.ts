@@ -16,6 +16,17 @@ export class JobController {
         stack: req.query.stack as string,
         level: req.query.level as string,
         isRemote: req.query.isRemote === 'true' ? true : req.query.isRemote === 'false' ? false : undefined,
+        jobFunction: req.query.jobFunction as string,
+        excludedTitles: req.query.excludedTitles 
+          ? (Array.isArray(req.query.excludedTitles) 
+              ? req.query.excludedTitles as string[] 
+              : [req.query.excludedTitles as string])
+          : undefined,
+        locationType: req.query.locationType
+          ? (Array.isArray(req.query.locationType)
+              ? req.query.locationType as string[]
+              : [req.query.locationType as string])
+          : undefined,
         limit: req.query.limit ? parseInt(req.query.limit as string) : 20,
         offset: req.query.offset ? parseInt(req.query.offset as string) : 0,
       };

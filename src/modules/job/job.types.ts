@@ -4,6 +4,9 @@ export interface JobFilterOptions {
   stack?: string;
   level?: string;
   isRemote?: boolean;
+  jobFunction?: string;
+  excludedTitles?: string[];
+  locationType?: string[];
   limit?: number;
   offset?: number;
 }
