@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import { JobController } from './job.controller';
+import { authenticate } from '@middlewares/auth.middleware';
 
 const router = Router();
 const jobController = new JobController();
+
+// All routes require authentication
+router.use(authenticate);
 
 // Get all jobs
 router.get('/', jobController.getJobs);
