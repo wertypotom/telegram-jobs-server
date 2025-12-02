@@ -2,6 +2,7 @@ import 'tsconfig-paths/register';
 import 'dotenv/config';
 import express, { Application } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { connectDatabase } from '@config/database.config';
 import { envConfig } from '@config/env.config';
 import { Logger } from '@utils/logger';
@@ -14,7 +15,13 @@ import { TelegramService } from '@modules/telegram/telegram.service';
 const app: Application = express();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: envConfig.frontendUrl,
+    credentials: true, // Important: Allow cookies
+  })
+);
+app.use(cookieParser()); // Parse cookies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

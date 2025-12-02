@@ -1,13 +1,13 @@
 export interface IUser {
   _id: string;
   email: string;
-  password: string;
+  name?: string;
+  image?: string;
+  emailVerified?: Date;
   masterResumeText?: string;
   masterResumeFileUrl?: string;
   subscribedChannels: string[];
-  telegramPhone?: string;
-  telegramSession?: string;
-  telegramUserId?: string;
+
   hasCompletedOnboarding: boolean;
   viewedJobs: string[];
   createdAt: Date;

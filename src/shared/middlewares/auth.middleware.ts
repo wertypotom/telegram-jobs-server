@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import { getToken } from 'next-auth/jwt';
 import { envConfig } from '@config/env.config';
 import { UnauthorizedError } from '@utils/errors';
 
@@ -8,38 +8,35 @@ export interface AuthRequest extends Request {
   userEmail?: string;
 }
 
-interface JwtPayload {
-  userId: string;
-  email: string;
-}
-
-export const authenticate = (
+/**
+ * Middleware to authenticate requests using NextAuth session
+ * Works with NextAuth v4 JWT strategy
+ */
+export const authenticate = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization;
+    // Use NextAuth's getToken to decode the encrypted session token
+    const token = await getToken({
+      req: req as any,
+      secret: process.env.NEXTAUTH_SECRET || envConfig.jwtSecret,
+    });
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedError('No token provided');
+    if (!token || !token.sub) {
+      throw new UnauthorizedError('No valid session found');
     }
 
-    const token = authHeader.substring(7);
-
-    const decoded = jwt.verify(token, envConfig.jwtSecret) as JwtPayload;
-
-    req.userId = decoded.userId;
-    req.userEmail = decoded.email;
+    // NextAuth stores user ID in 'sub' field (subject)
+    req.userId = token.sub;
+    req.userEmail = token.email as string | undefined;
 
     next();
   } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      throw new UnauthorizedError('Invalid token');
+    if (error instanceof UnauthorizedError) {
+      throw error;
     }
-    if (error instanceof jwt.TokenExpiredError) {
-      throw new UnauthorizedError('Token expired');
-    }
-    throw error;
+    throw new UnauthorizedError('Invalid or expired session');
   }
 };

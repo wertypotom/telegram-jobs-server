@@ -12,9 +12,14 @@ const userSchema = new Schema<IUserDocument>(
       lowercase: true,
       trim: true,
     },
-    password: {
+    name: {
       type: String,
-      required: true,
+    },
+    image: {
+      type: String,
+    },
+    emailVerified: {
+      type: Date,
     },
     masterResumeText: {
       type: String,
@@ -26,15 +31,7 @@ const userSchema = new Schema<IUserDocument>(
       type: [String],
       default: [],
     },
-    telegramPhone: {
-      type: String,
-    },
-    telegramSession: {
-      type: String,
-    },
-    telegramUserId: {
-      type: String,
-    },
+
     hasCompletedOnboarding: {
       type: Boolean,
       default: false,
