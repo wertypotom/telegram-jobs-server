@@ -125,6 +125,7 @@ The server will start on `http://localhost:3000`
 ## Usage Flow
 
 1. **Register/Login**
+
    ```bash
    curl -X POST http://localhost:3000/api/auth/register \
      -H "Content-Type: application/json" \
@@ -132,6 +133,7 @@ The server will start on `http://localhost:3000`
    ```
 
 2. **Upload Master Resume**
+
    ```bash
    curl -X POST http://localhost:3000/api/resume/upload \
      -H "Authorization: Bearer YOUR_JWT_TOKEN" \
@@ -139,6 +141,7 @@ The server will start on `http://localhost:3000`
    ```
 
 3. **Browse Jobs**
+
    ```bash
    curl http://localhost:3000/api/jobs?stack=react&limit=10
    ```
@@ -164,6 +167,7 @@ The server will start on `http://localhost:3000`
 ### First Run
 
 On first run with Telegram credentials, the app will:
+
 - Connect to Telegram
 - Join default CIS IT job channels
 - Start listening for new job posts
@@ -172,13 +176,10 @@ On first run with Telegram credentials, the app will:
 ### Default Channels
 
 The app monitors these channels by default:
+
 - @job_for_juniors
 - @javascript_jobs
-- @react_jobs
 - @nodejs_jobs
-- @python_jobs
-- @devops_jobs
-- @remote_jobs_cis
 
 ## How It Works
 

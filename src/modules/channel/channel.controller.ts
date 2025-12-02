@@ -11,15 +11,38 @@ export class ChannelController {
   }
 
   /**
-   * GET /api/channels/user-channels
-   * Get user's existing Telegram channels
+   * GET /api/channels/available
+   * Get all channels the server is monitoring
    */
-  getUserChannels = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getAvailableChannels = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const channels = await this.channelService.getAvailableChannels();
+      ApiResponse.success(
+        res,
+        channels,
+        'Available channels fetched successfully'
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /api/channels/user-channels
+   * Get user's subscribed channels
+   */
+  getUserChannels = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = (req as any).userId;
-      
       const channels = await this.channelService.getUserChannels(userId);
-
       ApiResponse.success(res, channels, 'User channels fetched successfully');
     } catch (error) {
       next(error);
@@ -30,11 +53,18 @@ export class ChannelController {
    * GET /api/channels/recommended
    * Get recommended job channels
    */
-  getRecommendedChannels = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getRecommendedChannels = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const channels = this.channelService.getRecommendedChannels();
-
-      ApiResponse.success(res, channels, 'Recommended channels fetched successfully');
+      ApiResponse.success(
+        res,
+        channels,
+        'Recommended channels fetched successfully'
+      );
     } catch (error) {
       next(error);
     }
@@ -44,7 +74,11 @@ export class ChannelController {
    * POST /api/channels/search
    * Search for Telegram channels
    */
-  searchChannels = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  searchChannels = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = (req as any).userId;
       const { query } = req.body;
@@ -54,7 +88,6 @@ export class ChannelController {
       }
 
       const channels = await this.channelService.searchChannels(userId, query);
-
       ApiResponse.success(res, channels, 'Channels found successfully');
     } catch (error) {
       next(error);
@@ -63,9 +96,13 @@ export class ChannelController {
 
   /**
    * POST /api/channels/subscribe
-   * Subscribe user to selected channels
+   * Subscribe user to selected channels (DB only - no Telegram join)
    */
-  subscribeToChannels = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  subscribeToChannels = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = (req as any).userId;
       const { channels } = req.body;
@@ -74,8 +111,10 @@ export class ChannelController {
         throw new BadRequestError('At least one channel must be selected');
       }
 
-      const result = await this.channelService.subscribeToChannels(userId, channels);
-
+      const result = await this.channelService.subscribeToChannels(
+        userId,
+        channels
+      );
       ApiResponse.success(res, result, 'Successfully subscribed to channels');
     } catch (error) {
       next(error);
@@ -83,26 +122,14 @@ export class ChannelController {
   };
 
   /**
-   * GET /api/channels/subscribed
-   * Get user's currently subscribed channels
-   */
-  getSubscribedChannels = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const userId = (req as any).userId;
-      
-      const channels = await this.channelService.getSubscribedChannels(userId);
-
-      ApiResponse.success(res, channels, 'Subscribed channels fetched successfully');
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  /**
    * POST /api/channels/add
-   * Add new channels to existing subscriptions
+   * Add new channels to existing subscriptions (DB only)
    */
-  addChannels = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  addChannels = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = (req as any).userId;
       const { channels } = req.body;
@@ -112,7 +139,6 @@ export class ChannelController {
       }
 
       const result = await this.channelService.addChannels(userId, channels);
-
       ApiResponse.success(res, result, 'Successfully added new channels');
     } catch (error) {
       next(error);

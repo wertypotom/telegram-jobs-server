@@ -34,3 +34,15 @@ export interface ParsedJobData {
   isRemote?: boolean;
   level?: string;
 }
+
+export interface IChannel {
+  _id: string;
+  username: string; // @react_jobs
+  title: string; // "React Jobs Official"
+  description?: string; // Channel description
+  memberCount?: number; // Number of subscribers
+  isMonitored: boolean; // Is server actively scraping?
+  lastScrapedAt?: Date; // Last successful scrape timestamp
+  createdAt: Date;
+  updatedAt: Date;
+}

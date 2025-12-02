@@ -1,144 +1,78 @@
-import { TelegramClient } from 'telegram';
-import { StringSession } from 'telegram/sessions';
-import { envConfig } from '@config/env.config';
 import { Logger } from '@utils/logger';
 import { BadRequestError } from '@utils/errors';
 import { UserRepository } from '@modules/user/user.repository';
-import { JobService } from '@modules/job/job.service';
+import { ChannelRepository } from './channel.repository';
 import { TelegramClientService } from '@modules/telegram/services/telegram-client.service';
 import { ChannelInfo, RecommendedChannel } from './channel.types';
 import { recommendedChannels } from './channel.config';
 
+/**
+ * ChannelService - Service-Centric Implementation
+ *
+ * This service manages channel subscriptions WITHOUT user Telegram sessions.
+ * The master Telegram account handles all scraping in the background.
+ */
 export class ChannelService {
   private userRepository: UserRepository;
-  private jobService: JobService;
+  private channelRepository: ChannelRepository;
   private telegramClientService: TelegramClientService;
 
   constructor() {
     this.userRepository = new UserRepository();
-    this.jobService = new JobService();
+    this.channelRepository = new ChannelRepository();
     this.telegramClientService = new TelegramClientService();
   }
 
   /**
-   * Check if message text likely contains a job posting
-   * Uses Russian + English keywords to pre-filter before AI validation
+   * Get list of all available channels (from DB)
+   * These are channels the master account is monitoring
    */
-  private isLikelyJobPost(text: string): boolean {
-    // Minimum length check - job posts are usually detailed
-    if (!text || text.trim().length < 50) {
-      return false;
+  async getAvailableChannels(): Promise<ChannelInfo[]> {
+    try {
+      const channels = await this.channelRepository.findAll();
+
+      return channels.map((channel) => ({
+        username: channel.username,
+        title: channel.title,
+        description: channel.description,
+        memberCount: channel.memberCount,
+        isJoined: channel.isMonitored,
+      }));
+    } catch (error) {
+      Logger.error('Failed to fetch available channels:', error);
+      throw new BadRequestError('Failed to fetch available channels');
     }
-
-    const lowerText = text.toLowerCase();
-
-    // Russian job keywords
-    const russianKeywords = [
-      'работа',
-      'вакансия',
-      'вакансии',
-      'ищем',
-      'требуется',
-      'нужен',
-      'нужна',
-      'разработчик',
-      'программист',
-      'developer',
-      'зарплата',
-      'оплата',
-      'удаленно',
-      'remote',
-      'офис',
-      'резюме',
-      'откликнуться',
-      'соискател',
-      'кандидат',
-      'junior',
-      'middle',
-      'senior',
-      'fullstack',
-      'backend',
-      'frontend',
-      'react',
-      'node',
-      'python',
-      'java',
-      'golang',
-      'php',
-      'hiring',
-      'ищу работу',
-      'в команду',
-      'проект',
-    ];
-
-    // English job keywords
-    const englishKeywords = [
-      'hiring',
-      'job',
-      'position',
-      'vacancy',
-      'opening',
-      'developer',
-      'engineer',
-      'programmer',
-      'looking for',
-      'we need',
-      'we are hiring',
-      'join our team',
-      'apply',
-      'salary',
-      'compensation',
-      'remote',
-      'full-time',
-      'part-time',
-      'contract',
-      'freelance',
-      'resume',
-      'cv',
-      'candidate',
-    ];
-
-    const allKeywords = [...russianKeywords, ...englishKeywords];
-
-    // Check if text contains at least one job keyword
-    return allKeywords.some((keyword) => lowerText.includes(keyword));
   }
 
   /**
-   * Get user's Telegram channels (dialogs)
+   * Get user's subscribed channels (from user.subscribedChannels)
    */
   async getUserChannels(userId: string): Promise<ChannelInfo[]> {
     try {
-      // Use Master Telegram Client to get channels
-      const client = await this.telegramClientService.getClient();
-
-      // Get all dialogs (chats, channels, groups)
-      const dialogs = await client.getDialogs({ limit: 100 });
-
-      const channels: ChannelInfo[] = [];
-
-      for (const dialog of dialogs) {
-        const entity = dialog.entity;
-
-        // Filter for channels only
-        if ((entity as any).className === 'Channel') {
-          const channel = entity as any;
-
-          channels.push({
-            username: channel.username || `channel_${channel.id}`,
-            title: channel.title || 'Unknown Channel',
-            description: channel.about,
-            memberCount: channel.participantsCount,
-            isJoined: true,
-          });
-        }
+      const user = await this.userRepository.findById(userId);
+      if (!user) {
+        throw new BadRequestError('User not found');
       }
 
-      Logger.info(`Fetched ${channels.length} channels for user ${userId}`);
-      return channels;
+      // Get channel details from DB
+      const channels = await Promise.all(
+        user.subscribedChannels.map((username) =>
+          this.channelRepository.findByUsername(username)
+        )
+      );
+
+      return channels
+        .filter((channel) => channel !== null)
+        .map((channel) => ({
+          username: channel!.username,
+          title: channel!.title,
+          description: channel!.description,
+          memberCount: channel!.memberCount,
+          isJoined: true,
+        }));
     } catch (error) {
       Logger.error('Failed to fetch user channels:', error);
-      throw new BadRequestError('Failed to fetch Telegram channels');
+      throw new BadRequestError('Failed to fetch user channels');
     }
   }
 
@@ -150,11 +84,10 @@ export class ChannelService {
   }
 
   /**
-   * Search for Telegram channels
+   * Search for Telegram channels using master account
    */
   async searchChannels(userId: string, query: string): Promise<ChannelInfo[]> {
     try {
-      // Use Master Telegram Client
       const client = await this.telegramClientService.getClient();
 
       // Search for channels
@@ -190,19 +123,35 @@ export class ChannelService {
   }
 
   /**
-   * Subscribe user to selected channels and fetch historical jobs
+   * Subscribe user to channels (DB only - no Telegram join)
+   *
+   * @param userId - User ID
+   * @param channelUsernames - Array of channel usernames (e.g., ['@react_jobs'])
    */
   async subscribeToChannels(
     userId: string,
     channelUsernames: string[]
-  ): Promise<{ success: boolean; jobsCount: number }> {
+  ): Promise<{ success: boolean; message: string }> {
     try {
       Logger.info(`Subscribing user ${userId} to channels:`, channelUsernames);
 
       const user = await this.userRepository.findById(userId);
       if (!user) {
-        Logger.error(`User not found: ${userId}`);
         throw new BadRequestError('User not found');
+      }
+
+      // Validate channel limit (max 10 per user)
+      if (channelUsernames.length > 10) {
+        throw new BadRequestError('Cannot subscribe to more than 10 channels');
+      }
+
+      // Ensure channels exist in DB (add if new)
+      for (const username of channelUsernames) {
+        const existing = await this.channelRepository.findByUsername(username);
+        if (!existing) {
+          // Fetch channel info from Telegram and add to DB
+          await this.addChannelToDatabase(username);
+        }
       }
 
       // Update user's subscribed channels
@@ -211,175 +160,102 @@ export class ChannelService {
         hasCompletedOnboarding: true,
       });
 
-      Logger.info(`Updated user ${userId} subscriptions and onboarding status`);
-
-      // Fetch historical jobs from last 24 hours using Master client
-      const jobsCount = await this.fetchHistoricalJobs(channelUsernames);
-
       Logger.info(
-        `User ${userId} subscribed to ${channelUsernames.length} channels, fetched ${jobsCount} jobs`
+        `User ${userId} subscribed to ${channelUsernames.length} channels`
       );
 
-      return { success: true, jobsCount };
+      return {
+        success: true,
+        message: `Subscribed to ${channelUsernames.length} channels`,
+      };
     } catch (error) {
-      Logger.error('Failed to subscribe to channels:', {
-        userId,
-        channelUsernames,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      });
+      Logger.error('Failed to subscribe to channels:', error);
       throw error;
     }
   }
 
   /**
-   * Fetch messages from last 24 hours from channels
-   */
-  private async fetchHistoricalJobs(
-    channelUsernames: string[]
-  ): Promise<number> {
-    try {
-      // Use Master Telegram Client
-      const client = await this.telegramClientService.getClient();
-
-      let totalJobs = 0;
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-      for (const channelUsername of channelUsernames) {
-        try {
-          // Get channel entity
-          const channel = await client.getEntity(channelUsername);
-
-          // Fetch messages from last 24 hours
-          const messages = await client.getMessages(channel, {
-            limit: 100,
-            offsetDate: Math.floor(oneDayAgo.getTime() / 1000),
-          });
-
-          // Process each message
-          for (const message of messages) {
-            const text = message.text || message.message;
-            if (!text || text.trim().length === 0) {
-              continue;
-            }
-
-            // Pre-filter: Skip messages that don't look like job posts
-            if (!this.isLikelyJobPost(text)) {
-              Logger.debug(`Skipped non-job message from ${channelUsername}`, {
-                messageId: message.id,
-                preview: text.substring(0, 50),
-              });
-              continue;
-            }
-
-            // Create job entry (AI validation happens async in JobService)
-            await this.jobService.createJob({
-              telegramMessageId: `${channelUsername}_${message.id}`,
-              channelId: channelUsername,
-              rawText: text,
-            });
-
-            totalJobs++;
-          }
-
-          Logger.info(
-            `Fetched ${messages.length} messages from ${channelUsername}`
-          );
-        } catch (error) {
-          Logger.warn(
-            `Failed to fetch messages from ${channelUsername}:`,
-            error
-          );
-        }
-      }
-
-      return totalJobs;
-    } catch (error) {
-      Logger.error('Failed to fetch historical jobs:', error);
-      return 0;
-    }
-  }
-
-  /**
-   * Get user's currently subscribed channels
-   */
-  async getSubscribedChannels(userId: string): Promise<string[]> {
-    try {
-      const user = await this.userRepository.findById(userId);
-      if (!user) {
-        throw new BadRequestError('User not found');
-      }
-
-      return user.subscribedChannels || [];
-    } catch (error) {
-      Logger.error('Failed to get subscribed channels:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Add new channels to existing subscriptions and fetch historical jobs
+   * Add new channels to user's subscription (DB only)
    */
   async addChannels(
     userId: string,
     newChannelUsernames: string[]
-  ): Promise<{ success: boolean; jobsCount: number; totalChannels: number }> {
+  ): Promise<{ success: boolean; totalChannels: number }> {
     try {
-      Logger.info(`Adding channels for user ${userId}:`, newChannelUsernames);
-
       const user = await this.userRepository.findById(userId);
       if (!user) {
-        Logger.error(`User not found: ${userId}`);
         throw new BadRequestError('User not found');
       }
 
-      // Get existing subscriptions
       const existingChannels = user.subscribedChannels || [];
-
-      // Filter out channels that are already subscribed
       const channelsToAdd = newChannelUsernames.filter(
         (channel) => !existingChannels.includes(channel)
       );
 
       if (channelsToAdd.length === 0) {
-        Logger.info(`No new channels to add for user ${userId}`);
-        return {
-          success: true,
-          jobsCount: 0,
-          totalChannels: existingChannels.length,
-        };
+        return { success: true, totalChannels: existingChannels.length };
       }
 
-      // Append new channels to existing subscriptions
       const updatedChannels = [...existingChannels, ...channelsToAdd];
+
+      // Validate limit
+      if (updatedChannels.length > 10) {
+        throw new BadRequestError(
+          'Cannot subscribe to more than 10 channels total'
+        );
+      }
+
+      // Ensure new channels exist in DB
+      for (const username of channelsToAdd) {
+        const existing = await this.channelRepository.findByUsername(username);
+        if (!existing) {
+          await this.addChannelToDatabase(username);
+        }
+      }
+
       await this.userRepository.update(userId, {
         subscribedChannels: updatedChannels,
       });
 
-      Logger.info(
-        `Updated user ${userId} subscriptions with ${channelsToAdd.length} new channels`
-      );
-
-      // Fetch historical jobs only from newly added channels using Master client
-      const jobsCount = await this.fetchHistoricalJobs(channelsToAdd);
-
-      Logger.info(
-        `User ${userId} added ${channelsToAdd.length} channels, fetched ${jobsCount} jobs`
-      );
+      Logger.info(`User ${userId} added ${channelsToAdd.length} new channels`);
 
       return {
         success: true,
-        jobsCount,
         totalChannels: updatedChannels.length,
       };
     } catch (error) {
-      Logger.error('Failed to add channels:', {
-        userId,
-        newChannelUsernames,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      });
+      Logger.error('Failed to add channels:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Add a channel to the database (fetch info from Telegram)
+   * Private helper method
+   */
+  private async addChannelToDatabase(username: string): Promise<void> {
+    try {
+      const client = await this.telegramClientService.getClient();
+      const channel = await client.getEntity(username);
+      const channelData = channel as any;
+
+      await this.channelRepository.create({
+        username,
+        title: channelData.title || username,
+        description: channelData.about,
+        memberCount: channelData.participantsCount,
+        isMonitored: true,
+      } as any);
+
+      Logger.info(`Added channel ${username} to database`);
+    } catch (error) {
+      Logger.warn(`Failed to add channel ${username} to database:`, error);
+      // Create with minimal info if Telegram fetch fails
+      await this.channelRepository.create({
+        username,
+        title: username,
+        isMonitored: true,
+      } as any);
     }
   }
 }

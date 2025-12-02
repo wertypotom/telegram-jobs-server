@@ -5,25 +5,22 @@ import { authenticate } from '@middlewares/auth.middleware';
 const router = Router();
 const channelController = new ChannelController();
 
-// All routes require authentication
-router.use(authenticate);
+// Get all available channels (server is monitoring)
+router.get('/available', authenticate, channelController.getAvailableChannels);
 
-// Get user's Telegram channels
-router.get('/user-channels', channelController.getUserChannels);
+// Get user's subscribed channels
+router.get('/user-channels', authenticate, channelController.getUserChannels);
 
 // Get recommended channels
 router.get('/recommended', channelController.getRecommendedChannels);
 
-// Search for channels
-router.post('/search', channelController.searchChannels);
+// Search channels
+router.post('/search', authenticate, channelController.searchChannels);
 
-// Subscribe to channels
-router.post('/subscribe', channelController.subscribeToChannels);
+// Subscribe to channels (DB only)
+router.post('/subscribe', authenticate, channelController.subscribeToChannels);
 
-// Get user's subscribed channels
-router.get('/subscribed', channelController.getSubscribedChannels);
-
-// Add new channels to subscriptions
-router.post('/add', channelController.addChannels);
+// Add channels to subscription (DB only)
+router.post('/add', authenticate, channelController.addChannels);
 
 export default router;

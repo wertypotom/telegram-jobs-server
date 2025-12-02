@@ -15,13 +15,7 @@ export const recommendedChannels: RecommendedChannel[] = [
     category: 'Frontend/Backend',
     memberCount: '45K+',
   },
-  {
-    username: '@react_jobs',
-    title: 'React Jobs',
-    description: 'React, React Native, and Next.js positions',
-    category: 'Frontend',
-    memberCount: '40K+',
-  },
+
   {
     username: '@nodejs_jobs',
     title: 'Node.js Jobs',

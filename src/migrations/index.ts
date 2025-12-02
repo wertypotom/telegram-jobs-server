@@ -11,12 +11,10 @@ import { Migration } from './types';
 
 // Import all migrations
 import { migration001 } from './versions/001-add-viewed-jobs-field';
+import { migration002 } from './versions/002-update-schemas';
 
 // Register migrations in order
-const migrations: Migration[] = [
-  migration001,
-  // Add new migrations here
-];
+const migrations: Migration[] = [migration001, migration002];
 
 export class MigrationRunner {
   private logger: MigrationLogger;
@@ -51,11 +49,13 @@ export class MigrationRunner {
 
       // Run each pending migration
       for (const migration of pendingMigrations) {
-        Logger.info(`Running migration ${migration.version}: ${migration.name}`);
-        
+        Logger.info(
+          `Running migration ${migration.version}: ${migration.name}`
+        );
+
         try {
           await migration.up();
-          
+
           await this.logger.recordMigration({
             version: migration.version,
             name: migration.name,
@@ -63,10 +63,13 @@ export class MigrationRunner {
             status: 'success',
           });
 
-          Logger.info(`✅ Migration ${migration.version} completed successfully`);
+          Logger.info(
+            `✅ Migration ${migration.version} completed successfully`
+          );
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+
           await this.logger.recordMigration({
             version: migration.version,
             name: migration.name,
@@ -105,7 +108,9 @@ export class MigrationRunner {
         return;
       }
 
-      Logger.info(`Rolling back from version ${currentVersion} to ${rollbackTo}`);
+      Logger.info(
+        `Rolling back from version ${currentVersion} to ${rollbackTo}`
+      );
 
       // Get migrations to rollback (in reverse order)
       const migrationsToRollback = migrations
@@ -114,11 +119,15 @@ export class MigrationRunner {
 
       for (const migration of migrationsToRollback) {
         if (!migration.down) {
-          Logger.warn(`Migration ${migration.version} has no rollback function`);
+          Logger.warn(
+            `Migration ${migration.version} has no rollback function`
+          );
           continue;
         }
 
-        Logger.info(`Rolling back migration ${migration.version}: ${migration.name}`);
+        Logger.info(
+          `Rolling back migration ${migration.version}: ${migration.name}`
+        );
         await migration.down();
         Logger.info(`✅ Rolled back migration ${migration.version}`);
       }
@@ -134,20 +143,22 @@ export class MigrationRunner {
 
   async status(): Promise<void> {
     await this.logger.load();
-    
+
     console.log('\n📊 Migration Status\n');
     console.log(`Last applied version: ${this.logger.getLastVersion()}`);
     console.log(`Total migrations available: ${migrations.length}\n`);
-    
+
     console.log('Migration History:');
     const history = this.logger.getAllMigrations();
-    
+
     if (history.length === 0) {
       console.log('  No migrations applied yet\n');
     } else {
       history.forEach((entry) => {
         const status = entry.status === 'success' ? '✅' : '❌';
-        console.log(`  ${status} v${entry.version}: ${entry.name} (${entry.appliedAt})`);
+        console.log(
+          `  ${status} v${entry.version}: ${entry.name} (${entry.appliedAt})`
+        );
         if (entry.error) {
           console.log(`     Error: ${entry.error}`);
         }
@@ -155,7 +166,9 @@ export class MigrationRunner {
       console.log('');
     }
 
-    const pending = migrations.filter((m) => m.version > this.logger.getLastVersion());
+    const pending = migrations.filter(
+      (m) => m.version > this.logger.getLastVersion()
+    );
     if (pending.length > 0) {
       console.log('Pending migrations:');
       pending.forEach((m) => {
@@ -188,7 +201,9 @@ async function main() {
     default:
       console.log('Usage:');
       console.log('  npm run migrate up       - Run pending migrations');
-      console.log('  npm run migrate down [v] - Rollback to version (default: previous)');
+      console.log(
+        '  npm run migrate down [v] - Rollback to version (default: previous)'
+      );
       console.log('  npm run migrate status   - Show migration status');
       process.exit(1);
   }

@@ -44,17 +44,51 @@ const startServer = async (): Promise<void> => {
     // Create required directories
     await ensureDirectories();
 
+    // Seed default channels
+    const { seedDefaultChannels } = await import(
+      '@modules/channel/channel.seed'
+    );
+    const { cleanupInvalidChannels } = await import(
+      '@modules/channel/channel.cleanup'
+    );
+    await cleanupInvalidChannels();
+    await seedDefaultChannels();
+
     // Start Telegram listener service
     const telegramService = new TelegramService();
     await telegramService.start();
 
+    // Start background scraper
+    const { ScraperService } = await import('@modules/scraper/scraper.service');
+    const scraperService = new ScraperService();
+    // Don't await scraper start to avoid blocking server startup
+    scraperService.start().catch((err) => {
+      Logger.error('Failed to start scraper:', err);
+    });
+
     // Start HTTP server
-    app.listen(envConfig.port, () => {
+    const server = app.listen(envConfig.port, () => {
       Logger.info(`Server started successfully`, {
         port: envConfig.port,
         environment: envConfig.nodeEnv,
       });
     });
+
+    // Graceful shutdown
+    const shutdown = async () => {
+      Logger.info('Shutting down server...');
+
+      scraperService.stop();
+      await telegramService.stop();
+
+      server.close(() => {
+        Logger.info('HTTP server closed');
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
   } catch (error) {
     Logger.error('Failed to start server:', error);
     process.exit(1);
