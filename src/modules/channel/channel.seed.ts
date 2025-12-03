@@ -24,6 +24,66 @@ const DEFAULT_CHANNELS = [
     description: 'Node.js backend positions',
     isMonitored: true,
   },
+  {
+    username: '@frontend_jobs',
+    title: 'Frontend Jobs',
+    description: 'Frontend developer opportunities',
+    isMonitored: true,
+  },
+  {
+    username: '@backend_jobs',
+    title: 'Backend Jobs',
+    description: 'Backend developer positions',
+    isMonitored: true,
+  },
+  {
+    username: '@fullstack_jobs',
+    title: 'Fullstack Jobs',
+    description: 'Fullstack developer roles',
+    isMonitored: true,
+  },
+  {
+    username: '@remotework',
+    title: 'Remote Work',
+    description: 'Remote developer and IT jobs',
+    isMonitored: true,
+  },
+  {
+    username: '@job_react',
+    title: 'React Jobs',
+    description: 'React and React Native positions',
+    isMonitored: true,
+  },
+  {
+    username: '@python_jobs',
+    title: 'Python Jobs',
+    description: 'Python developer opportunities',
+    isMonitored: true,
+  },
+  {
+    username: '@devops_jobs',
+    title: 'DevOps Jobs',
+    description: 'DevOps and infrastructure roles',
+    isMonitored: true,
+  },
+  {
+    username: '@remote_developers',
+    title: 'Remote Developers',
+    description: 'Remote positions for developers',
+    isMonitored: true,
+  },
+  {
+    username: '@prog_jobs',
+    title: 'Programming Jobs',
+    description: 'General programming positions',
+    isMonitored: true,
+  },
+  {
+    username: '@itfreelance',
+    title: 'IT Freelance',
+    description: 'Freelance IT and developer jobs',
+    isMonitored: true,
+  },
 ];
 
 /**
