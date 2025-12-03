@@ -25,14 +25,29 @@ export interface IJob {
   updatedAt: Date;
 }
 
+export interface ContactInfo {
+  telegram?: string; // Username (e.g., @username)
+  email?: string;
+  applicationUrl?: string;
+  other?: string;
+}
+
 export interface ParsedJobData {
   jobTitle?: string;
   company?: string;
-  techStack?: string[];
+  techStack: string[];
   salary?: string;
-  contactMethod?: string;
+  contactInfo?: ContactInfo;
   isRemote?: boolean;
   level?: string;
+  employmentType?: string;
+  location?: string; // Company location
+  candidateLocation?: string; // Where candidate should be based
+  responsibilities?: string[]; // What the job entails
+  requiredQualifications?: string[]; // Must-have skills
+  preferredQualifications?: string[]; // Nice-to-have skills
+  benefits?: string[]; // Perks, additional compensation
+  description?: string; // Clean summary without hashtags/emojis
 }
 
 export interface IChannel {

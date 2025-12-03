@@ -12,9 +12,10 @@ import { Migration } from './types';
 // Import all migrations
 import { migration001 } from './versions/001-add-viewed-jobs-field';
 import { migration002 } from './versions/002-update-schemas';
+import { migration003 } from './versions/003-restructure-job-schema';
 
 // Register migrations in order
-const migrations: Migration[] = [migration001, migration002];
+const migrations: Migration[] = [migration001, migration002, migration003];
 
 export class MigrationRunner {
   private logger: MigrationLogger;

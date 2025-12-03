@@ -24,7 +24,8 @@ export class JobParserService {
           messages: [
             {
               role: 'system',
-              content: 'You are a job posting parser. Extract structured data from job postings and return valid JSON only.',
+              content:
+                'You are a job posting parser. Extract structured data from job postings and return valid JSON only.',
             },
             {
               role: 'user',
@@ -36,7 +37,7 @@ export class JobParserService {
         },
         {
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
+            Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
         }
@@ -47,7 +48,9 @@ export class JobParserService {
 
       // If the AI determines it's not a job posting
       if (parsedData.isJobPosting === false) {
-        Logger.debug('Message is not a job posting', { rawText: rawText.substring(0, 100) });
+        Logger.debug('Message is not a job posting', {
+          rawText: rawText.substring(0, 100),
+        });
         return null;
       }
 
@@ -56,9 +59,17 @@ export class JobParserService {
         company: parsedData.company || undefined,
         techStack: parsedData.techStack || [],
         salary: parsedData.salary || undefined,
-        contactMethod: parsedData.contactMethod || undefined,
+        contactInfo: parsedData.contactInfo || undefined,
         isRemote: parsedData.isRemote || false,
         level: parsedData.level || undefined,
+        employmentType: parsedData.employmentType || undefined,
+        location: parsedData.location || undefined,
+        candidateLocation: parsedData.candidateLocation || 'Anywhere',
+        responsibilities: parsedData.responsibilities || [],
+        requiredQualifications: parsedData.requiredQualifications || [],
+        preferredQualifications: parsedData.preferredQualifications || [],
+        benefits: parsedData.benefits || [],
+        description: parsedData.description || undefined,
       };
     } catch (error) {
       Logger.error('Failed to parse job text with AI:', error);
@@ -67,18 +78,81 @@ export class JobParserService {
   }
 
   private buildParsingPrompt(rawText: string): string {
-    return `Extract the following information from this job posting. If it's not a job posting, set "isJobPosting" to false.
+    return `You are a job posting parser. Extract structured data from this Telegram job posting and standardize the format.
 
-Return a JSON object with this structure:
+CRITICAL RULES:
+1. **REMOVE ALL EMOJIS** - Do not include ANY emojis in ANY output field (✅❗️🔘💻👉 etc.)
+2. **REMOVE ALL HASHTAGS** - Use hashtags to extract metadata (remote status, location) but DO NOT include them in output
+3. **REMOVE FORMATTING SYMBOLS** - Remove ** (bold), __ (italic), decorative separators like "****🔘****", "=========", etc.
+4. **STANDARDIZE TEXT** - Convert all-caps sections to proper case (e.g., "БУДЕТ ПРЕИМУЩЕСТВОМ" → "Будет преимуществом")
+5. **EXTRACT SECTIONS** - Identify and separate different sections of the job posting
+
+EXTRACTION GUIDELINES:
+
+**Contact Information:**
+- Extract Telegram usernames (format as @username)
+- Extract emails
+- Extract application URLs
+- Extract any other contact methods
+
+**Candidate Location:**
+- Where the candidate should be based (from hashtags like #удалёнка, #remote, or text)
+- If mentions "за пределами РФ/РБ" or similar restrictions, note them
+- Default to "Anywhere" if not specified
+
+**Responsibilities:**
+- Look for sections like "Над чем предстоит работать", "Responsibilities", "Чем предстоит заниматься"
+- Extract as clean bullet points without emojis or formatting symbols
+
+**Required Qualifications:**
+- Look for sections like "Требования", "Required", "Минимальные требования", "Что нужно"
+- Extract as clean bullet points
+
+**Preferred Qualifications:**
+- Look for sections like "Будет плюсом", "Preferred", "Nice to have", "Будет преимуществом"
+- Extract as clean bullet points
+
+**Benefits:**
+- Look for sections like "Мы предлагаем", "Benefits", "Почему стоит идти к нам", "Что мы предлагаем"
+- Include compensation details beyond base salary
+- Extract as clean bullet points
+
+**Description:**
+- Create a clean 2-3 sentence summary of the role
+- Remove all emojis, hashtags, and formatting symbols
+- Keep it professional and readable
+
+**Tech Stack:**
+- Extract programming languages, frameworks, tools
+- Return as array of strings
+
+**Validation:**
+- If this is NOT a job posting (resume, spam, discussion), set "isJobPosting" to false
+- If it contains hashtags like #резюме, #ищуработу, #lookingforjob, set "isJobPosting" to false
+
+Return a JSON object with this EXACT structure:
 {
   "isJobPosting": boolean,
   "jobTitle": string or null,
   "company": string or null,
-  "techStack": array of strings (e.g., ["React", "Node.js", "TypeScript"]),
-  "salary": string or null (e.g., "$80k-$120k", "3000-5000 USD"),
-  "contactMethod": string or null (Telegram username, email, or other contact),
+  "techStack": array of strings,
+  "salary": string or null,
+  "contactInfo": {
+    "telegram": string or null (e.g., "@username"),
+    "email": string or null,
+    "applicationUrl": string or null,
+    "other": string or null
+  },
   "isRemote": boolean,
-  "level": string or null (e.g., "junior", "middle", "senior")
+  "level": string or null (e.g., "Junior", "Middle", "Senior", "Lead"),
+  "employmentType": string or null (e.g., "Full-time", "Contract", "Part-time"),
+  "location": string or null (company location),
+  "candidateLocation": string (where candidate should be based, default "Anywhere"),
+  "responsibilities": array of strings (clean bullet points, no emojis),
+  "requiredQualifications": array of strings (clean bullet points, no emojis),
+  "preferredQualifications": array of strings (clean bullet points, no emojis),
+  "benefits": array of strings (clean bullet points, no emojis),
+  "description": string (clean 2-3 sentence summary, no emojis/hashtags)
 }
 
 Job posting text:

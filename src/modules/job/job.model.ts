@@ -3,15 +3,33 @@ import { IJob, ParsedJobData } from '@shared/types/common.types';
 
 export interface IJobDocument extends Omit<IJob, '_id'>, Document {}
 
+const contactInfoSchema = new Schema(
+  {
+    telegram: String,
+    email: String,
+    applicationUrl: String,
+    other: String,
+  },
+  { _id: false }
+);
+
 const parsedJobDataSchema = new Schema<ParsedJobData>(
   {
     jobTitle: String,
     company: String,
     techStack: [String],
     salary: String,
-    contactMethod: String,
+    contactInfo: contactInfoSchema,
     isRemote: Boolean,
     level: String,
+    employmentType: String,
+    location: String,
+    candidateLocation: String,
+    responsibilities: [String],
+    requiredQualifications: [String],
+    preferredQualifications: [String],
+    benefits: [String],
+    description: String,
   },
   { _id: false }
 );

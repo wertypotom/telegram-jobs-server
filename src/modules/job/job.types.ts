@@ -1,4 +1,4 @@
-import { IJob } from '../../shared/types/common.types';
+import { IJob, ParsedJobData } from '../../shared/types/common.types';
 
 export interface JobFilterOptions {
   stack?: string;
@@ -11,8 +11,16 @@ export interface JobFilterOptions {
   offset?: number;
 }
 
+export interface JobListItem {
+  id: string;
+  channelId: string;
+  parsedData?: ParsedJobData;
+  createdAt: Date;
+  isVisited?: boolean;
+}
+
 export interface JobFeedResponse {
-  jobs: IJob[];
+  jobs: JobListItem[];
   total: number;
   limit: number;
   offset: number;

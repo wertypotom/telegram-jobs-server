@@ -255,6 +255,20 @@ export class ScraperService {
       'frontend',
     ];
 
+    // Negative keywords (exclude resumes and job seekers)
+    const negativeKeywords = [
+      '#резюме',
+      '#ищуработу',
+      '#lookingforjob',
+      '#cv',
+      '#resume',
+    ];
+
+    // Check for negative keywords
+    if (negativeKeywords.some((keyword) => lowerText.includes(keyword))) {
+      return false;
+    }
+
     // Check if text contains at least 2 job keywords
     const keywordMatches = jobKeywords.filter((keyword) =>
       lowerText.includes(keyword)

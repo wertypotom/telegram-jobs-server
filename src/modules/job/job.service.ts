@@ -18,7 +18,9 @@ export class JobService {
 
   async createJob(data: CreateJobDto): Promise<void> {
     // Check if job already exists
-    const existing = await this.jobRepository.findByMessageId(data.telegramMessageId);
+    const existing = await this.jobRepository.findByMessageId(
+      data.telegramMessageId
+    );
     if (existing) {
       Logger.debug('Job already exists', { messageId: data.telegramMessageId });
       return;
@@ -30,13 +32,19 @@ export class JobService {
       status: 'pending_parse',
     });
 
-    Logger.info('New job created', { jobId: job._id, channelId: data.channelId });
+    Logger.info('New job created', {
+      jobId: job._id,
+      channelId: data.channelId,
+    });
 
     // Trigger parsing asynchronously
     this.parseJobAsync(job._id.toString(), data.rawText);
   }
 
-  async getJobFeed(options: JobFilterOptions, userId?: string): Promise<JobFeedResponse> {
+  async getJobFeed(
+    options: JobFilterOptions,
+    userId?: string
+  ): Promise<JobFeedResponse> {
     const { jobs, total } = await this.jobRepository.findWithFilters(options);
 
     // Get user's viewed jobs if userId provided
@@ -50,8 +58,7 @@ export class JobService {
       jobs: jobs.map((job: any) => ({
         id: job._id,
         channelId: job.channelId,
-        rawText: job.rawText,
-        ...job.parsedData,
+        parsedData: job.parsedData,
         createdAt: job.createdAt,
         isVisited: viewedJobs.includes(job._id.toString()),
       })),
