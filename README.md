@@ -1,254 +1,517 @@
 # Telegram Job Scraper Backend
 
-A Node.js/Express backend application that monitors Telegram channels for job postings, parses them using AI (Abacus.ai), and generates tailored resumes for users.
+**AI-powered job aggregation platform** that monitors Telegram channels, parses job postings with AI, and generates tailored resumes for each opportunity.
 
-## Features
+## 🎯 What I'm Building
 
-- 🔐 **JWT Authentication** - Secure user registration and login
-- 📱 **Telegram Integration** - Monitors job channels automatically using GramJS
-- 🤖 **AI-Powered Job Parsing** - Extracts structured data from unstructured job posts
-- 📄 **Resume Management** - Upload and store master resumes (PDF/DOCX)
-- ✨ **AI Resume Tailoring** - Generates customized resumes for specific jobs
-- 📊 **Job Feed API** - Filter jobs by tech stack, level, remote status
-- 📝 **Multi-Format Export** - Generate tailored resumes in PDF and DOCX
+A comprehensive job discovery and application automation system that:
 
-## Tech Stack
+- **Aggregates** job postings from multiple Telegram channels in real-time
+- **Parses** unstructured job posts into structured data using AI (Abacus.ai)
+- **Filters** jobs by tech stack, experience level, location type, and custom criteria
+- **Tailors** resumes automatically for each job using AI
+- **Generates** professional PDF/DOCX resumes optimized for specific positions
+- **Tracks** user interactions (views, likes, applications) for personalized recommendations
 
-- **Runtime**: Node.js + TypeScript
-- **Framework**: Express.js
-- **Database**: MongoDB Atlas (Mongoose)
-- **Telegram**: GramJS
-- **AI**: Abacus.ai API
-- **Authentication**: JWT + bcrypt
-- **File Processing**: multer, pdf-parse, mammoth, pdfkit, docx
+This is a **full-stack backend service** designed to eliminate manual job hunting and resume customization, allowing developers to focus on interview preparation rather than application logistics.
 
-## Project Structure
+## 🏗️ Architecture & Approach
+
+### Design Philosophy
+
+I follow a **pragmatic, layered architecture** with these core principles:
+
+1. **Separation of Concerns** - Clean 3-layer architecture (Controller → Service → Repository)
+2. **Type Safety** - Strict TypeScript with comprehensive type definitions
+3. **Error Handling** - Custom error classes with operational vs programmer error distinction
+4. **Modularity** - Feature-based module organization for scalability
+5. **Path Aliases** - Clean imports using `@config`, `@modules`, `@utils` etc.
+6. **Lean Codebase** - Remove unused code, flags, and endpoints aggressively
+
+### 3-Layer Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        HTTP Layer                           │
+│  Controllers: Handle requests, validate input, format output│
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                      Business Logic                         │
+│   Services: Orchestrate operations, implement core logic    │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                      Data Access                            │
+│  Repositories: Database operations, query abstraction       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Why this approach?**
+
+- **Testability**: Each layer can be tested independently
+- **Maintainability**: Changes to one layer don't cascade
+- **Reusability**: Services can be composed, repositories shared
+- **Clarity**: Clear responsibility boundaries
+
+### Code Organization
 
 ```
 src/
-├── index.ts                    # Application entry point
-├── modules/                    # Feature modules
-│   ├── auth/                  # Authentication (register, login)
-│   ├── user/                  # User management
-│   ├── job/                   # Job feed and parsing
-│   ├── resume/                # Resume upload and processing
-│   ├── sniper/                # Resume tailoring engine
-│   └── telegram/              # Telegram listener service
-└── shared/                    # Shared utilities
-    ├── config/                # Environment and database config
-    ├── middlewares/           # Express middlewares
-    ├── utils/                 # Logger, errors, response formatter
+├── index.ts                    # App entry: middleware, routes, startup
+├── modules/                    # Feature modules (domain-driven)
+│   ├── channel/               # Telegram channel management
+│   │   ├── channel.controller.ts
+│   │   ├── channel.service.ts
+│   │   ├── channel.repository.ts
+│   │   ├── channel.model.ts
+│   │   ├── channel.routes.ts
+│   │   ├── channel.types.ts
+│   │   ├── channel.config.ts  # Recommended channels
+│   │   ├── channel.seed.ts    # Database seeding
+│   │   └── channel.cleanup.ts # Data maintenance
+│   ├── job/                   # Job feed & filtering
+│   │   ├── job.controller.ts  # Advanced filter handling
+│   │   ├── job.service.ts     # Business logic + AI parsing
+│   │   ├── job.repository.ts  # Complex MongoDB queries
+│   │   ├── job.model.ts       # Mongoose schema
+│   │   ├── job.routes.ts
+│   │   └── job.types.ts       # Filter options, DTOs
+│   ├── resume/                # Resume upload & parsing
+│   ├── sniper/                # AI resume tailoring
+│   │   ├── sniper.service.ts  # Orchestration
+│   │   └── services/          # Specialized sub-services
+│   │       ├── ai-tailor.service.ts    # Abacus.ai integration
+│   │       ├── pdf-generator.service.ts
+│   │       └── docx-generator.service.ts
+│   ├── scraper/               # Background job scraper
+│   ├── telegram/              # GramJS listener service
+│   └── user/                  # User management & auth
+└── shared/                    # Cross-cutting concerns
+    ├── config/                # Environment & database
+    │   ├── env.config.ts      # Centralized env vars
+    │   └── database.config.ts # MongoDB connection
+    ├── middlewares/           # Express middleware
+    │   ├── auth.middleware.ts # JWT verification
+    │   ├── error.middleware.ts # Global error handler
+    │   └── validation.middleware.ts # Joi schemas
+    ├── utils/                 # Utilities
+    │   ├── logger.ts          # Structured logging
+    │   ├── errors.ts          # Custom error classes
+    │   └── response.ts        # Standardized API responses
     └── types/                 # Shared TypeScript types
 ```
 
-## Setup Instructions
+### Key Architectural Decisions
 
-### 1. Prerequisites
+#### 1. **Module Structure**
 
-- Node.js 18+ and npm
-- MongoDB Atlas account
-- Abacus.ai API key
-- (Optional) Telegram account for listener
+Each module is **self-contained** with all related files:
 
-### 2. Install Dependencies
+- **Why?** Easier to understand, modify, and potentially extract into microservices
+- **Pattern**: `[feature].[layer].ts` naming convention
 
-```bash
-npm install
+#### 2. **Path Aliases**
+
+Using TypeScript path mapping (`@modules/*`, `@config/*`, etc.):
+
+```typescript
+// ❌ Bad: Relative imports
+import { Logger } from '../../../shared/utils/logger';
+
+// ✅ Good: Clean aliases
+import { Logger } from '@utils/logger';
 ```
 
-### 3. Configure Environment Variables
+#### 3. **Error Handling Strategy**
 
-Copy `.env.example` to `.env` and update the values:
+Custom error classes extend `AppError` with HTTP status codes:
 
-```bash
-cp .env.example .env
+```typescript
+throw new NotFoundError('Job not found'); // 404
+throw new BadRequestError('Invalid filter'); // 400
+throw new UnauthorizedError('Token expired'); // 401
 ```
 
-**Required Configuration:**
+- **Operational errors** (user mistakes) → Handled gracefully
+- **Programmer errors** (bugs) → Logged with stack traces
 
-```env
-# MongoDB Atlas - Get connection string from MongoDB Atlas
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/telegram-jobs
+#### 4. **Service Composition**
 
-# JWT Secret - Generate a secure random string
-JWT_SECRET=your-super-secret-jwt-key-change-this
+Complex services delegate to specialized sub-services:
 
-# Abacus.ai API - Get from Abacus.ai dashboard
-ABACUS_API_KEY=your_abacus_api_key
-ABACUS_API_URL=https://api.abacus.ai/v1
+```typescript
+// sniper.service.ts orchestrates:
+// - ai-tailor.service.ts (AI calls)
+// - pdf-generator.service.ts (PDF creation)
+// - docx-generator.service.ts (DOCX creation)
 ```
 
-**Optional (for Telegram listener):**
+#### 5. **Type Safety**
 
-```env
-# Get from https://my.telegram.org
-TELEGRAM_API_ID=your_api_id
-TELEGRAM_API_HASH=your_api_hash
-```
+Strict TypeScript with:
 
-> **Note**: The app will run without Telegram credentials, but won't listen to channels. You can add them later.
+- Interface definitions for all DTOs
+- Type guards for runtime validation
+- Mongoose schema types matching TypeScript interfaces
 
-### 4. Start Development Server
+## 🛠️ Tech Stack
 
-```bash
-npm run dev
-```
+| Layer               | Technology                               | Rationale                                               |
+| ------------------- | ---------------------------------------- | ------------------------------------------------------- |
+| **Runtime**         | Node.js + TypeScript                     | Type safety, modern async/await patterns                |
+| **Framework**       | Express.js                               | Lightweight, flexible, extensive middleware ecosystem   |
+| **Database**        | MongoDB Atlas + Mongoose                 | Flexible schema for unstructured job data, cloud-hosted |
+| **Telegram**        | GramJS                                   | Official Telegram client library for Node.js            |
+| **AI**              | Abacus.ai API                            | Job parsing & resume tailoring with LLMs                |
+| **Auth**            | JWT + bcrypt                             | Stateless authentication, secure password hashing       |
+| **File Processing** | multer, pdf-parse, mammoth, pdfkit, docx | Multi-format resume handling                            |
+| **Validation**      | Joi                                      | Schema-based request validation                         |
 
-The server will start on `http://localhost:3000`
+## 🚀 Features
 
-## API Endpoints
+### Core Functionality
+
+#### 1. **Telegram Channel Monitoring**
+
+- Real-time message listening via GramJS
+- Auto-join recommended channels on first run
+- Persistent session management
+- Graceful reconnection on network failures
+
+#### 2. **AI Job Parsing**
+
+- Extracts structured data from unstructured Telegram messages:
+  - Job title, company, salary
+  - Tech stack (array of technologies)
+  - Experience level (Junior/Mid/Senior)
+  - Location type (Remote/Hybrid/Onsite)
+  - Job function (Frontend/Backend/Full Stack/etc.)
+- Powered by Abacus.ai LLM API
+
+#### 3. **Advanced Job Filtering**
+
+- **Tech Stack**: Multi-select with autocomplete
+- **Experience Level**: Junior/Mid/Senior
+- **Location Type**: Remote/Hybrid/Onsite
+- **Job Function**: Frontend/Backend/Full Stack/DevOps/etc.
+- **Excluded Titles**: Blacklist specific roles
+- **Mute Keywords**: Filter out unwanted terms
+- Pagination support (limit/offset)
+
+#### 4. **Resume Management**
+
+- Upload master resume (PDF/DOCX)
+- Automatic text extraction
+- Storage in MongoDB + file system
+
+#### 5. **AI Resume Tailoring**
+
+- Analyzes job requirements vs. master resume
+- Generates customized:
+  - Resume summary
+  - Skills section
+  - Cover letter
+  - Telegram application message
+- Exports to PDF and DOCX
+
+#### 6. **User Interaction Tracking**
+
+- Mark jobs as viewed
+- Like/unlike jobs
+- Track applications
+- Personalized recommendations (future)
+
+## 📡 API Endpoints
 
 ### Authentication
 
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login and get JWT token
+```http
+POST /api/auth/register
+POST /api/auth/login
+```
+
+### Channels
+
+```http
+GET  /api/channels              # List all channels
+GET  /api/channels/recommended  # Get recommended channels
+POST /api/channels/subscribe    # Subscribe to channel
+POST /api/channels/unsubscribe  # Unsubscribe from channel
+```
 
 ### Jobs
 
-- `GET /api/jobs` - Get job feed with filters
-  - Query params: `stack`, `level`, `isRemote`, `limit`, `offset`
-- `GET /api/jobs/:id` - Get specific job details
+```http
+GET  /api/jobs                  # Get filtered job feed
+GET  /api/jobs/:id              # Get job details
+POST /api/jobs/:id/view         # Mark job as viewed
+GET  /api/jobs/skills/search    # Autocomplete tech skills
+```
+
+**Example Filter Query:**
+
+```bash
+GET /api/jobs?stack=react&stack=typescript&level=Mid&locationType=Remote&limit=20&offset=0
+```
 
 ### Resume
 
-- `POST /api/resume/upload` - Upload master resume (PDF/DOCX)
-  - Requires authentication
-  - Form data: `resume` file
+```http
+POST /api/resume/upload         # Upload master resume (multipart/form-data)
+```
 
 ### Sniper (Resume Tailoring)
 
-- `POST /api/sniper/generate` - Generate tailored resume
-  - Requires authentication
-  - Body: `{ "jobId": "job_id_here" }`
-  - Returns: PDF/DOCX URLs, Telegram message, cover letter
+```http
+POST /api/sniper/generate       # Generate tailored resume for job
+```
 
-## Usage Flow
+**Request Body:**
 
-1. **Register/Login**
+```json
+{
+  "jobId": "507f1f77bcf86cd799439011"
+}
+```
 
-   ```bash
-   curl -X POST http://localhost:3000/api/auth/register \
-     -H "Content-Type: application/json" \
-     -d '{"email":"user@example.com","password":"password123"}'
-   ```
+**Response:**
 
-2. **Upload Master Resume**
+```json
+{
+  "success": true,
+  "data": {
+    "pdfUrl": "/temp/resume_123.pdf",
+    "docxUrl": "/temp/resume_123.docx",
+    "telegramMessage": "Hi! I'm applying for...",
+    "coverLetter": "Dear Hiring Manager..."
+  }
+}
+```
 
-   ```bash
-   curl -X POST http://localhost:3000/api/resume/upload \
-     -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-     -F "resume=@path/to/resume.pdf"
-   ```
+## ⚙️ Setup & Configuration
 
-3. **Browse Jobs**
+### Prerequisites
 
-   ```bash
-   curl http://localhost:3000/api/jobs?stack=react&limit=10
-   ```
+- Node.js 18+
+- MongoDB Atlas account
+- Abacus.ai API key
+- (Optional) Telegram API credentials
 
-4. **Generate Tailored Resume**
-   ```bash
-   curl -X POST http://localhost:3000/api/sniper/generate \
-     -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-     -H "Content-Type: application/json" \
-     -d '{"jobId":"JOB_ID_FROM_FEED"}'
-   ```
-
-## Telegram Setup (Optional)
-
-### Getting Telegram Credentials
-
-1. Go to https://my.telegram.org
-2. Login with your phone number
-3. Go to "API development tools"
-4. Create a new application
-5. Copy `api_id` and `api_hash` to `.env`
-
-### First Run
-
-On first run with Telegram credentials, the app will:
-
-- Connect to Telegram
-- Join default CIS IT job channels
-- Start listening for new job posts
-- Save session for future runs
-
-### Default Channels
-
-The app monitors these channels by default:
-
-- @job_for_juniors
-- @javascript_jobs
-- @nodejs_jobs
-
-## How It Works
-
-1. **Telegram Listener** monitors configured channels for new messages
-2. **Job Parser** uses Abacus.ai to extract structured data from messages
-3. **Job Feed** provides filtered access to parsed jobs
-4. **Resume Tailoring** uses AI to customize resumes for specific jobs
-5. **File Generation** creates professional PDF and DOCX documents
-
-## Development
+### Installation
 
 ```bash
-# Development with auto-reload
+# Install dependencies
+npm install
+
+# Copy environment template
+cp .env.example .env
+
+# Configure .env (see below)
+# Start development server
 npm run dev
-
-# Build TypeScript
-npm run build
-
-# Production
-npm start
 ```
 
-## Architecture
+### Environment Variables
 
-The application follows a **3-layer architecture**:
+```env
+# Server
+PORT=4000
+NODE_ENV=development
 
+# Database
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/telegram-jobs
+
+# Authentication
+JWT_SECRET=your-secret-key-here
+JWT_EXPIRES_IN=7d
+NEXTAUTH_SECRET=your-nextauth-secret
+
+# Telegram (optional for scraping)
+TELEGRAM_API_ID=your_api_id
+TELEGRAM_API_HASH=your_api_hash
+
+# AI
+ABACUS_API_KEY=your_abacus_key
+ABACUS_API_URL=https://routellm.abacus.ai/v1
+
+# File Uploads
+MAX_FILE_SIZE=10485760
+UPLOAD_DIR=./uploads
+TEMP_DIR=./public/temp
+
+# Frontend
+FRONTEND_URL=http://localhost:3000
 ```
-Controller → Service → Repository
+
+### Scripts
+
+```bash
+npm run dev      # Development with hot reload (nodemon)
+npm run build    # Compile TypeScript to dist/
+npm start        # Production mode (runs dist/index.js)
 ```
 
-- **Controllers**: Handle HTTP requests/responses
-- **Services**: Business logic and orchestration
-- **Repositories**: Database operations
+## 🔐 Security Practices
 
-## Error Handling
+- ✅ **JWT Authentication** - Stateless, secure token-based auth
+- ✅ **Password Hashing** - bcrypt with salt rounds
+- ✅ **Input Validation** - Joi schemas on all endpoints
+- ✅ **File Type Validation** - Restrict uploads to PDF/DOCX
+- ✅ **CORS Configuration** - Whitelist frontend origin
+- ✅ **Environment Secrets** - Never commit `.env` files
+- ✅ **Error Message Sanitization** - Hide stack traces in production
 
-- Custom error classes for different HTTP status codes
-- Global error middleware
-- Standardized API responses
-- Environment-aware error details
+**Per-PR Checklist:**
 
-## Logging
+- [ ] Input validation on new endpoints
+- [ ] Secrets not hardcoded
+- [ ] Dependencies scanned for vulnerabilities
+- [ ] User data properly sanitized
 
-- Timestamp-based logging
-- Different log levels (info, error, warn, debug)
-- Debug logs only in development mode
+## 🧪 Development Workflow
 
-## Security
+### Adding a New Feature
 
-- JWT-based authentication
-- Password hashing with bcrypt
-- Request validation with Joi
-- File type validation for uploads
-- CORS enabled
+1. **Create module structure**
 
-## Future Enhancements
+   ```bash
+   modules/feature/
+   ├── feature.controller.ts
+   ├── feature.service.ts
+   ├── feature.repository.ts
+   ├── feature.model.ts
+   ├── feature.routes.ts
+   └── feature.types.ts
+   ```
 
-- [ ] Add tests (unit and integration)
-- [ ] Implement rate limiting
-- [ ] Add API documentation (Swagger)
-- [ ] Email notifications for new jobs
-- [ ] User preferences for job filtering
-- [ ] Resume templates
+2. **Define types first** (`feature.types.ts`)
+3. **Build repository** (data access)
+4. **Implement service** (business logic)
+5. **Create controller** (HTTP handling)
+6. **Register routes** (`modules/index.ts`)
+
+### Code Style
+
+- **Concise over verbose** - Sacrifice grammar for brevity in comments
+- **Explicit types** - Avoid `any`, use interfaces
+- **Async/await** - No callback hell
+- **Early returns** - Guard clauses over nested ifs
+- **Functional patterns** - Prefer `map`/`filter` over loops
+
+### Error Handling Pattern
+
+```typescript
+// ✅ Good: Throw custom errors, let middleware handle
+async getJob(id: string) {
+  const job = await this.repository.findById(id);
+  if (!job) throw new NotFoundError('Job not found');
+  return job;
+}
+
+// ❌ Bad: Try-catch in every function
+async getJob(id: string) {
+  try {
+    const job = await this.repository.findById(id);
+    if (!job) return null;
+    return job;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+}
+```
+
+## 🗂️ Database Schema
+
+### User
+
+```typescript
+{
+  email: string (unique)
+  password: string (hashed)
+  masterResumeText?: string
+  masterResumeUrl?: string
+  createdAt: Date
+}
+```
+
+### Job
+
+```typescript
+{
+  channelId: ObjectId
+  messageId: number
+  rawText: string
+  parsedData: {
+    jobTitle?: string
+    company?: string
+    techStack?: string[]
+    salary?: string
+    level?: 'Junior' | 'Mid' | 'Senior'
+    isRemote?: boolean
+    locationType?: 'Remote' | 'Hybrid' | 'Onsite'
+    jobFunction?: string
+  }
+  createdAt: Date
+}
+```
+
+### Channel
+
+```typescript
+{
+  username: string (unique)
+  title: string
+  description?: string
+  category?: string
+  memberCount?: string
+  isActive: boolean
+  lastScrapedAt?: Date
+}
+```
+
+## 🎯 Roadmap
+
+### Phase 1: Core Infrastructure ✅
+
+- [x] Telegram integration
+- [x] AI job parsing
+- [x] Basic job feed
+- [x] Resume upload
+- [x] AI resume tailoring
+
+### Phase 2: Advanced Features (In Progress)
+
+- [x] Advanced filtering (tech stack, level, location)
+- [x] Channel management
+- [x] User interaction tracking
+- [ ] Bundle onboarding for new users
+- [ ] Explore modal with search
+
+### Phase 3: Intelligence
+
+- [ ] Personalized job recommendations
+- [ ] Application success tracking
+- [ ] Resume A/B testing
+- [ ] Interview preparation suggestions
+
+### Phase 4: Scale & Polish
+
+- [ ] Rate limiting
+- [ ] API documentation (Swagger)
+- [ ] Unit & integration tests
+- [ ] Email notifications
 - [ ] Analytics dashboard
 
-## License
+## 📝 License
 
 MIT
 
-## Author
+## 👤 Author
 
-werty.potom
+**werty.potom**
+
+---
+
+**Built with a focus on pragmatism, type safety, and developer experience.**

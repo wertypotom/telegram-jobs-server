@@ -8,6 +8,9 @@ const jobController = new JobController();
 // All routes require authentication
 router.use(authenticate);
 
+// Search skills
+router.get('/skills/search', jobController.searchSkills);
+
 // Get all jobs
 router.get('/', jobController.getJobs);
 // Get specific job

@@ -86,4 +86,18 @@ export class JobController {
       next(error);
     }
   };
+
+  searchSkills = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { q } = req.query;
+      const skills = await this.jobService.searchSkills(q as string);
+      ApiResponse.success(res, skills, 'Skills retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  };
 }
