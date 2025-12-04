@@ -45,7 +45,24 @@ export class JobService {
     options: JobFilterOptions,
     userId?: string
   ): Promise<JobFeedResponse> {
-    const { jobs, total } = await this.jobRepository.findWithFilters(options);
+    // CRITICAL: Enforce subscription filtering
+    let channelIds: string[] | undefined = options.channelIds;
+
+    if (userId) {
+      const user = await this.userRepository.findById(userId);
+      if (user) {
+        // Override channelIds with user's subscriptions
+        channelIds = user.subscribedChannels;
+        Logger.info(`Filtering feed for user ${userId}`, {
+          channelCount: channelIds.length,
+        });
+      }
+    }
+
+    const { jobs, total } = await this.jobRepository.findWithFilters({
+      ...options,
+      channelIds,
+    });
 
     // Get user's viewed jobs if userId provided
     let viewedJobs: string[] = [];

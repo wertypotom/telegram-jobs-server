@@ -16,17 +16,46 @@ export class JobRepository {
     return await Job.findOne({ telegramMessageId: messageId });
   }
 
-  async updateById(id: string, data: Partial<IJob>): Promise<IJobDocument | null> {
+  async updateById(
+    id: string,
+    data: Partial<IJob>
+  ): Promise<IJobDocument | null> {
     return await Job.findByIdAndUpdate(id, data, { new: true });
   }
 
-  async findWithFilters(options: JobFilterOptions): Promise<{ jobs: IJobDocument[]; total: number }> {
-    const { stack, level, isRemote, jobFunction, excludedTitles, locationType, limit = 20, offset = 0 } = options;
+  async findWithFilters(
+    options: JobFilterOptions
+  ): Promise<{ jobs: IJobDocument[]; total: number }> {
+    const {
+      channelIds,
+      stack,
+      level,
+      isRemote,
+      jobFunction,
+      excludedTitles,
+      muteKeywords,
+      locationType,
+      limit = 20,
+      offset = 0,
+    } = options;
 
     const query: any = { status: 'parsed' };
 
-    if (stack) {
-      query['parsedData.techStack'] = { $regex: stack, $options: 'i' };
+    // CRITICAL: Filter by subscribed channels
+    if (channelIds !== undefined) {
+      if (channelIds.length === 0) {
+        // User has no subscriptions - return empty feed
+        return { jobs: [], total: 0 };
+      }
+      query.channelId = { $in: channelIds };
+    }
+
+    if (stack && stack.length > 0) {
+      // Match jobs that contain ANY of the specified technologies
+      query['parsedData.techStack'] = {
+        $regex: stack.join('|'),
+        $options: 'i',
+      };
     }
 
     if (level) {
@@ -50,10 +79,18 @@ export class JobRepository {
       };
     }
 
+    // Mute Keywords filter (Negative Filter)
+    if (muteKeywords && muteKeywords.length > 0) {
+      // Exclude if rawText contains ANY of the keywords
+      query['rawText'] = {
+        $not: { $regex: muteKeywords.join('|'), $options: 'i' },
+      };
+    }
+
     // Location Type filter
     if (locationType && locationType.length > 0) {
       const locationConditions: any[] = [];
-      
+
       if (locationType.includes('remote')) {
         locationConditions.push({ 'parsedData.isRemote': true });
       }
@@ -61,7 +98,7 @@ export class JobRepository {
         // On-site and hybrid are both non-remote
         locationConditions.push({ 'parsedData.isRemote': { $ne: true } });
       }
-      
+
       if (locationConditions.length > 0) {
         query.$or = locationConditions;
       }

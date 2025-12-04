@@ -114,9 +114,9 @@ export class ScraperService {
   }
 
   /**
-   * Scrape a single channel
+   * Scrape a single channel (can be called externally for immediate scraping)
    */
-  private async scrapeChannel(
+  async scrapeChannel(
     channelUsername: string,
     lastScrapedAt?: Date
   ): Promise<number> {

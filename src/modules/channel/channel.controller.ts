@@ -107,8 +107,9 @@ export class ChannelController {
       const userId = (req as any).userId;
       const { channels } = req.body;
 
-      if (!channels || !Array.isArray(channels) || channels.length === 0) {
-        throw new BadRequestError('At least one channel must be selected');
+      // Allow empty arrays - users can unsubscribe from all channels (Zero State)
+      if (!channels || !Array.isArray(channels)) {
+        throw new BadRequestError('Channels must be an array');
       }
 
       const result = await this.channelService.subscribeToChannels(
