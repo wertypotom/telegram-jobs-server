@@ -13,18 +13,22 @@ export class AiTailorService {
     this.apiUrl = envConfig.abacusApiUrl;
   }
 
-  async tailorResume(masterResume: string, jobDescription: string): Promise<TailoredContent> {
+  async tailorResume(
+    masterResume: string,
+    jobDescription: string
+  ): Promise<TailoredContent> {
     try {
       const prompt = this.buildTailoringPrompt(masterResume, jobDescription);
 
       const response = await axios.post(
         `${this.apiUrl}/chat/completions`,
         {
-          model: 'gpt-4o-mini',
+          model: 'gpt-5-mini',
           messages: [
             {
               role: 'system',
-              content: 'You are a professional resume writer and career coach. Tailor resumes to match job descriptions while keeping information truthful.',
+              content:
+                'You are a professional resume writer and career coach. Tailor resumes to match job descriptions while keeping information truthful.',
             },
             {
               role: 'user',
@@ -36,7 +40,7 @@ export class AiTailorService {
         },
         {
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
+            Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
         }
@@ -57,7 +61,10 @@ export class AiTailorService {
     }
   }
 
-  private buildTailoringPrompt(masterResume: string, jobDescription: string): string {
+  private buildTailoringPrompt(
+    masterResume: string,
+    jobDescription: string
+  ): string {
     return `I need you to tailor a resume for a specific job posting. 
 
 Master Resume:

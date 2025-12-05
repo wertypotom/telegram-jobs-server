@@ -20,7 +20,7 @@ export class JobParserService {
       const response = await axios.post(
         `${this.apiUrl}/chat/completions`,
         {
-          model: 'gpt-4o-mini',
+          model: 'gpt-5-mini',
           messages: [
             {
               role: 'system',
@@ -46,6 +46,13 @@ export class JobParserService {
       const content = response.data.choices[0].message.content;
       const parsedData = JSON.parse(content);
 
+      // Debug: Log what AI returns
+      Logger.debug('AI Parser Response', {
+        hasExperienceYears: 'experienceYears' in parsedData,
+        experienceYearsValue: parsedData.experienceYears,
+        rawTextPreview: rawText.substring(0, 100),
+      });
+
       // If the AI determines it's not a job posting
       if (parsedData.isJobPosting === false) {
         Logger.debug('Message is not a job posting', {
@@ -70,6 +77,10 @@ export class JobParserService {
         preferredQualifications: parsedData.preferredQualifications || [],
         benefits: parsedData.benefits || [],
         description: parsedData.description || undefined,
+        experienceYears:
+          parsedData.experienceYears !== undefined
+            ? parsedData.experienceYears
+            : null,
       };
     } catch (error) {
       Logger.error('Failed to parse job text with AI:', error);
@@ -126,6 +137,20 @@ EXTRACTION GUIDELINES:
 - Extract programming languages, frameworks, tools
 - Return as array of strings
 
+**Experience Years (CRITICAL):**
+- Extract REQUIRED years of experience as a NUMBER
+- Look for patterns in Russian: "от X лет", "X+ лет", "Опыт X лет", "Опыт работы: от X лет", "минимум X лет"
+- Look for patterns in English: "X+ years", "X years of experience", "minimum X years"
+- Extract the MINIMUM required number (e.g., "от 3 лет" = 3, "5+ years" = 5)
+- If a range is given (e.g., "3-5 лет"), use the minimum (3)
+- If only mentioned in qualifications like "Опыт коммерческой разработки от 3 лет", extract 3
+- Return as a number, or null/undefined if not specified
+- Examples: 
+  * "Опыт работы: от 3 лет" → 3
+  * "5+ years experience" → 5
+  * "Опыт коммерческой разработки от 2 лет" → 2
+  * "Junior developer" (no explicit years) → null
+
 **Validation:**
 - If this is NOT a job posting (resume, spam, discussion), set "isJobPosting" to false
 - If it contains hashtags like #резюме, #ищуработу, #lookingforjob, set "isJobPosting" to false
@@ -152,7 +177,8 @@ Return a JSON object with this EXACT structure:
   "requiredQualifications": array of strings (clean bullet points, no emojis),
   "preferredQualifications": array of strings (clean bullet points, no emojis),
   "benefits": array of strings (clean bullet points, no emojis),
-  "description": string (clean 2-3 sentence summary, no emojis/hashtags)
+  "description": string (clean 2-3 sentence summary, no emojis/hashtags),
+  "experienceYears": number or null (minimum required years of experience)
 }
 
 Job posting text:

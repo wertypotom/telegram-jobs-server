@@ -48,6 +48,7 @@ export interface ParsedJobData {
   preferredQualifications?: string[]; // Nice-to-have skills
   benefits?: string[]; // Perks, additional compensation
   description?: string; // Clean summary without hashtags/emojis
+  experienceYears?: number; // Required years of experience
 }
 
 export interface IChannel {

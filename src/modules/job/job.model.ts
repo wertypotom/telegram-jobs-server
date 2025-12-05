@@ -30,6 +30,7 @@ const parsedJobDataSchema = new Schema<ParsedJobData>(
     preferredQualifications: [String],
     benefits: [String],
     description: String,
+    experienceYears: Number,
   },
   { _id: false }
 );

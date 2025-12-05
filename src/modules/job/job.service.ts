@@ -42,6 +42,49 @@ export class JobService {
     this.parseJobAsync(job._id.toString(), data.rawText);
   }
 
+  /**
+   * Parse and save job synchronously
+   * Used by scraper for bulk processing - validates with AI before saving
+   */
+  async createJobSync(data: CreateJobDto): Promise<void> {
+    // Check if job already exists
+    const existing = await this.jobRepository.findByMessageId(
+      data.telegramMessageId
+    );
+    if (existing) {
+      Logger.debug('Job already exists', { messageId: data.telegramMessageId });
+      return;
+    }
+
+    try {
+      // Parse FIRST with AI
+      const parsedData = await this.jobParserService.parseJobText(data.rawText);
+
+      // Only save if valid job
+      if (parsedData) {
+        await this.jobRepository.create({
+          ...data,
+          parsedData,
+          status: 'parsed',
+        });
+        Logger.info('Job created and parsed', { channelId: data.channelId });
+      } else {
+        Logger.debug('Message is not a job, skipped', {
+          channelId: data.channelId,
+          previewText: data.rawText.substring(0, 50),
+        });
+      }
+    } catch (error) {
+      // On error, don't save - just log
+      Logger.error('Failed to parse message', {
+        channelId: data.channelId,
+        error,
+        previewText: data.rawText.substring(0, 50),
+      });
+      // Don't throw - continue processing other messages
+    }
+  }
+
   async getJobFeed(
     options: JobFilterOptions,
     userId?: string
@@ -113,11 +156,9 @@ export class JobService {
         });
         Logger.info('Job parsed successfully', { jobId });
       } else {
-        // Not a job posting
-        await this.jobRepository.updateById(jobId, {
-          status: 'failed',
-        });
-        Logger.debug('Message is not a job posting', { jobId });
+        // Not a job posting - delete it
+        await this.jobRepository.deleteById(jobId);
+        Logger.debug('Message is not a job posting, deleted', { jobId });
       }
     } catch (error) {
       Logger.error('Failed to parse job', { jobId, error });

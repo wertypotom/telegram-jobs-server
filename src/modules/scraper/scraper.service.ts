@@ -141,7 +141,8 @@ export class ScraperService {
         `Fetched ${messages.length} messages from ${channelUsername}`
       );
 
-      let jobsFound = 0;
+      // Collect messages that pass pre-filter
+      const validMessages: Array<{ id: number; text: string }> = [];
 
       for (const message of messages) {
         const text = message.text || (message as any).message;
@@ -155,20 +156,46 @@ export class ScraperService {
           continue;
         }
 
-        // Create job entry (AI parsing happens async in JobService)
-        try {
-          await this.jobService.createJob({
-            telegramMessageId: `${channelUsername}_${message.id}`,
-            channelId: channelUsername,
-            rawText: text,
-          });
-          jobsFound++;
-        } catch (error) {
-          // Skip if job already exists (duplicate message ID)
-          if ((error as any).code === 11000) {
-            continue;
+        validMessages.push({ id: message.id, text });
+      }
+
+      Logger.info(
+        `${validMessages.length} messages passed pre-filter in ${channelUsername}`
+      );
+
+      // Process in batches with AI parsing
+      const BATCH_SIZE = 3; // Conservative - avoids API rate limits
+      let jobsFound = 0;
+
+      for (let i = 0; i < validMessages.length; i += BATCH_SIZE) {
+        const batch = validMessages.slice(i, i + BATCH_SIZE);
+
+        // Process batch in parallel using Promise.allSettled
+        const results = await Promise.allSettled(
+          batch.map((msg) =>
+            this.jobService.createJobSync({
+              telegramMessageId: `${channelUsername}_${msg.id}`,
+              channelId: channelUsername,
+              rawText: msg.text,
+            })
+          )
+        );
+
+        // Count successful jobs (createJobSync logs failures internally)
+        results.forEach((result, idx) => {
+          if (result.status === 'fulfilled') {
+            jobsFound++;
+          } else {
+            Logger.warn(
+              `Batch job failed for message ${batch[idx].id}`,
+              result.reason
+            );
           }
-          Logger.warn(`Failed to create job from ${channelUsername}:`, error);
+        });
+
+        // Add delay between batches to avoid overwhelming API
+        if (i + BATCH_SIZE < validMessages.length) {
+          await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 second
         }
       }
 
@@ -181,99 +208,36 @@ export class ScraperService {
   }
 
   /**
-   * Check if message text likely contains a job posting
-   * Uses Russian + English keywords to pre-filter before AI validation
+   * Quick pre-filter to avoid unnecessary AI calls
+   * Uses simple keyword matching - AI does final validation
    */
   private isLikelyJobPost(text: string): boolean {
     // Minimum length check
-    if (!text || text.trim().length < 50) {
+    if (!text || text.length < 50) {
       return false;
     }
 
     const lowerText = text.toLowerCase();
 
-    // Job keywords (Russian + English)
+    // Top reliable keywords only (AI will do comprehensive validation)
     const jobKeywords = [
-      // Russian
-      'работа',
-      'вакансия',
-      'вакансии',
-      'ищем',
-      'требуется',
-      'нужен',
-      'нужна',
-      'разработчик',
-      'программист',
-      'зарплата',
-      'оплата',
-      'удаленно',
-      'офис',
-      'резюме',
-      'откликнуться',
-      'соискател',
-      'кандидат',
-      'в команду',
-      'проект',
-      // English
+      'вакансия', // vacancy (RU)
       'hiring',
-      'job',
-      'position',
-      'vacancy',
-      'opening',
+      'разработчик', // developer (RU)
       'developer',
-      'engineer',
-      'programmer',
-      'looking for',
-      'we need',
-      'we are hiring',
-      'join our team',
-      'apply',
-      'salary',
-      'compensation',
-      'remote',
-      'full-time',
-      'part-time',
-      'contract',
-      'freelance',
-      'resume',
-      'cv',
-      'candidate',
-      // Tech levels
-      'junior',
-      'middle',
-      'senior',
-      'lead',
-      // Tech stacks
-      'react',
-      'node',
-      'python',
-      'java',
-      'golang',
-      'php',
-      'fullstack',
-      'backend',
-      'frontend',
+      'требуется', // required (RU)
+      'ищем', // looking for (RU)
+      'position',
+      'opening',
     ];
 
-    // Negative keywords (exclude resumes and job seekers)
-    const negativeKeywords = [
-      '#резюме',
-      '#ищуработу',
-      '#lookingforjob',
-      '#cv',
-      '#resume',
-    ];
-
-    // Check for negative keywords
-    if (negativeKeywords.some((keyword) => lowerText.includes(keyword))) {
+    // Exclude resumes/job seekers
+    const excludeKeywords = ['#резюме', '#ищуработу', '#cv'];
+    if (excludeKeywords.some((keyword) => lowerText.includes(keyword))) {
       return false;
     }
 
-    // Check if text contains at least 2 job keywords
-    const keywordMatches = jobKeywords.filter((keyword) =>
-      lowerText.includes(keyword)
-    );
-
-    return keywordMatches.length >= 2;
+    // Must match at least 1 keyword (lowered from 2 since AI validates anyway)
+    return jobKeywords.some((keyword) => lowerText.includes(keyword));
   }
 }

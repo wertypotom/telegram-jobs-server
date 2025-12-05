@@ -23,6 +23,10 @@ export class JobRepository {
     return await Job.findByIdAndUpdate(id, data, { new: true });
   }
 
+  async deleteById(id: string): Promise<void> {
+    await Job.findByIdAndDelete(id);
+  }
+
   async findWithFilters(
     options: JobFilterOptions
   ): Promise<{ jobs: IJobDocument[]; total: number }> {
@@ -40,7 +44,8 @@ export class JobRepository {
       offset = 0,
     } = options;
 
-    const query: any = { status: 'parsed' };
+    // All jobs in DB are valid (parse-before-save ensures this)
+    const query: any = {};
 
     // CRITICAL: Filter by subscribed channels
     if (channelIds !== undefined) {
