@@ -4,6 +4,7 @@ import { JobFilterOptions, JobFeedResponse, CreateJobDto } from './job.types';
 import { UserRepository } from '@modules/user/user.repository';
 import { Logger } from '@utils/logger';
 import { NotFoundError } from '@utils/errors';
+import { JOB_TITLES } from '@shared/constants/job-titles';
 
 export class JobService {
   private jobRepository: JobRepository;
@@ -266,6 +267,17 @@ export class JobService {
     const lowerQuery = query.toLowerCase();
     return TECH_SKILLS.filter((skill) =>
       skill.toLowerCase().includes(lowerQuery)
+    ).slice(0, 20); // Limit to 20 results
+  }
+
+  async searchJobFunctions(query: string = ''): Promise<string[]> {
+    if (!query || query.trim() === '') {
+      return JOB_TITLES.slice(0, 20); // Return first 20 titles
+    }
+
+    const lowerQuery = query.toLowerCase();
+    return JOB_TITLES.filter((title) =>
+      title.toLowerCase().includes(lowerQuery)
     ).slice(0, 20); // Limit to 20 results
   }
 }

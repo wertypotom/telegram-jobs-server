@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { AuthRequest } from '@shared/middlewares/auth.middleware';
 import { JobService } from './job.service';
 import { ApiResponse } from '@utils/response';
 import { JobFilterOptions } from './job.types';
@@ -11,45 +12,28 @@ export class JobController {
   }
 
   getJobs = async (
-    req: Request,
+    req: AuthRequest,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
+      const { filters = {}, pagination = {} } = req.body;
+      const { limit = 20, offset = 0 } = pagination;
+      const userId = req.userId!;
+
       const options: JobFilterOptions = {
-        stack: req.query.stack
-          ? Array.isArray(req.query.stack)
-            ? (req.query.stack as string[])
-            : [req.query.stack as string]
-          : undefined,
-        level: req.query.level as string,
-        isRemote:
-          req.query.isRemote === 'true'
-            ? true
-            : req.query.isRemote === 'false'
-            ? false
-            : undefined,
-        jobFunction: req.query.jobFunction as string,
-        excludedTitles: req.query.excludedTitles
-          ? Array.isArray(req.query.excludedTitles)
-            ? (req.query.excludedTitles as string[])
-            : [req.query.excludedTitles as string]
-          : undefined,
-        muteKeywords: req.query.muteKeywords
-          ? Array.isArray(req.query.muteKeywords)
-            ? (req.query.muteKeywords as string[])
-            : [req.query.muteKeywords as string]
-          : undefined,
-        locationType: req.query.locationType
-          ? Array.isArray(req.query.locationType)
-            ? (req.query.locationType as string[])
-            : [req.query.locationType as string]
-          : undefined,
-        limit: req.query.limit ? parseInt(req.query.limit as string) : 20,
-        offset: req.query.offset ? parseInt(req.query.offset as string) : 0,
+        stack: filters.stack || undefined,
+        level: filters.level || undefined,
+        jobFunction: filters.jobFunction || undefined,
+        locationType: filters.locationType || undefined,
+        excludedTitles: filters.excludedTitles || undefined,
+        muteKeywords: filters.muteKeywords || undefined,
+        isRemote: filters.isRemote,
+        limit,
+        offset,
       };
 
-      const userId = (req as any).userId;
+      // Service will fetch user and get subscribedChannels
       const result = await this.jobService.getJobFeed(options, userId);
       ApiResponse.success(res, result, 'Jobs retrieved successfully');
     } catch (error) {
@@ -96,6 +80,26 @@ export class JobController {
       const { q } = req.query;
       const skills = await this.jobService.searchSkills(q as string);
       ApiResponse.success(res, skills, 'Skills retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  searchJobFunctions = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { q } = req.query;
+      const jobFunctions = await this.jobService.searchJobFunctions(
+        q as string
+      );
+      ApiResponse.success(
+        res,
+        jobFunctions,
+        'Job functions retrieved successfully'
+      );
     } catch (error) {
       next(error);
     }

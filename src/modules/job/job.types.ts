@@ -3,12 +3,13 @@ import { IJob, ParsedJobData } from '../../shared/types/common.types';
 export interface JobFilterOptions {
   channelIds?: string[]; // Filter by subscribed channels
   stack?: string[];
-  level?: string;
+  level?: string[];
   isRemote?: boolean;
-  jobFunction?: string;
+  jobFunction?: string[];
   excludedTitles?: string[];
   muteKeywords?: string[]; // New: Negative filters (Mute)
   locationType?: string[];
+  experienceYears?: { min: number; max: number }; // Experience range filter
   limit?: number;
   offset?: number;
 }

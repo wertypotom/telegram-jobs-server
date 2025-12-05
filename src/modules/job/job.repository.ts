@@ -35,6 +35,7 @@ export class JobRepository {
       excludedTitles,
       muteKeywords,
       locationType,
+      experienceYears,
       limit = 20,
       offset = 0,
     } = options;
@@ -58,17 +59,62 @@ export class JobRepository {
       };
     }
 
-    if (level) {
-      query['parsedData.level'] = { $regex: level, $options: 'i' };
+    if (level && level.length > 0) {
+      // Match jobs that contain ANY of the specified levels
+      query['parsedData.level'] = {
+        $regex: level.join('|'),
+        $options: 'i',
+      };
     }
 
     if (isRemote !== undefined) {
       query['parsedData.isRemote'] = isRemote;
     }
 
-    // Job Function filter
-    if (jobFunction) {
-      query['parsedData.jobTitle'] = { $regex: jobFunction, $options: 'i' };
+    // Job Function filter - AND logic for precise matching
+    if (jobFunction && jobFunction.length > 0) {
+      const importantShortWords = [
+        'js',
+        'ts',
+        'go',
+        'c++',
+        'c#',
+        'ui',
+        'ux',
+        'qa',
+        'ai',
+        'ml',
+        'ar',
+        'vr',
+      ];
+
+      // For each selected job function, create AND conditions
+      const jobFunctionConditions = jobFunction.map((func) => {
+        // Split by spaces, commas, parentheses, slashes, AND dots
+        // This makes "Node.js" -> ["Node", "js"] instead of ["Node.js"]
+        const keywords = func.split(/[\s,()\/\.]+/).filter((word) => {
+          if (!word) return false; // Skip empty strings
+          const normalized = word.toLowerCase();
+          return word.length > 2 || importantShortWords.includes(normalized);
+        });
+
+        // Job must contain ALL keywords from this function
+        return {
+          $and: keywords.map((keyword) => ({
+            'parsedData.jobTitle': {
+              $regex: `\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
+              $options: 'i',
+            },
+          })),
+        };
+      });
+
+      // If multiple functions selected, match ANY of them (OR at top level)
+      if (jobFunctionConditions.length === 1) {
+        Object.assign(query, jobFunctionConditions[0]);
+      } else {
+        query['$or'] = jobFunctionConditions;
+      }
     }
 
     // Excluded Titles filter
@@ -77,6 +123,20 @@ export class JobRepository {
         ...query['parsedData.jobTitle'],
         $not: { $regex: excludedTitles.join('|'), $options: 'i' },
       };
+    }
+
+    // Experience Years filter
+    if (experienceYears) {
+      const { min, max } = experienceYears;
+      // Include jobs where:
+      // 1. No experience is specified (treated as 0+ / no requirement)
+      // 2. Experience is specified AND within the range
+      // Exclude jobs that explicitly require MORE than max
+      query['$or'] = [
+        { 'parsedData.experienceYears': { $exists: false } }, // No experience = 0+ years
+        { 'parsedData.experienceYears': null }, // Null = 0+ years
+        { 'parsedData.experienceYears': { $lte: max } }, // Requires <= max years
+      ];
     }
 
     // Mute Keywords filter (Negative Filter)
