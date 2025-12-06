@@ -4,6 +4,7 @@ import resumeRoutes from './resume/resume.routes';
 import sniperRoutes from './sniper/sniper.routes';
 import channelRoutes from './channel/channel.routes';
 import userRoutes from './user/user.routes';
+import bundleRoutes from './bundle/bundle.routes';
 
 const router = Router();
 
@@ -12,5 +13,6 @@ router.use('/resume', resumeRoutes);
 router.use('/sniper', sniperRoutes);
 router.use('/channels', channelRoutes);
 router.use('/users', userRoutes);
+router.use('/bundles', bundleRoutes);
 
 export default router;

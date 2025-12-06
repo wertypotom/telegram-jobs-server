@@ -7,6 +7,7 @@ export interface IUser {
   masterResumeText?: string;
   masterResumeFileUrl?: string;
   subscribedChannels: string[];
+  plan: 'free' | 'premium';
 
   hasCompletedOnboarding: boolean;
   viewedJobs: string[];

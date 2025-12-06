@@ -143,9 +143,18 @@ export class ChannelService {
         throw new BadRequestError('User not found');
       }
 
-      // Validate channel limit (max 5 per user for free tier)
-      if (channelUsernames.length > 5) {
-        throw new BadRequestError('Cannot subscribe to more than 5 channels');
+      // Plan-based channel limit enforcement
+      const MAX_FREE_CHANNELS = 5;
+      const MAX_PREMIUM_CHANNELS = 50;
+      const maxAllowed =
+        user.plan === 'premium' ? MAX_PREMIUM_CHANNELS : MAX_FREE_CHANNELS;
+
+      if (channelUsernames.length > maxAllowed) {
+        throw new BadRequestError(
+          `Plan limit exceeded. ${
+            user.plan === 'free' ? 'Free' : 'Premium'
+          } plan allows max ${maxAllowed} channels.`
+        );
       }
 
       // CURATED CHANNELS ONLY: Validate all channels exist in DB
@@ -176,11 +185,15 @@ export class ChannelService {
         (username) => !previousChannels.includes(username)
       );
 
-      // Update user's subscribed channels
+      // Update user's subscribed channels and mark onboarding complete
       await this.userRepository.update(userId, {
         subscribedChannels: channelUsernames,
         hasCompletedOnboarding: true,
       });
+
+      Logger.info(
+        `User ${userId} subscribed to ${channelUsernames.length} channels`
+      );
 
       // IMMEDIATE SCRAPE: Trigger scraping for newly subscribed channels (if they haven't been scraped recently)
       if (newChannels.length > 0) {
@@ -234,10 +247,17 @@ export class ChannelService {
 
       const updatedChannels = [...existingChannels, ...channelsToAdd];
 
-      // Validate limit
-      if (updatedChannels.length > 10) {
+      // Plan-based channel limit enforcement
+      const MAX_FREE_CHANNELS = 5;
+      const MAX_PREMIUM_CHANNELS = 50;
+      const maxAllowed =
+        user.plan === 'premium' ? MAX_PREMIUM_CHANNELS : MAX_FREE_CHANNELS;
+
+      if (updatedChannels.length > maxAllowed) {
         throw new BadRequestError(
-          'Cannot subscribe to more than 10 channels total'
+          `Plan limit exceeded. ${
+            user.plan === 'free' ? 'Free' : 'Premium'
+          } plan allows max ${maxAllowed} channels total.`
         );
       }
 

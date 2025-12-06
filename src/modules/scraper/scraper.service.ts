@@ -156,22 +156,6 @@ export class ScraperService {
           continue;
         }
 
-        // TEMP: Log message structure to understand sender fields
-        if (validMessages.length === 0) {
-          Logger.info('TEMP - Sample message structure:', {
-            id: message.id,
-            text: text.substring(0, 50),
-            fromId: (message as any).fromId,
-            peerId: (message as any).peerId,
-            sender: (message as any).sender,
-            senderId: (message as any).senderId,
-            availableKeys: Object.keys(message).filter(
-              (k) =>
-                k.includes('from') || k.includes('sender') || k.includes('peer')
-            ),
-          });
-        }
-
         // Pre-filter: Check if message looks like a job post
         if (!this.isLikelyJobPost(text)) {
           continue;

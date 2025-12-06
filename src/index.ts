@@ -54,6 +54,10 @@ const startServer = async (): Promise<void> => {
     await cleanupInvalidChannels();
     await seedDefaultChannels();
 
+    // Seed bundles
+    const { seedBundles } = await import('@modules/bundle/bundle.seed');
+    await seedBundles();
+
     // Start Telegram listener service
     const telegramService = new TelegramService();
     await telegramService.start();

@@ -97,9 +97,20 @@ export class JobService {
       if (user) {
         // Override channelIds with user's subscriptions
         channelIds = user.subscribedChannels;
-        Logger.info(`Filtering feed for user ${userId}`, {
-          channelCount: channelIds.length,
-        });
+
+        // Read-time enforcement: free users limited to first 5 channels
+        const MAX_FREE_CHANNELS = 5;
+        if (user.plan === 'free' && channelIds.length > MAX_FREE_CHANNELS) {
+          // Downgrade protection: preserve all channels, but only query first 5
+          channelIds = channelIds.slice(0, MAX_FREE_CHANNELS);
+          Logger.info(
+            `Free user ${userId} has ${user.subscribedChannels.length} channels, limiting feed to first ${MAX_FREE_CHANNELS}`
+          );
+        } else {
+          Logger.info(`Filtering feed for user ${userId}`, {
+            channelCount: channelIds.length,
+          });
+        }
       }
     }
 
