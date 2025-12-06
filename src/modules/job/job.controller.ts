@@ -28,6 +28,7 @@ export class JobController {
         locationType: filters.locationType || undefined,
         excludedTitles: filters.excludedTitles || undefined,
         muteKeywords: filters.muteKeywords || undefined,
+        experienceYears: filters.experienceYears || undefined,
         isRemote: filters.isRemote,
         limit,
         offset,

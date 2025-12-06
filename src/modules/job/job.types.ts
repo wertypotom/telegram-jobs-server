@@ -32,5 +32,7 @@ export interface JobFeedResponse {
 export interface CreateJobDto {
   telegramMessageId: string;
   channelId: string;
+  senderUserId?: string;
+  senderUsername?: string;
   rawText: string;
 }

@@ -46,6 +46,12 @@ const jobSchema = new Schema<IJobDocument>(
       type: String,
       required: true,
     },
+    senderUserId: {
+      type: String, // Telegram user ID
+    },
+    senderUsername: {
+      type: String, // @username for DM contact
+    },
     rawText: {
       type: String,
       required: true,

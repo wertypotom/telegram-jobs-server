@@ -119,6 +119,10 @@ export class JobService {
       jobs: jobs.map((job: any) => ({
         id: job._id,
         channelId: job.channelId,
+        telegramMessageId: job.telegramMessageId,
+        channelUsername: job.channelUsername,
+        senderUserId: job.senderUserId,
+        senderUsername: job.senderUsername,
         parsedData: job.parsedData,
         createdAt: job.createdAt,
         isVisited: viewedJobs.includes(job._id.toString()),
@@ -130,7 +134,7 @@ export class JobService {
   }
 
   async getJobById(id: string): Promise<any> {
-    const job = await this.jobRepository.findById(id);
+    const job = await this.jobRepository.findByIdWithChannel(id);
     if (!job) {
       throw new NotFoundError('Job not found');
     }
@@ -138,6 +142,10 @@ export class JobService {
     return {
       id: job._id,
       channelId: job.channelId,
+      telegramMessageId: job.telegramMessageId,
+      channelUsername: job.channelUsername,
+      senderUserId: job.senderUserId,
+      senderUsername: job.senderUsername,
       rawText: job.rawText,
       parsedData: job.parsedData,
       status: job.status,
@@ -238,6 +246,7 @@ export class JobService {
       'Rust',
       'PHP',
       'Laravel',
+      'Electron',
       'Ruby',
       'Ruby on Rails',
       '.NET',

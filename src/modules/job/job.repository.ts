@@ -1,6 +1,7 @@
 import { Job, IJobDocument } from './job.model';
 import { IJob } from '@shared/types/common.types';
 import { JobFilterOptions } from './job.types';
+import { Logger } from '@utils/logger';
 
 export class JobRepository {
   async create(jobData: Partial<IJob>): Promise<IJobDocument> {
@@ -10,6 +11,20 @@ export class JobRepository {
 
   async findById(id: string): Promise<IJobDocument | null> {
     return await Job.findById(id);
+  }
+
+  async findByIdWithChannel(id: string): Promise<any> {
+    const job = await Job.findById(id).lean();
+    if (!job) return null;
+
+    // Import Channel model and query by username (channelId stores username, not ObjectId)
+    const { Channel } = await import('@modules/channel/channel.model');
+    const channel = await Channel.findOne({ username: job.channelId }).lean();
+
+    return {
+      ...job,
+      channelUsername: channel?.username || job.channelId, // Fallback to channelId if not found
+    };
   }
 
   async findByMessageId(messageId: string): Promise<IJobDocument | null> {
@@ -118,7 +133,11 @@ export class JobRepository {
       if (jobFunctionConditions.length === 1) {
         Object.assign(query, jobFunctionConditions[0]);
       } else {
-        query['$or'] = jobFunctionConditions;
+        // Don't overwrite existing $or! Use $and to combine
+        if (!query['$and']) {
+          query['$and'] = [];
+        }
+        query['$and'].push({ $or: jobFunctionConditions });
       }
     }
 
@@ -133,15 +152,36 @@ export class JobRepository {
     // Experience Years filter
     if (experienceYears) {
       const { min, max } = experienceYears;
+
       // Include jobs where:
-      // 1. No experience is specified (treated as 0+ / no requirement)
-      // 2. Experience is specified AND within the range
-      // Exclude jobs that explicitly require MORE than max
-      query['$or'] = [
-        { 'parsedData.experienceYears': { $exists: false } }, // No experience = 0+ years
-        { 'parsedData.experienceYears': null }, // Null = 0+ years
-        { 'parsedData.experienceYears': { $lte: max } }, // Requires <= max years
-      ];
+      // 1. No experience specified (null or missing) - assume open to all levels
+      // 2. Experience IS specified AND within the range
+
+      const withinRangeConditions: any = {
+        'parsedData.experienceYears': { $exists: true, $ne: null },
+      };
+
+      // Add min/max constraints
+      if (min !== undefined && min > 0) {
+        withinRangeConditions['parsedData.experienceYears'].$gte = min;
+      }
+      if (max !== undefined) {
+        withinRangeConditions['parsedData.experienceYears'].$lte = max;
+      }
+
+      // Use $and to combine with jobFunction if it exists
+      if (!query['$and']) {
+        query['$and'] = [];
+      }
+      query['$and'].push({
+        $or: [
+          // Option 1: No experience specified
+          { 'parsedData.experienceYears': { $exists: false } },
+          { 'parsedData.experienceYears': null },
+          // Option 2: Experience specified AND within range
+          withinRangeConditions,
+        ],
+      });
     }
 
     // Mute Keywords filter (Negative Filter)
@@ -159,13 +199,17 @@ export class JobRepository {
       if (locationType.includes('remote')) {
         locationConditions.push({ 'parsedData.isRemote': true });
       }
-      if (locationType.includes('on-site') || locationType.includes('hybrid')) {
-        // On-site and hybrid are both non-remote
-        locationConditions.push({ 'parsedData.isRemote': { $ne: true } });
+
+      if (locationType.includes('on-site')) {
+        locationConditions.push({ 'parsedData.isRemote': false });
+      }
+
+      if (locationType.includes('hybrid')) {
+        locationConditions.push({ 'parsedData.isRemote': null });
       }
 
       if (locationConditions.length > 0) {
-        query.$or = locationConditions;
+        query['$or'] = locationConditions;
       }
     }
 
@@ -178,7 +222,26 @@ export class JobRepository {
       Job.countDocuments(query),
     ]);
 
-    return { jobs, total };
+    // Populate channel usernames for all jobs
+    const { Channel } = await import('@modules/channel/channel.model');
+    const uniqueChannelIds = [...new Set(jobs.map((job) => job.channelId))];
+
+    // Query channels by username (channelId contains username strings, not ObjectIds)
+    const channels = await Channel.find({
+      username: { $in: uniqueChannelIds },
+    }).lean();
+
+    // Map by username (not _id)
+    const channelMap = new Map(
+      channels.map((ch: any) => [ch.username, ch.username])
+    );
+
+    const jobsWithChannel = jobs.map((job: any) => ({
+      ...job,
+      channelUsername: channelMap.get(job.channelId) || job.channelId, // Fallback to channelId
+    }));
+
+    return { jobs: jobsWithChannel, total };
   }
 
   async findPendingJobs(): Promise<IJobDocument[]> {
