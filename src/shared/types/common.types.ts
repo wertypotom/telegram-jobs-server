@@ -35,7 +35,8 @@ export interface ContactInfo {
 }
 
 export interface ParsedJobData {
-  jobTitle?: string;
+  jobTitle?: string; // Original title (any language)
+  normalizedJobTitle?: string; // English normalized title for filtering
   company?: string;
   techStack: string[];
   salary?: string;

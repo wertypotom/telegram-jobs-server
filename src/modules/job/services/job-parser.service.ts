@@ -63,6 +63,8 @@ export class JobParserService {
 
       return {
         jobTitle: parsedData.jobTitle || undefined,
+        normalizedJobTitle:
+          parsedData.normalizedJobTitle || parsedData.jobTitle || undefined,
         company: parsedData.company || undefined,
         techStack: parsedData.techStack || [],
         salary: parsedData.salary || undefined,
@@ -99,6 +101,26 @@ CRITICAL RULES:
 5. **EXTRACT SECTIONS** - Identify and separate different sections of the job posting
 
 EXTRACTION GUIDELINES:
+
+**Job Title Normalization:**
+- Extract the raw job title as "jobTitle" (preserve original language)
+- Translate/normalize to standard English as "normalizedJobTitle"
+- Use these mappings for common Russian/Kazakh titles:
+  * "Фронтенд-разработчик", "Frontend-разработчик" → "Frontend Developer"
+  * "Фулстек-разработчик", "Fullstack-разработчик", "Full-stack разработчик" → "Fullstack Developer"
+  * "Бэкенд-разработчик", "Backend-разработчик" → "Backend Developer"
+  * "Мобильный разработчик" → "Mobile Developer"
+  * "Тимлид", "Team Lead" → "Team Lead"
+  * "Инженер данных", "Дата инженер" → "Data Engineer"
+  * "Тестировщик", "QA Engineer" → "QA Engineer"
+  * "DevOps инженер" → "DevOps Engineer"
+- Match to closest standard English title from common tech roles
+- If already in English, preserve as-is
+- Examples:
+  * "Senior Fullstack-разработчик" → "Senior Fullstack Developer"
+  * "React Developer" → "React Developer"
+  * "Инженер данных" → "Data Engineer"
+  * "Middle Frontend разработчик" → "Middle Frontend Developer"
 
 **Contact Information:**
 - Extract Telegram usernames (format as @username)
@@ -159,6 +181,7 @@ Return a JSON object with this EXACT structure:
 {
   "isJobPosting": boolean,
   "jobTitle": string or null,
+  "normalizedJobTitle": string or null,
   "company": string or null,
   "techStack": array of strings,
   "salary": string or null,

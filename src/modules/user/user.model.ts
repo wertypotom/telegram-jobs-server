@@ -31,6 +31,11 @@ const userSchema = new Schema<IUserDocument>(
       type: [String],
       default: [],
     },
+    plan: {
+      type: String,
+      enum: ['free', 'premium'],
+      default: 'free',
+    },
 
     hasCompletedOnboarding: {
       type: Boolean,

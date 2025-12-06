@@ -121,7 +121,7 @@ export class JobRepository {
         // Job must contain ALL keywords from this function
         return {
           $and: keywords.map((keyword) => ({
-            'parsedData.jobTitle': {
+            'parsedData.normalizedJobTitle': {
               $regex: `\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
               $options: 'i',
             },
@@ -143,8 +143,8 @@ export class JobRepository {
 
     // Excluded Titles filter
     if (excludedTitles && excludedTitles.length > 0) {
-      query['parsedData.jobTitle'] = {
-        ...query['parsedData.jobTitle'],
+      query['parsedData.normalizedJobTitle'] = {
+        ...query['parsedData.normalizedJobTitle'],
         $not: { $regex: excludedTitles.join('|'), $options: 'i' },
       };
     }
