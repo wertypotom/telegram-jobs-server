@@ -1,49 +1,22 @@
-import axios from 'axios';
-import { envConfig } from '@config/env.config';
 import { Logger } from '@utils/logger';
 import { ParsedJobData } from '@shared/types/common.types';
 import { InternalServerError } from '@utils/errors';
+import { AIProviderFactory, AIProvider } from '@shared/providers';
 
 export class JobParserService {
-  private apiKey: string;
-  private apiUrl: string;
+  private provider: AIProvider;
 
   constructor() {
-    this.apiKey = envConfig.abacusApiKey;
-    this.apiUrl = envConfig.abacusApiUrl;
+    this.provider = AIProviderFactory.getProvider();
   }
 
   async parseJobText(rawText: string): Promise<ParsedJobData | null> {
     try {
       const prompt = this.buildParsingPrompt(rawText);
+      const systemPrompt =
+        'You are a job posting parser. Extract structured data from job postings and return valid JSON only.';
 
-      const response = await axios.post(
-        `${this.apiUrl}/chat/completions`,
-        {
-          model: 'gpt-5-mini',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a job posting parser. Extract structured data from job postings and return valid JSON only.',
-            },
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          temperature: 0.3,
-          response_format: { type: 'json_object' },
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      const content = response.data.choices[0].message.content;
+      const content = await this.provider.generateContent(prompt, systemPrompt);
       const parsedData = JSON.parse(content);
 
       // Debug: Log what AI returns
@@ -85,7 +58,7 @@ export class JobParserService {
             : null,
       };
     } catch (error) {
-      Logger.error('Failed to parse job text with AI:', error);
+      Logger.error('Failed to parse job text:', error);
       throw new InternalServerError('Failed to parse job posting');
     }
   }

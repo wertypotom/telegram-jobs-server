@@ -16,6 +16,7 @@ const contactInfoSchema = new Schema(
 const parsedJobDataSchema = new Schema<ParsedJobData>(
   {
     jobTitle: String,
+    normalizedJobTitle: String, // English normalized title for filtering
     company: String,
     techStack: [String],
     salary: String,

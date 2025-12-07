@@ -13,7 +13,7 @@ export const migration004: Migration = {
     );
 
     const parser = new JobParserService();
-    const CONCURRENT_REQUESTS = 5; // Process 5 jobs in parallel
+    const CONCURRENT_REQUESTS = 3; // Process 3 jobs in parallel
 
     // Find jobs without normalizedJobTitle
     const totalJobs = await Job.countDocuments({
@@ -31,15 +31,20 @@ export const migration004: Migration = {
     let processed = 0;
     let failed = 0;
     const batchSize = 100;
-    let skip = 0;
 
-    while (skip < totalJobs) {
+    while (true) {
+      // Query always finds unprocessed jobs (those without normalizedJobTitle)
       const jobs = await Job.find({
         'parsedData.jobTitle': { $exists: true },
         'parsedData.normalizedJobTitle': { $exists: false },
-      })
-        .skip(skip)
-        .limit(batchSize);
+      }).limit(batchSize);
+
+      // Exit when no more jobs to process
+      if (jobs.length === 0) {
+        break;
+      }
+
+      Logger.info(`Processing batch of ${jobs.length} jobs...`);
 
       // Process jobs in chunks of CONCURRENT_REQUESTS
       for (let i = 0; i < jobs.length; i += CONCURRENT_REQUESTS) {
@@ -52,15 +57,23 @@ export const migration004: Migration = {
               throw new Error('Missing job title');
             }
 
-            // Re-parse to get normalized title
-            const parsed = await parser.parseJobText(job.rawText);
+            try {
+              // Re-parse to get normalized title
+              const parsed = await parser.parseJobText(job.rawText);
 
-            if (parsed?.normalizedJobTitle) {
-              job.parsedData.normalizedJobTitle = parsed.normalizedJobTitle;
-            } else {
-              // Fallback: use original title
+              if (parsed?.normalizedJobTitle) {
+                job.parsedData.normalizedJobTitle = parsed.normalizedJobTitle;
+              } else {
+                // Fallback: use original title
+                job.parsedData.normalizedJobTitle = job.parsedData.jobTitle;
+                Logger.warn(`Used fallback for job ${job._id}`);
+              }
+            } catch (error) {
+              // If AI parsing fails, use original title as fallback
               job.parsedData.normalizedJobTitle = job.parsedData.jobTitle;
-              Logger.warn(`Used fallback for job ${job._id}`);
+              Logger.warn(
+                `AI parsing failed for job ${job._id}, using original title`
+              );
             }
 
             await job.save();
@@ -85,8 +98,6 @@ export const migration004: Migration = {
         // Small delay between chunks to avoid overwhelming the API
         await new Promise((resolve) => setTimeout(resolve, 200));
       }
-
-      skip += batchSize;
     }
 
     Logger.info(

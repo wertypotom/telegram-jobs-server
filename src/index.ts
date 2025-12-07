@@ -45,14 +45,12 @@ const startServer = async (): Promise<void> => {
     await ensureDirectories();
 
     // Seed default channels
-    const { seedDefaultChannels } = await import(
-      '@modules/channel/channel.seed'
-    );
+    const { seedChannels } = await import('@modules/channel/channel.seed');
     const { cleanupInvalidChannels } = await import(
       '@modules/channel/channel.cleanup'
     );
     await cleanupInvalidChannels();
-    await seedDefaultChannels();
+    await seedChannels();
 
     // Seed bundles
     const { seedBundles } = await import('@modules/bundle/bundle.seed');
