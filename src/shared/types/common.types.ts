@@ -61,6 +61,8 @@ export interface IChannel {
   title: string; // "React Jobs Official"
   description?: string; // Channel description
   memberCount?: number; // Number of subscribers
+  category: string; // "Frontend" | "Backend" | "Mobile" | etc.
+  tags: string[]; // ["React", "Remote", "JavaScript"]
   isMonitored: boolean; // Is server actively scraping?
   lastScrapedAt?: Date; // Last successful scrape timestamp
   createdAt: Date;

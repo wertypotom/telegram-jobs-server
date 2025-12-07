@@ -23,7 +23,7 @@ export class AiTailorService {
       const response = await axios.post(
         `${this.apiUrl}/chat/completions`,
         {
-          model: 'gpt-5-mini',
+          model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',

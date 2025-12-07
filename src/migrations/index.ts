@@ -14,6 +14,8 @@ import { migration001 } from './versions/001-add-viewed-jobs-field';
 import { migration002 } from './versions/002-update-schemas';
 import { migration003 } from './versions/003-restructure-job-schema';
 import { migration004 } from './versions/004-normalize-job-titles';
+import { migration005 } from './versions/005-add-channel-category-tags';
+import { migration006 } from './versions/006-add-job-text-index';
 
 // Register migrations in order
 const migrations: Migration[] = [
@@ -21,6 +23,8 @@ const migrations: Migration[] = [
   migration002,
   migration003,
   migration004,
+  migration005,
+  migration006,
 ];
 
 export class MigrationRunner {

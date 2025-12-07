@@ -21,6 +21,15 @@ const channelSchema = new Schema<IChannelDocument>(
     memberCount: {
       type: Number,
     },
+    category: {
+      type: String,
+      required: true,
+      default: 'General IT',
+    },
+    tags: {
+      type: [String],
+      default: [],
+    },
     isMonitored: {
       type: Boolean,
       default: true,
@@ -37,6 +46,8 @@ const channelSchema = new Schema<IChannelDocument>(
 // Indexes for performance
 channelSchema.index({ username: 1 });
 channelSchema.index({ isMonitored: 1 });
+channelSchema.index({ category: 1 });
+channelSchema.index({ tags: 1 });
 
 export const Channel = mongoose.model<IChannelDocument>(
   'Channel',
