@@ -145,4 +145,60 @@ export class ChannelController {
       next(error);
     }
   };
+
+  /**
+   * GET /api/channels/explore
+   * Explore channels with filters (Phase 2C Discovery)
+   */
+  exploreChannels = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const userId = (req as any).userId;
+      const { searchQuery, categories } = req.query;
+
+      const result = await this.channelService.exploreChannels(userId, {
+        searchQuery: searchQuery as string | undefined,
+        categories: categories ? (categories as string).split(',') : undefined,
+      });
+
+      ApiResponse.success(res, result, 'Channels explored successfully');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * POST /api/channels/unsubscribe
+   * Unsubscribe from a single channel
+   */
+  unsubscribeChannel = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const userId = (req as any).userId;
+      const { channel } = req.body;
+
+      if (!channel) {
+        throw new BadRequestError('Channel username is required');
+      }
+
+      const result = await this.channelService.unsubscribeChannel(
+        userId,
+        channel
+      );
+
+      ApiResponse.success(
+        res,
+        result,
+        'Successfully unsubscribed from channel'
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
 }

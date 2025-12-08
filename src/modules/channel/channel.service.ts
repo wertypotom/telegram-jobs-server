@@ -126,6 +126,103 @@ export class ChannelService {
   }
 
   /**
+   * Explore channels with filters (Phase 2C Discovery)
+   * Returns channels matching filters + count of missed jobs
+   */
+  async exploreChannels(
+    userId: string,
+    options: {
+      searchQuery?: string;
+      categories?: string[];
+    }
+  ): Promise<{
+    channels: ChannelInfo[];
+    missedJobsCount: number;
+  }> {
+    try {
+      const user = await this.userRepository.findById(userId);
+      if (!user) {
+        throw new BadRequestError('User not found');
+      }
+
+      // Build channel filter
+      const channelFilter: any = { isMonitored: true };
+
+      if (options.categories?.length) {
+        channelFilter.category = { $in: options.categories };
+      }
+
+      if (options.searchQuery) {
+        channelFilter.$or = [
+          { title: { $regex: options.searchQuery, $options: 'i' } },
+          { tags: { $regex: options.searchQuery, $options: 'i' } },
+          { username: { $regex: options.searchQuery, $options: 'i' } },
+        ];
+      }
+
+      const channels = await this.channelRepository.findAll(channelFilter);
+
+      // Calculate "missed jobs" (last 7 days, not in user's subscriptions)
+      const channelUsernames = channels.map((c) => c.username);
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      const JobModel = require('@modules/job/job.model').Job;
+      const jobFilter: any = {
+        channelId: {
+          $in: channelUsernames,
+          $nin: user.subscribedChannels,
+        },
+        createdAt: { $gte: sevenDaysAgo },
+        status: 'parsed', // Only count successfully parsed jobs
+      };
+
+      if (options.searchQuery) {
+        jobFilter.$text = { $search: options.searchQuery };
+      }
+
+      const missedJobsCount = await JobModel.countDocuments(jobFilter);
+
+      Logger.info(
+        `Explore channels: found ${channels.length} channels, ${missedJobsCount} missed jobs`
+      );
+
+      // Enrich with stats (calculate on-demand if stale)
+      const enrichedChannels = await Promise.all(
+        channels.map(async (c) => {
+          let dailyJobCount = c.stats?.dailyJobCount ?? 0;
+
+          // Recalculate if never calculated or older than 7 days
+          const needsRecalc =
+            !c.stats?.lastCalculated ||
+            Date.now() - c.stats.lastCalculated.getTime() >
+              7 * 24 * 60 * 60 * 1000;
+
+          if (needsRecalc) {
+            dailyJobCount = await this.calculateDailyJobCount(c.username);
+          }
+
+          return {
+            username: c.username,
+            title: c.title,
+            description: c.description,
+            memberCount: c.memberCount,
+            isJoined: user.subscribedChannels.includes(c.username),
+            dailyJobCount,
+          };
+        })
+      );
+
+      return {
+        channels: enrichedChannels,
+        missedJobsCount,
+      };
+    } catch (error) {
+      Logger.error('Failed to explore channels:', error);
+      throw new BadRequestError('Failed to explore channels');
+    }
+  }
+
+  /**
    * Subscribe user to channels (DB only - no Telegram join)
    *
    * @param userId - User ID
@@ -286,6 +383,41 @@ export class ChannelService {
   }
 
   /**
+   * Unsubscribe from a single channel (Phase 2C My Channels)
+   */
+  async unsubscribeChannel(
+    userId: string,
+    channelUsername: string
+  ): Promise<{ success: boolean; totalChannels: number }> {
+    try {
+      const user = await this.userRepository.findById(userId);
+      if (!user) {
+        throw new BadRequestError('User not found');
+      }
+
+      const updatedChannels = user.subscribedChannels.filter(
+        (username) => username !== channelUsername
+      );
+
+      await this.userRepository.update(userId, {
+        subscribedChannels: updatedChannels,
+      });
+
+      Logger.info(
+        `User ${userId} unsubscribed from ${channelUsername}. Total channels: ${updatedChannels.length}`
+      );
+
+      return {
+        success: true,
+        totalChannels: updatedChannels.length,
+      };
+    } catch (error) {
+      Logger.error('Failed to unsubscribe from channel:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Add a channel to the database (fetch info from Telegram)
    * Private helper method
    */
@@ -329,6 +461,41 @@ export class ChannelService {
       } catch (error) {
         Logger.error(`Failed to scrape new channel ${username}:`, error);
       }
+    }
+  }
+
+  /**
+   * Calculate and cache daily job count for channels
+   * Calculates average jobs per day over last 30 days
+   */
+  async calculateDailyJobCount(channelUsername: string): Promise<number> {
+    try {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const JobModel = require('@modules/job/job.model').Job;
+
+      const jobCount = await JobModel.countDocuments({
+        channelId: channelUsername,
+        createdAt: { $gte: thirtyDaysAgo },
+        status: 'parsed',
+      });
+
+      const dailyAverage = Math.round(jobCount / 30);
+
+      // Update channel stats
+      await this.channelRepository.update(channelUsername, {
+        stats: {
+          dailyJobCount: dailyAverage,
+          lastCalculated: new Date(),
+        },
+      } as any);
+
+      return dailyAverage;
+    } catch (error) {
+      Logger.error(
+        `Failed to calculate daily job count for ${channelUsername}:`,
+        error
+      );
+      return 0;
     }
   }
 }

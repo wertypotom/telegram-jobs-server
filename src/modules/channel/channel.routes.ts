@@ -22,5 +22,7 @@ router.post('/subscribe', authenticate, channelController.subscribeToChannels);
 
 // Add channels to subscription (DB only)
 router.post('/add', authenticate, channelController.addChannels);
+router.get('/explore', authenticate, channelController.exploreChannels);
+router.post('/unsubscribe', authenticate, channelController.unsubscribeChannel);
 
 export default router;

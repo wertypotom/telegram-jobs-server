@@ -15,7 +15,13 @@ export class ScraperService {
   private jobService: JobService;
   private isRunning: boolean = false;
   private scrapeInterval: NodeJS.Timeout | null = null;
+
+  // Performance Configuration (tunable)
   private readonly SCRAPE_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+  private readonly CHANNEL_CONCURRENCY = 5; // Scrape 5 channels simultaneously
+  private readonly MESSAGE_LIMIT = 500; // Fetch 500 messages per channel (was 100)
+  private readonly AI_BATCH_SIZE = 10; // Process 10 jobs per AI batch (was 3)
+  private readonly BATCH_DELAY_MS = 500; // Delay between AI batches (was 1000ms)
 
   constructor() {
     this.telegramClient = new TelegramClientService();
@@ -87,26 +93,66 @@ export class ScraperService {
 
       const monitoredChannels = await this.channelRepository.findMonitored();
       Logger.info(`Found ${monitoredChannels.length} monitored channels`);
+      Logger.info(
+        `Processing in batches of ${this.CHANNEL_CONCURRENCY} channels`
+      );
 
       let totalJobsFound = 0;
+      const startTime = Date.now();
 
-      for (const channel of monitoredChannels) {
-        try {
-          const jobsFound = await this.scrapeChannel(
-            channel.username,
-            channel.lastScrapedAt
-          );
-          totalJobsFound += jobsFound;
+      // Process channels in parallel batches
+      for (
+        let i = 0;
+        i < monitoredChannels.length;
+        i += this.CHANNEL_CONCURRENCY
+      ) {
+        const channelBatch = monitoredChannels.slice(
+          i,
+          i + this.CHANNEL_CONCURRENCY
+        );
 
-          // Update last scraped timestamp
-          await this.channelRepository.updateLastScraped(channel.username);
-        } catch (error) {
-          Logger.error(`Failed to scrape channel ${channel.username}:`, error);
-        }
+        Logger.info(
+          `Processing channel batch ${
+            Math.floor(i / this.CHANNEL_CONCURRENCY) + 1
+          }/${Math.ceil(
+            monitoredChannels.length / this.CHANNEL_CONCURRENCY
+          )} (${channelBatch.length} channels)`
+        );
+
+        // Scrape channels in parallel
+        const results = await Promise.allSettled(
+          channelBatch.map(async (channel) => {
+            try {
+              const jobsFound = await this.scrapeChannel(
+                channel.username,
+                channel.lastScrapedAt
+              );
+
+              // Update last scraped timestamp
+              await this.channelRepository.updateLastScraped(channel.username);
+
+              return { channel: channel.username, jobsFound };
+            } catch (error) {
+              Logger.error(
+                `Failed to scrape channel ${channel.username}:`,
+                error
+              );
+              return { channel: channel.username, jobsFound: 0 };
+            }
+          })
+        );
+
+        // Aggregate results
+        results.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            totalJobsFound += result.value.jobsFound;
+          }
+        });
       }
 
+      const durationSec = Math.round((Date.now() - startTime) / 1000);
       Logger.info(
-        `Scrape cycle complete. Found ${totalJobsFound} potential jobs.`
+        `Scrape cycle complete in ${durationSec}s. Found ${totalJobsFound} potential jobs across ${monitoredChannels.length} channels.`
       );
     } catch (error) {
       Logger.error('Scrape cycle failed:', error);
@@ -131,9 +177,9 @@ export class ScraperService {
         ? Math.floor(lastScrapedAt.getTime() / 1000)
         : Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
 
-      // Fetch messages
+      // Fetch messages (increased limit for better coverage)
       const messages = await client.getMessages(channel, {
-        limit: 100,
+        limit: this.MESSAGE_LIMIT,
         offsetDate,
       });
 
@@ -173,8 +219,8 @@ export class ScraperService {
         `${validMessages.length} messages passed pre-filter in ${channelUsername}`
       );
 
-      // Process in batches with AI parsing
-      const BATCH_SIZE = 3; // Conservative - avoids API rate limits
+      // Process in batches with AI parsing (increased for better throughput)
+      const BATCH_SIZE = this.AI_BATCH_SIZE;
       let jobsFound = 0;
 
       for (let i = 0; i < validMessages.length; i += BATCH_SIZE) {
@@ -214,7 +260,9 @@ export class ScraperService {
 
         // Add delay between batches to avoid overwhelming API
         if (i + BATCH_SIZE < validMessages.length) {
-          await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 second
+          await new Promise((resolve) =>
+            setTimeout(resolve, this.BATCH_DELAY_MS)
+          );
         }
       }
 

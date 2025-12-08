@@ -34,7 +34,7 @@ export class ChannelRepository {
     await Channel.updateOne({ username }, { lastScrapedAt: new Date() });
   }
 
-  async findAll(): Promise<IChannelDocument[]> {
-    return Channel.find();
+  async findAll(filter: any = {}): Promise<IChannelDocument[]> {
+    return Channel.find(filter);
   }
 }

@@ -42,6 +42,7 @@ async function seedChannels() {
         channel.tags = tags;
         channel.title = seedChannel.title;
         channel.description = seedChannel.description;
+        channel.memberCount = seedChannel.memberCount as any; // Can be string like "80K+"
         await channel.save();
         updated++;
         Logger.info(
@@ -55,6 +56,7 @@ async function seedChannels() {
           description: seedChannel.description,
           category: seedChannel.category,
           tags,
+          memberCount: seedChannel.memberCount,
           isMonitored: true,
         });
         created++;

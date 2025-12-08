@@ -19,7 +19,7 @@ const channelSchema = new Schema<IChannelDocument>(
       type: String,
     },
     memberCount: {
-      type: Number,
+      type: Schema.Types.Mixed, // Can be Number or String (e.g., "80K+")
     },
     category: {
       type: String,
@@ -36,6 +36,15 @@ const channelSchema = new Schema<IChannelDocument>(
     },
     lastScrapedAt: {
       type: Date,
+    },
+    stats: {
+      dailyJobCount: {
+        type: Number,
+        default: 0,
+      },
+      lastCalculated: {
+        type: Date,
+      },
     },
   },
   {
