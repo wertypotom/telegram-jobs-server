@@ -44,13 +44,6 @@ export const CHANNEL_SEED_DATA: RecommendedChannel[] = [
     memberCount: '70K+',
   },
   {
-    username: '@itfreelance',
-    title: 'IT Freelance',
-    description: 'Фриланс для IT-специалистов',
-    category: 'General IT',
-    memberCount: '55K+',
-  },
-  {
     username: '@remoteok',
     title: 'Remote OK',
     description: 'Remote work opportunities worldwide',
@@ -684,13 +677,6 @@ export const CHANNEL_SEED_DATA: RecommendedChannel[] = [
     description: 'Data engineering positions',
     category: 'Data Science',
     memberCount: '26K+',
-  },
-  {
-    username: '@bi_analyst_jobs',
-    title: 'BI Analyst Jobs',
-    description: 'Business Intelligence analyst positions',
-    category: 'Data Science',
-    memberCount: '19K+',
   },
   {
     username: '@nlp_jobs',

@@ -30,11 +30,4 @@ export const recommendedChannels: RecommendedChannel[] = [
     category: 'Frontend',
     memberCount: '38K+',
   },
-  {
-    username: '@fullstack_jobs',
-    title: 'Full Stack Jobs',
-    description: 'Full stack development positions',
-    category: 'Full Stack',
-    memberCount: '55K+',
-  },
 ];

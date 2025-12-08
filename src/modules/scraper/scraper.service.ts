@@ -17,8 +17,8 @@ export class ScraperService {
   private scrapeInterval: NodeJS.Timeout | null = null;
 
   // Performance Configuration (tunable)
-  private readonly SCRAPE_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
-  private readonly CHANNEL_CONCURRENCY = 5; // Scrape 5 channels simultaneously
+  private readonly SCRAPE_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes (was 10)
+  private readonly CHANNEL_CONCURRENCY = 3; // Scrape 3 channels simultaneously (was 5)
   private readonly MESSAGE_LIMIT = 500; // Fetch 500 messages per channel (was 100)
   private readonly AI_BATCH_SIZE = 10; // Process 10 jobs per AI batch (was 3)
   private readonly BATCH_DELAY_MS = 500; // Delay between AI batches (was 1000ms)
@@ -172,10 +172,10 @@ export class ScraperService {
       // Get channel entity
       const channel = await client.getEntity(channelUsername);
 
-      // Calculate offset date (fetch messages since last scrape, or last 24 hours)
+      // Calculate offset date (fetch messages since last scrape, or last 3 days)
       const offsetDate = lastScrapedAt
         ? Math.floor(lastScrapedAt.getTime() / 1000)
-        : Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
+        : Math.floor((Date.now() - 3 * 24 * 60 * 60 * 1000) / 1000); // 3 days
 
       // Fetch messages (increased limit for better coverage)
       const messages = await client.getMessages(channel, {
@@ -268,7 +268,20 @@ export class ScraperService {
 
       Logger.info(`Found ${jobsFound} potential jobs in ${channelUsername}`);
       return jobsFound;
-    } catch (error) {
+    } catch (error: any) {
+      // Handle Telegram FloodWait error (rate limiting)
+      if (
+        error?.message?.includes('FloodWaitError') ||
+        error?.message?.includes('wait of')
+      ) {
+        const waitSeconds =
+          error.message.match(/(\d+) seconds/)?.[1] || 'unknown';
+        Logger.warn(
+          `Rate limited on ${channelUsername}, must wait ${waitSeconds} seconds. Skipping for now.`
+        );
+        return 0;
+      }
+
       Logger.error(`Error scraping ${channelUsername}:`, error);
       return 0;
     }

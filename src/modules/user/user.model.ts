@@ -45,6 +45,43 @@ const userSchema = new Schema<IUserDocument>(
       type: [String],
       default: [],
     },
+
+    // Telegram Notifications
+    telegramChatId: {
+      type: String,
+    },
+    telegramSubscriptionToken: {
+      type: String,
+      unique: true,
+      sparse: true, // Allow null values
+    },
+    notificationEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    notificationFilters: {
+      stack: [String],
+      level: [String],
+      jobFunction: [String],
+      locationType: [String],
+      experienceYears: {
+        min: Number,
+        max: Number,
+      },
+    },
+    quietHours: {
+      enabled: { type: Boolean, default: false },
+      startHour: { type: Number, default: 22 }, // 10 PM
+      endHour: { type: Number, default: 8 }, // 8 AM
+      timezone: { type: String, default: 'America/New_York' },
+    },
+    lastNotificationSent: {
+      type: Date,
+    },
+    notificationCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

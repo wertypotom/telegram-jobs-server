@@ -62,12 +62,25 @@ export class JobService {
 
       // Only save if valid job
       if (parsedData) {
-        await this.jobRepository.create({
+        const job = await this.jobRepository.create({
           ...data,
           parsedData,
           status: 'parsed',
         });
         Logger.info('Job created and parsed', { channelId: data.channelId });
+
+        // Trigger notifications asynchronously (non-blocking)
+        setImmediate(async () => {
+          try {
+            const { NotificationService } = await import(
+              '@modules/notification/notification.service'
+            );
+            const notificationService = new NotificationService();
+            await notificationService.processNewJob(job as any);
+          } catch (error) {
+            Logger.error('Failed to send notifications:', error);
+          }
+        });
       } else {
         Logger.debug('Message is not a job, skipped', {
           channelId: data.channelId,

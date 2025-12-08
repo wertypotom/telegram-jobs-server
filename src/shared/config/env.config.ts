@@ -16,6 +16,7 @@ export const envConfig = {
   telegramApiId: process.env.TELEGRAM_API_ID || '',
   telegramApiHash: process.env.TELEGRAM_API_HASH || '',
   telegramSessionString: process.env.TELEGRAM_SESSION_STRING || '',
+  telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '', // Optional for now || '',
 
   // Abacus.ai API
   abacusApiKey: process.env.ABACUS_API_KEY || '',

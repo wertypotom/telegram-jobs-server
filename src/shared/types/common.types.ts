@@ -11,6 +11,30 @@ export interface IUser {
 
   hasCompletedOnboarding: boolean;
   viewedJobs: string[];
+
+  // Telegram Notifications
+  telegramChatId?: string;
+  telegramSubscriptionToken?: string;
+  notificationEnabled: boolean;
+  notificationFilters?: {
+    stack?: string[];
+    level?: string[];
+    jobFunction?: string[];
+    locationType?: string[];
+    experienceYears?: {
+      min?: number;
+      max?: number;
+    };
+  };
+  quietHours?: {
+    enabled: boolean;
+    startHour: number;
+    endHour: number;
+    timezone: string;
+  };
+  lastNotificationSent?: Date;
+  notificationCount: number;
+
   createdAt: Date;
   updatedAt: Date;
 }

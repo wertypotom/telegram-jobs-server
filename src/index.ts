@@ -60,6 +60,13 @@ const startServer = async (): Promise<void> => {
     const telegramService = new TelegramService();
     await telegramService.start();
 
+    // Initialize Telegram notification bot
+    const { TelegramBotService } = await import(
+      '@modules/notification/telegram-bot.service'
+    );
+    TelegramBotService.getInstance(); // Initialize bot singleton
+    Logger.info('Telegram notification bot initialized');
+
     // Start background scraper
     const { ScraperService } = await import('@modules/scraper/scraper.service');
     const scraperService = new ScraperService();
