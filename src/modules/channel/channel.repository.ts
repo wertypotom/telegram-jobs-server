@@ -37,4 +37,8 @@ export class ChannelRepository {
   async findAll(filter: any = {}): Promise<IChannelDocument[]> {
     return Channel.find(filter);
   }
+
+  async countMonitored(): Promise<number> {
+    return Channel.countDocuments({ isMonitored: true });
+  }
 }
