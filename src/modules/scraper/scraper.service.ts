@@ -123,13 +123,17 @@ export class ScraperService {
         const results = await Promise.allSettled(
           channelBatch.map(async (channel) => {
             try {
-              const jobsFound = await this.scrapeChannel(
+              const { jobsFound, highestMessageId } = await this.scrapeChannel(
                 channel.username,
-                channel.lastScrapedAt
+                channel.lastScrapedAt,
+                channel.lastScrapedMessageId
               );
 
-              // Update last scraped timestamp
-              await this.channelRepository.updateLastScraped(channel.username);
+              // Update last scraped timestamp and message ID
+              await this.channelRepository.updateLastScraped(
+                channel.username,
+                highestMessageId
+              );
 
               return { channel: channel.username, jobsFound };
             } catch (error) {
@@ -164,24 +168,41 @@ export class ScraperService {
    */
   async scrapeChannel(
     channelUsername: string,
-    lastScrapedAt?: Date
-  ): Promise<number> {
+    lastScrapedAt?: Date,
+    lastScrapedMessageId?: number
+  ): Promise<{ jobsFound: number; highestMessageId?: number }> {
     try {
       const client = await this.telegramClient.getClient();
 
       // Get channel entity
       const channel = await client.getEntity(channelUsername);
 
-      // Calculate offset date (fetch messages since last scrape, or last 3 days)
-      const offsetDate = lastScrapedAt
-        ? Math.floor(lastScrapedAt.getTime() / 1000)
-        : Math.floor((Date.now() - 3 * 24 * 60 * 60 * 1000) / 1000); // 3 days
+      let messages;
 
-      // Fetch messages (increased limit for better coverage)
-      const messages = await client.getMessages(channel, {
-        limit: this.MESSAGE_LIMIT,
-        offsetDate,
-      });
+      // Use message ID-based scraping if available (incremental)
+      if (lastScrapedMessageId) {
+        Logger.info(
+          `Fetching messages after ID ${lastScrapedMessageId} from ${channelUsername}`
+        );
+        messages = await client.getMessages(channel, {
+          limit: this.MESSAGE_LIMIT,
+          minId: lastScrapedMessageId, // Only get messages newer than this
+        });
+      }
+      // First time scraping or fallback - use time-based
+      else {
+        const offsetDate = lastScrapedAt
+          ? Math.floor(lastScrapedAt.getTime() / 1000)
+          : Math.floor((Date.now() - 3 * 24 * 60 * 60 * 1000) / 1000); // 3 days
+
+        Logger.info(
+          `First-time scrape or no message ID for ${channelUsername}, fetching last 3 days`
+        );
+        messages = await client.getMessages(channel, {
+          limit: this.MESSAGE_LIMIT,
+          offsetDate,
+        });
+      }
 
       Logger.info(
         `Fetched ${messages.length} messages from ${channelUsername}`
@@ -267,7 +288,14 @@ export class ScraperService {
       }
 
       Logger.info(`Found ${jobsFound} potential jobs in ${channelUsername}`);
-      return jobsFound;
+
+      // Find highest message ID from the batch
+      const highestMessageId =
+        validMessages.length > 0
+          ? Math.max(...validMessages.map((m) => m.id))
+          : undefined;
+
+      return { jobsFound, highestMessageId };
     } catch (error: any) {
       // Handle Telegram FloodWait error (rate limiting)
       if (
@@ -277,13 +305,14 @@ export class ScraperService {
         const waitSeconds =
           error.message.match(/(\d+) seconds/)?.[1] || 'unknown';
         Logger.warn(
-          `Rate limited on ${channelUsername}, must wait ${waitSeconds} seconds. Skipping for now.`
+          `Rate limited on ${channelUsername}. Telegram requires waiting ${waitSeconds} seconds. Skipping for now.`
         );
-        return 0;
+        // Return 0 jobs but don't throw - allows scraper to continue
+        return { jobsFound: 0 };
       }
 
       Logger.error(`Error scraping ${channelUsername}:`, error);
-      return 0;
+      throw error; // Re-throw other errors
     }
   }
 

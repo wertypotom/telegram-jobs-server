@@ -30,8 +30,20 @@ export class ChannelRepository {
     return this.create(data);
   }
 
-  async updateLastScraped(username: string): Promise<void> {
-    await Channel.updateOne({ username }, { lastScrapedAt: new Date() });
+  /**
+   * Update last scraped timestamp for a channel
+   */
+  async updateLastScraped(
+    username: string,
+    highestMessageId?: number
+  ): Promise<void> {
+    const updateData: any = { lastScrapedAt: new Date() };
+
+    if (highestMessageId !== undefined) {
+      updateData.lastScrapedMessageId = highestMessageId;
+    }
+
+    await Channel.updateOne({ username }, { $set: updateData });
   }
 
   async findAll(filter: any = {}): Promise<IChannelDocument[]> {

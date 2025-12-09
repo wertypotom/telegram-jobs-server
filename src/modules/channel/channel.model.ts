@@ -37,6 +37,9 @@ const channelSchema = new Schema<IChannelDocument>(
     lastScrapedAt: {
       type: Date,
     },
+    lastScrapedMessageId: {
+      type: Number,
+    },
     stats: {
       dailyJobCount: {
         type: Number,

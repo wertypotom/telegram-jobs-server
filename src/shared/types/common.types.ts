@@ -89,6 +89,7 @@ export interface IChannel {
   tags: string[]; // ["React", "Remote", "JavaScript"]
   isMonitored: boolean; // Is server actively scraping?
   lastScrapedAt?: Date; // Last successful scrape timestamp
+  lastScrapedMessageId?: number; // Last Telegram message ID processed
   stats?: {
     dailyJobCount: number; // Average jobs per day (last 30 days)
     lastCalculated?: Date;
