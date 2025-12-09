@@ -75,6 +75,14 @@ const startServer = async (): Promise<void> => {
       Logger.error('Failed to start scraper:', err);
     });
 
+    // Start job cleanup service
+    const { JobCleanupService } = await import(
+      '@modules/job/job-cleanup.service'
+    );
+    const cleanupService = new JobCleanupService();
+    cleanupService.start();
+    Logger.info('Job cleanup service started (runs every 7 days)');
+
     // Start HTTP server
     const server = app.listen(envConfig.port, () => {
       Logger.info(`Server started successfully`, {
