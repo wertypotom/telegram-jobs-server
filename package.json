@@ -27,6 +27,7 @@
     "@types/node-telegram-bot-api": "^0.64.13",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
+    "cheerio": "^1.1.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "docx": "^8.5.0",

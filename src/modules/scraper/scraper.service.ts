@@ -1,6 +1,7 @@
 import { TelegramClientService } from '@modules/telegram/services/telegram-client.service';
 import { ChannelRepository } from '@modules/channel/channel.repository';
 import { JobService } from '@modules/job/job.service';
+import { PageScraperService } from './page-scraper.service';
 import { Logger } from '@utils/logger';
 
 /**
@@ -23,10 +24,13 @@ export class ScraperService {
   private readonly AI_BATCH_SIZE = 10; // Process 10 jobs per AI batch (was 3)
   private readonly BATCH_DELAY_MS = 500; // Delay between AI batches (was 1000ms)
 
+  private pageScraperService: PageScraperService;
+
   constructor() {
     this.telegramClient = new TelegramClientService();
     this.channelRepository = new ChannelRepository();
     this.jobService = new JobService();
+    this.pageScraperService = new PageScraperService();
   }
 
   /**
@@ -214,16 +218,58 @@ export class ScraperService {
         text: string;
         fromId?: any;
         sender?: any;
+        entities?: any[];
+      }> = [];
+
+      // Collect digest messages with external URLs
+      const digestMessages: Array<{
+        id: number;
+        externalUrls: string[];
+        fromId?: any;
+        sender?: any;
       }> = [];
 
       for (const message of messages) {
         const text = message.text || (message as any).message;
+        const entities = (message as any).entities || [];
 
         if (!text || text.trim().length === 0) {
           continue;
         }
 
-        // Pre-filter: Check if message looks like a job post
+        // Extract URLs from message entities
+        const urls = this.extractUrlsFromEntities(entities);
+        const externalUrls = urls.filter(
+          (url) => !PageScraperService.isTelegramLink(url)
+        );
+        const telegramUrls = urls.filter((url) =>
+          PageScraperService.isTelegramLink(url)
+        );
+
+        // Digest detection: message has multiple links
+        if (urls.length >= 3) {
+          // If ALL links are Telegram internal → skip entirely (weekly roundup type)
+          if (externalUrls.length === 0 && telegramUrls.length > 0) {
+            Logger.debug('Skipping Telegram-link digest message', {
+              messageId: message.id,
+              telegramLinksCount: telegramUrls.length,
+            });
+            continue;
+          }
+
+          // Has external URLs → process as digest
+          if (externalUrls.length > 0) {
+            digestMessages.push({
+              id: message.id,
+              externalUrls,
+              fromId: (message as any).fromId,
+              sender: (message as any).sender,
+            });
+            continue;
+          }
+        }
+
+        // Regular job post: pre-filter check
         if (!this.isLikelyJobPost(text)) {
           continue;
         }
@@ -233,8 +279,13 @@ export class ScraperService {
           text,
           fromId: (message as any).fromId,
           sender: (message as any).sender,
+          entities,
         });
       }
+
+      Logger.info(
+        `${validMessages.length} regular jobs, ${digestMessages.length} digest messages in ${channelUsername}`
+      );
 
       Logger.info(
         `${validMessages.length} messages passed pre-filter in ${channelUsername}`
@@ -287,13 +338,62 @@ export class ScraperService {
         }
       }
 
+      // Process digest messages (external URLs)
+      for (const digest of digestMessages) {
+        Logger.info(
+          `Processing digest message ${digest.id} with ${digest.externalUrls.length} external URLs`
+        );
+
+        for (
+          let urlIndex = 0;
+          urlIndex < digest.externalUrls.length;
+          urlIndex++
+        ) {
+          const url = digest.externalUrls[urlIndex];
+
+          try {
+            const pageContent = await this.pageScraperService.scrapeJobPage(
+              url
+            );
+
+            if (!pageContent) {
+              Logger.debug('Failed to fetch job page content', { url });
+              continue;
+            }
+
+            const senderUserId =
+              digest.fromId?.userId?.toString() ||
+              digest.fromId?.toString() ||
+              undefined;
+            const senderUsername = digest.sender?.username || undefined;
+
+            await this.jobService.createJobSync({
+              telegramMessageId: `${channelUsername}_${digest.id}_link_${urlIndex}`,
+              channelId: channelUsername,
+              senderUserId,
+              senderUsername,
+              rawText: pageContent,
+            });
+
+            jobsFound++;
+          } catch (error) {
+            Logger.warn('Failed to process digest URL', { url, error });
+          }
+
+          // Small delay between URL fetches to be respectful
+          await new Promise((resolve) => setTimeout(resolve, 300));
+        }
+      }
+
       Logger.info(`Found ${jobsFound} potential jobs in ${channelUsername}`);
 
-      // Find highest message ID from the batch
+      // Find highest message ID from all processed messages
+      const allMessageIds = [
+        ...validMessages.map((m) => m.id),
+        ...digestMessages.map((m) => m.id),
+      ];
       const highestMessageId =
-        validMessages.length > 0
-          ? Math.max(...validMessages.map((m) => m.id))
-          : undefined;
+        allMessageIds.length > 0 ? Math.max(...allMessageIds) : undefined;
 
       return { jobsFound, highestMessageId };
     } catch (error: any) {
@@ -348,5 +448,30 @@ export class ScraperService {
 
     // Must match at least 1 keyword (lowered from 2 since AI validates anyway)
     return jobKeywords.some((keyword) => lowerText.includes(keyword));
+  }
+
+  /**
+   * Extract URLs from Telegram message entities
+   * Handles MessageEntityTextUrl (hyperlinked text) and MessageEntityUrl (plain URLs)
+   */
+  private extractUrlsFromEntities(entities: any[]): string[] {
+    if (!entities || !Array.isArray(entities)) {
+      return [];
+    }
+
+    const urls: string[] = [];
+
+    for (const entity of entities) {
+      // MessageEntityTextUrl - text with hyperlink
+      if (entity.className === 'MessageEntityTextUrl' && entity.url) {
+        urls.push(entity.url);
+      }
+      // MessageEntityUrl - plain URL in text (less common in digests)
+      else if (entity.className === 'MessageEntityUrl' && entity.url) {
+        urls.push(entity.url);
+      }
+    }
+
+    return urls;
   }
 }
