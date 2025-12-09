@@ -14,6 +14,9 @@ router.get('/user-channels', authenticate, channelController.getUserChannels);
 // Get recommended channels
 router.get('/recommended', channelController.getRecommendedChannels);
 
+// Get all distinct categories
+router.get('/categories', channelController.getCategories);
+
 // Search channels
 router.post('/search', authenticate, channelController.searchChannels);
 

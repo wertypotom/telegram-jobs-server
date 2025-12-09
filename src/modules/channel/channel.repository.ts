@@ -53,4 +53,11 @@ export class ChannelRepository {
   async countMonitored(): Promise<number> {
     return Channel.countDocuments({ isMonitored: true });
   }
+
+  /**
+   * Get all distinct categories from monitored channels
+   */
+  async getDistinctCategories(): Promise<string[]> {
+    return Channel.distinct('category', { isMonitored: true });
+  }
 }

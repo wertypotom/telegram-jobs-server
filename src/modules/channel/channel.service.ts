@@ -87,6 +87,20 @@ export class ChannelService {
   }
 
   /**
+   * Get all distinct categories from monitored channels
+   */
+  async getCategories(): Promise<string[]> {
+    try {
+      const categories = await this.channelRepository.getDistinctCategories();
+      Logger.info(`Retrieved ${categories.length} categories`);
+      return categories;
+    } catch (error) {
+      Logger.error('Failed to fetch categories:', error);
+      throw new BadRequestError('Failed to fetch categories');
+    }
+  }
+
+  /**
    * Search for Telegram channels using master account
    */
   async searchChannels(userId: string, query: string): Promise<ChannelInfo[]> {

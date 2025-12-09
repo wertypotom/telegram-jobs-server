@@ -71,6 +71,23 @@ export class ChannelController {
   };
 
   /**
+   * GET /api/channels/categories
+   * Get all distinct categories
+   */
+  getCategories = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const categories = await this.channelService.getCategories();
+      ApiResponse.success(res, categories, 'Categories fetched successfully');
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
    * POST /api/channels/search
    * Search for Telegram channels
    */
