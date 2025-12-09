@@ -4,10 +4,12 @@ export interface IFeedback {
   _id: string;
   userId?: string;
   telegramChatId?: string;
+  source: 'WEB' | 'TELEGRAM';
   message: string;
-  rating?: number; // 1-5 stars
-  category: 'bug' | 'feature' | 'general' | 'complaint' | 'praise';
-  status: 'new' | 'reviewed' | 'resolved';
+  rating?: number; // 1-5 stars (optional, mainly for bot)
+  category: 'BUG' | 'FEATURE' | 'UX' | 'SUBSCRIPTION' | 'OTHER';
+  contactConsent: boolean;
+  status: 'PENDING' | 'REVIEWED' | 'RESOLVED';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +25,12 @@ const feedbackSchema = new Schema<IFeedbackDocument>(
     telegramChatId: {
       type: String,
     },
+    source: {
+      type: String,
+      enum: ['WEB', 'TELEGRAM'],
+      required: true,
+      default: 'TELEGRAM', // Default for backward compatibility if any
+    },
     message: {
       type: String,
       required: true,
@@ -34,13 +42,17 @@ const feedbackSchema = new Schema<IFeedbackDocument>(
     },
     category: {
       type: String,
-      enum: ['bug', 'feature', 'general', 'complaint', 'praise'],
-      default: 'general',
+      enum: ['BUG', 'FEATURE', 'UX', 'SUBSCRIPTION', 'OTHER'],
+      default: 'OTHER',
+    },
+    contactConsent: {
+      type: Boolean,
+      default: false,
     },
     status: {
       type: String,
-      enum: ['new', 'reviewed', 'resolved'],
-      default: 'new',
+      enum: ['PENDING', 'REVIEWED', 'RESOLVED'],
+      default: 'PENDING',
     },
   },
   {

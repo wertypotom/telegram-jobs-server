@@ -4,12 +4,13 @@ import { Logger } from '@utils/logger';
 import { User } from '@modules/user/user.model';
 import { Feedback } from '@modules/feedback/feedback.model';
 
-interface UserSession {
+interface ISession {
+  lastMessageId?: number;
   awaitingFeedback?: {
-    category: 'bug' | 'feature' | 'general' | 'complaint' | 'praise';
+    category: 'BUG' | 'FEATURE' | 'UX' | 'SUBSCRIPTION' | 'OTHER';
+    message?: string;
     awaitingMessage: boolean;
     awaitingRating: boolean;
-    message?: string;
   };
 }
 
@@ -19,7 +20,7 @@ interface UserSession {
 export class TelegramBotService {
   private static instance: TelegramBotService | null = null;
   private bot: TelegramBot | null = null;
-  private sessions: Map<string, UserSession> = new Map();
+  private sessions: Map<string, ISession> = new Map();
 
   private constructor() {
     if (envConfig.telegramBotToken) {
@@ -588,9 +589,9 @@ Quiet hours: ${
       // Feedback categories
       case 'fb_bug':
       case 'fb_feature':
-      case 'fb_general':
-      case 'fb_complaint':
-      case 'fb_praise':
+      case 'fb_ux':
+      case 'fb_subscription':
+      case 'fb_other':
         await this.startFeedbackFlow(chatId, data);
         break;
 
@@ -708,9 +709,9 @@ What would you like to share?
       inline_keyboard: [
         [{ text: '🐛 Report Bug', callback_data: 'fb_bug' }],
         [{ text: '💡 Feature Request', callback_data: 'fb_feature' }],
-        [{ text: '💬 General Feedback', callback_data: 'fb_general' }],
-        [{ text: '⚠️ Complaint', callback_data: 'fb_complaint' }],
-        [{ text: '🎉 Praise', callback_data: 'fb_praise' }],
+        [{ text: '🎨 UX Feedback', callback_data: 'fb_ux' }],
+        [{ text: '💳 Subscription', callback_data: 'fb_subscription' }],
+        [{ text: '💬 Other', callback_data: 'fb_other' }],
         [{ text: '« Back to Main Menu', callback_data: 'main_menu' }],
       ],
     };
@@ -726,23 +727,27 @@ What would you like to share?
     categoryData: string
   ): Promise<void> {
     const categoryMap = {
-      fb_bug: { category: 'bug' as const, emoji: '🐛', title: 'Bug Report' },
+      fb_bug: { category: 'BUG' as const, emoji: '🐛', title: 'Bug Report' },
       fb_feature: {
-        category: 'feature' as const,
+        category: 'FEATURE' as const,
         emoji: '💡',
         title: 'Feature Request',
       },
-      fb_general: {
-        category: 'general' as const,
+      fb_ux: {
+        category: 'UX' as const,
+        emoji: '🎨',
+        title: 'User Experience',
+      },
+      fb_subscription: {
+        category: 'SUBSCRIPTION' as const,
+        emoji: '💳',
+        title: 'Subscription & Membership',
+      },
+      fb_other: {
+        category: 'OTHER' as const,
         emoji: '💬',
-        title: 'General Feedback',
+        title: 'Other Feedback',
       },
-      fb_complaint: {
-        category: 'complaint' as const,
-        emoji: '⚠️',
-        title: 'Complaint',
-      },
-      fb_praise: { category: 'praise' as const, emoji: '🎉', title: 'Praise' },
     };
 
     const { category, emoji, title } =
@@ -802,10 +807,11 @@ What would you like to share?
       const feedback = new Feedback({
         userId: user?._id,
         telegramChatId: chatId.toString(),
+        source: 'TELEGRAM',
         message: session.awaitingFeedback.message,
         rating,
         category: session.awaitingFeedback.category,
-        status: 'new',
+        status: 'PENDING',
       });
 
       await feedback.save();
