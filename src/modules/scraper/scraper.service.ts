@@ -440,8 +440,20 @@ export class ScraperService {
       'opening',
     ];
 
-    // Exclude resumes/job seekers
-    const excludeKeywords = ['#резюме', '#ищуработу', '#cv'];
+    // Exclude resumes/job seekers - expanded list
+    const excludeKeywords = [
+      '#резюме', // resume hashtag
+      '#ищуработу', // looking for job hashtag
+      '#cv',
+      '#looking',
+      'ищу работу', // "I'm looking for work" (without hashtag)
+      'ищу позицию', // "I'm looking for position"
+      'открыт к предложениям', // "open to offers"
+      'рассмотрю предложения', // "will consider offers"
+      'в поиске работы', // "in job search"
+      'моё резюме', // "my resume"
+      'мое резюме', // "my resume" (alt spelling)
+    ];
     if (excludeKeywords.some((keyword) => lowerText.includes(keyword))) {
       return false;
     }
