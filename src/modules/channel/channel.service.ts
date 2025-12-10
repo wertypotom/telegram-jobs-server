@@ -19,11 +19,57 @@ export class ChannelService {
   private telegramClientService: TelegramClientService;
   private scraperService: ScraperService;
 
+  // Subscription change limits (abuse prevention)
+  private readonly MAX_FREE_SWAPS = 6;
+
   constructor() {
     this.userRepository = new UserRepository();
     this.channelRepository = new ChannelRepository();
     this.telegramClientService = new TelegramClientService();
     this.scraperService = new ScraperService();
+  }
+
+  /**
+   * Check if free user has swap quota remaining.
+   * Resets counter if new month. Returns swaps remaining.
+   */
+  private async checkAndConsumeSwap(
+    userId: string,
+    user: any
+  ): Promise<{ allowed: boolean; remaining: number }> {
+    // Premium users have unlimited swaps
+    if (user.plan === 'premium') {
+      return { allowed: true, remaining: Infinity };
+    }
+
+    // Initialize if not exists
+    const changes = user.subscriptionChanges || {
+      count: 0,
+      lastResetDate: new Date(),
+    };
+
+    // Reset monthly counter if new month
+    const lastReset = new Date(changes.lastResetDate);
+    const now = new Date();
+    const isNewMonth =
+      now.getMonth() !== lastReset.getMonth() ||
+      now.getFullYear() !== lastReset.getFullYear();
+
+    if (isNewMonth) {
+      changes.count = 0;
+      changes.lastResetDate = now;
+    }
+
+    // Check if limit exceeded
+    if (changes.count >= this.MAX_FREE_SWAPS) {
+      return { allowed: false, remaining: 0 };
+    }
+
+    // Consume one swap
+    changes.count += 1;
+    await this.userRepository.update(userId, { subscriptionChanges: changes });
+
+    return { allowed: true, remaining: this.MAX_FREE_SWAPS - changes.count };
   }
 
   /**
@@ -336,11 +382,25 @@ export class ChannelService {
   async addChannels(
     userId: string,
     newChannelUsernames: string[]
-  ): Promise<{ success: boolean; totalChannels: number }> {
+  ): Promise<{
+    success: boolean;
+    totalChannels: number;
+    swapsRemaining?: number;
+  }> {
     try {
       const user = await this.userRepository.findById(userId);
       if (!user) {
         throw new BadRequestError('User not found');
+      }
+
+      // Check swap limit for free users (only after onboarding)
+      if (user.hasCompletedOnboarding) {
+        const swapCheck = await this.checkAndConsumeSwap(userId, user);
+        if (!swapCheck.allowed) {
+          throw new BadRequestError(
+            `You have used all ${this.MAX_FREE_SWAPS} channel swaps this month. Upgrade to Premium for unlimited changes.`
+          );
+        }
       }
 
       const existingChannels = user.subscribedChannels || [];
@@ -376,6 +436,14 @@ export class ChannelService {
         }
       }
 
+      // Re-fetch user to get updated swap count
+      const updatedUser = await this.userRepository.findById(userId);
+      const swapsRemaining =
+        updatedUser?.plan === 'premium'
+          ? -1 // -1 indicates unlimited
+          : this.MAX_FREE_SWAPS -
+            (updatedUser?.subscriptionChanges?.count || 0);
+
       await this.userRepository.update(userId, {
         subscribedChannels: updatedChannels,
       });
@@ -385,6 +453,7 @@ export class ChannelService {
       return {
         success: true,
         totalChannels: updatedChannels.length,
+        swapsRemaining,
       };
     } catch (error) {
       Logger.error('Failed to add channels:', error);
@@ -398,11 +467,23 @@ export class ChannelService {
   async unsubscribeChannel(
     userId: string,
     channelUsername: string
-  ): Promise<{ success: boolean; totalChannels: number }> {
+  ): Promise<{
+    success: boolean;
+    totalChannels: number;
+    swapsRemaining?: number;
+  }> {
     try {
       const user = await this.userRepository.findById(userId);
       if (!user) {
         throw new BadRequestError('User not found');
+      }
+
+      // Check swap limit for free users
+      const swapCheck = await this.checkAndConsumeSwap(userId, user);
+      if (!swapCheck.allowed) {
+        throw new BadRequestError(
+          `You have used all ${this.MAX_FREE_SWAPS} channel swaps this month. Upgrade to Premium for unlimited changes.`
+        );
       }
 
       const updatedChannels = user.subscribedChannels.filter(
@@ -413,6 +494,14 @@ export class ChannelService {
         subscribedChannels: updatedChannels,
       });
 
+      // Get updated swap count
+      const updatedUser = await this.userRepository.findById(userId);
+      const swapsRemaining =
+        updatedUser?.plan === 'premium'
+          ? -1
+          : this.MAX_FREE_SWAPS -
+            (updatedUser?.subscriptionChanges?.count || 0);
+
       Logger.info(
         `User ${userId} unsubscribed from ${channelUsername}. Total channels: ${updatedChannels.length}`
       );
@@ -420,6 +509,7 @@ export class ChannelService {
       return {
         success: true,
         totalChannels: updatedChannels.length,
+        swapsRemaining,
       };
     } catch (error) {
       Logger.error('Failed to unsubscribe from channel:', error);

@@ -56,31 +56,31 @@ const startServer = async (): Promise<void> => {
     const { seedBundles } = await import('@modules/bundle/bundle.seed');
     await seedBundles();
 
-    // Start Telegram listener service
-    const telegramService = new TelegramService();
-    await telegramService.start();
-
-    // Initialize Telegram notification bot
+    // Initialize Telegram notification bot (always runs - uses TELEGRAM_BOT_TOKEN)
     const { TelegramBotService } = await import(
       '@modules/notification/telegram-bot.service'
     );
-    TelegramBotService.getInstance(); // Initialize bot singleton
+    TelegramBotService.getInstance();
     Logger.info('Telegram notification bot initialized');
 
-    // Start background scraper (optional - can disable in production)
+    // Start Telegram scraper services (optional - can disable in production)
+    let telegramService: TelegramService | null = null;
     let scraperService: any = null;
     if (!envConfig.disableScraper) {
+      // Telegram listener (uses TELEGRAM_SESSION_STRING)
+      telegramService = new TelegramService();
+      await telegramService.start();
+
       const { ScraperService } = await import(
         '@modules/scraper/scraper.service'
       );
       scraperService = new ScraperService();
-      // Don't await scraper start to avoid blocking server startup
       scraperService.start().catch((err: any) => {
         Logger.error('Failed to start scraper:', err);
       });
-      Logger.info('Background scraper enabled');
+      Logger.info('Telegram scraper & listener enabled');
     } else {
-      Logger.info('Background scraper disabled (DISABLE_SCRAPER=true)');
+      Logger.info('Telegram scraper disabled (DISABLE_SCRAPER=true)');
     }
 
     // Start job cleanup service
@@ -106,7 +106,9 @@ const startServer = async (): Promise<void> => {
       if (scraperService) {
         scraperService.stop();
       }
-      await telegramService.stop();
+      if (telegramService) {
+        await telegramService.stop();
+      }
 
       server.close(() => {
         Logger.info('HTTP server closed');

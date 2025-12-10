@@ -12,6 +12,12 @@ export interface IUser {
   hasCompletedOnboarding: boolean;
   viewedJobs: string[];
 
+  // Subscription change tracking (abuse prevention)
+  subscriptionChanges?: {
+    count: number;
+    lastResetDate: Date;
+  };
+
   // Telegram Notifications
   telegramChatId?: string;
   telegramSubscriptionToken?: string;

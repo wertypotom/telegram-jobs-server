@@ -46,6 +46,12 @@ const userSchema = new Schema<IUserDocument>(
       default: [],
     },
 
+    // Subscription change tracking (abuse prevention)
+    subscriptionChanges: {
+      count: { type: Number, default: 0 },
+      lastResetDate: { type: Date, default: Date.now },
+    },
+
     // Telegram Notifications
     telegramChatId: {
       type: String,
