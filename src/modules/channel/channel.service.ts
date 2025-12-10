@@ -176,9 +176,9 @@ export class ChannelService {
 
       const channels = await this.channelRepository.findAll(channelFilter);
 
-      // Calculate "missed jobs" (last 7 days, not in user's subscriptions)
+      // Calculate "missed jobs" (last 3 days, not in user's subscriptions)
       const channelUsernames = channels.map((c) => c.username);
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
 
       const JobModel = require('@modules/job/job.model').Job;
       const jobFilter: any = {
@@ -186,7 +186,7 @@ export class ChannelService {
           $in: channelUsernames,
           $nin: user.subscribedChannels,
         },
-        createdAt: { $gte: sevenDaysAgo },
+        createdAt: { $gte: threeDaysAgo },
         status: 'parsed', // Only count successfully parsed jobs
       };
 
@@ -484,16 +484,16 @@ export class ChannelService {
    */
   async calculateDailyJobCount(channelUsername: string): Promise<number> {
     try {
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
       const JobModel = require('@modules/job/job.model').Job;
 
       const jobCount = await JobModel.countDocuments({
         channelId: channelUsername,
-        createdAt: { $gte: thirtyDaysAgo },
+        createdAt: { $gte: threeDaysAgo },
         status: 'parsed',
       });
 
-      const dailyAverage = Math.round(jobCount / 30);
+      const dailyAverage = Math.round(jobCount / 3);
 
       // Update channel stats
       await this.channelRepository.update(channelUsername, {

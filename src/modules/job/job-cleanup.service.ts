@@ -6,8 +6,8 @@ import { Logger } from '@utils/logger';
  * Automatically deletes jobs older than specified retention period
  */
 export class JobCleanupService {
-  private readonly RETENTION_DAYS = 7; // Jobs older than this are deleted
-  private readonly CLEANUP_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // Run every 7 days
+  private readonly RETENTION_DAYS = 3; // Jobs older than 3 days are deleted
+  private readonly CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // Run daily
   private cleanupInterval: NodeJS.Timeout | null = null;
 
   /**
