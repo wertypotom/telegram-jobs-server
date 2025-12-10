@@ -200,30 +200,27 @@ export class ChannelService {
         `Explore channels: found ${channels.length} channels, ${missedJobsCount} missed jobs`
       );
 
-      // Enrich with stats (calculate on-demand if stale)
-      const enrichedChannels = await Promise.all(
+      // Calculate and cache stats (for internal use), but don't expose to client
+      await Promise.all(
         channels.map(async (c) => {
-          let dailyJobCount = c.stats?.dailyJobCount ?? 0;
-
-          // Recalculate if never calculated or older than 1 day
           const needsRecalc =
             !c.stats?.lastCalculated ||
-            Date.now() - c.stats.lastCalculated.getTime() > 24 * 60 * 60 * 1000; // 1 day
+            Date.now() - c.stats.lastCalculated.getTime() > 24 * 60 * 60 * 1000;
 
           if (needsRecalc) {
-            dailyJobCount = await this.calculateDailyJobCount(c.username);
+            await this.calculateDailyJobCount(c.username);
           }
-
-          return {
-            username: c.username,
-            title: c.title,
-            description: c.description,
-            memberCount: c.memberCount,
-            isJoined: user.subscribedChannels.includes(c.username),
-            dailyJobCount,
-          };
         })
       );
+
+      // Return channel info without detailed stats (preserve FOMO)
+      const enrichedChannels = channels.map((c) => ({
+        username: c.username,
+        title: c.title,
+        description: c.description,
+        memberCount: c.memberCount,
+        isJoined: user.subscribedChannels.includes(c.username),
+      }));
 
       return {
         channels: enrichedChannels,
