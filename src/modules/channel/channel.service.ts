@@ -205,11 +205,10 @@ export class ChannelService {
         channels.map(async (c) => {
           let dailyJobCount = c.stats?.dailyJobCount ?? 0;
 
-          // Recalculate if never calculated or older than 7 days
+          // Recalculate if never calculated or older than 1 day
           const needsRecalc =
             !c.stats?.lastCalculated ||
-            Date.now() - c.stats.lastCalculated.getTime() >
-              7 * 24 * 60 * 60 * 1000;
+            Date.now() - c.stats.lastCalculated.getTime() > 24 * 60 * 60 * 1000; // 1 day
 
           if (needsRecalc) {
             dailyJobCount = await this.calculateDailyJobCount(c.username);
