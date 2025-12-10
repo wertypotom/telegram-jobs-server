@@ -104,6 +104,20 @@ const startServer = async (): Promise<void> => {
       });
     };
 
+    // Global error handlers (CRITICAL: prevent crashes)
+    process.on('unhandledRejection', (reason, promise) => {
+      Logger.error('Unhandled Promise Rejection:', reason);
+      // Don't crash the server - just log
+    });
+
+    process.on('uncaughtException', (error) => {
+      Logger.error('Uncaught Exception:', error);
+      // In production, log but continue
+      if (envConfig.nodeEnv !== 'production') {
+        process.exit(1);
+      }
+    });
+
     process.on('SIGTERM', shutdown);
     process.on('SIGINT', shutdown);
   } catch (error) {
