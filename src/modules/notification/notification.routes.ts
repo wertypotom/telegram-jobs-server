@@ -15,4 +15,7 @@ router.post(
   controller.generateSubscriptionLink
 );
 
+// Webhook endpoint for Telegram bot (no auth - validated by secret)
+router.post('/telegram/webhook', controller.handleWebhook);
+
 export default router;

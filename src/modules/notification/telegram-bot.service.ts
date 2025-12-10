@@ -23,13 +23,26 @@ export class TelegramBotService {
   private sessions: Map<string, ISession> = new Map();
 
   private constructor() {
-    if (envConfig.telegramBotToken) {
-      this.bot = new TelegramBot(envConfig.telegramBotToken, { polling: true });
-      this.setupCommands();
-      Logger.info('Telegram bot initialized');
-    } else {
+    if (!envConfig.telegramBotToken) {
       Logger.warn('TELEGRAM_BOT_TOKEN not set - bot features disabled');
+      return;
     }
+
+    // Production: Use webhooks to avoid 409 conflicts
+    if (envConfig.nodeEnv === 'production') {
+      this.bot = new TelegramBot(envConfig.telegramBotToken);
+      // Setup webhook asynchronously (don't block constructor)
+      this.setupWebhook().catch((err) => {
+        Logger.error('Webhook setup failed (bot will not work):', err);
+      });
+      Logger.info('Telegram bot initialized with webhooks');
+    } else {
+      // Development: Use polling for easier local testing
+      this.bot = new TelegramBot(envConfig.telegramBotToken, { polling: true });
+      Logger.info('Telegram bot initialized with polling');
+    }
+
+    this.setupCommands();
   }
 
   /**
@@ -71,7 +84,48 @@ export class TelegramBotService {
       { command: 'status', description: 'Check subscription status' },
     ]);
 
-    Logger.info('Telegram bot initialized');
+    Logger.info('Telegram bot commands registered');
+  }
+
+  /**
+   * Setup webhook for production
+   */
+  private async setupWebhook(): Promise<void> {
+    if (!this.bot || !envConfig.telegramWebhookUrl) {
+      Logger.warn('Webhook URL not configured - skipping webhook setup');
+      return;
+    }
+
+    try {
+      // Delete any existing webhook first
+      await this.bot.deleteWebHook();
+
+      // Set new webhook
+      const webhookOptions: any = {};
+      if (envConfig.telegramWebhookSecret) {
+        webhookOptions.secret_token = envConfig.telegramWebhookSecret;
+      }
+
+      await this.bot.setWebHook(envConfig.telegramWebhookUrl, webhookOptions);
+      Logger.info(`Webhook set successfully: ${envConfig.telegramWebhookUrl}`);
+    } catch (error) {
+      Logger.error('Failed to set webhook:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Process webhook update (called by webhook endpoint)
+   */
+  async processUpdate(update: TelegramBot.Update): Promise<void> {
+    if (!this.bot) return;
+
+    try {
+      // Process the update through the bot's internal handler
+      await this.bot.processUpdate(update);
+    } catch (error) {
+      Logger.error('Error processing webhook update:', error);
+    }
   }
 
   /**

@@ -227,4 +227,39 @@ Manage settings: https://jobsniper.com/settings/notifications
       next(error);
     }
   };
+
+  /**
+   * POST /api/notifications/telegram/webhook
+   * Handle incoming Telegram webhook updates
+   */
+  handleWebhook = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const update = req.body;
+      const secretToken = req.headers['x-telegram-bot-api-secret-token'];
+
+      // Validate secret token if configured
+      const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+      if (expectedSecret && secretToken !== expectedSecret) {
+        Logger.warn('Invalid webhook secret token');
+        ApiResponse.error(res, 'Unauthorized', 401);
+        return;
+      }
+
+      // Process the update through bot service
+      const { TelegramBotService } = await import('./telegram-bot.service');
+      const botService = TelegramBotService.getInstance();
+      await botService.processUpdate(update);
+
+      // Respond to Telegram immediately
+      res.status(200).send('OK');
+    } catch (error) {
+      Logger.error('Webhook handler error:', error);
+      // Still respond with 200 to prevent Telegram from retrying
+      res.status(200).send('ERROR');
+    }
+  };
 }
