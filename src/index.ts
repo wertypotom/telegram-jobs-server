@@ -67,13 +67,21 @@ const startServer = async (): Promise<void> => {
     TelegramBotService.getInstance(); // Initialize bot singleton
     Logger.info('Telegram notification bot initialized');
 
-    // Start background scraper
-    const { ScraperService } = await import('@modules/scraper/scraper.service');
-    const scraperService = new ScraperService();
-    // Don't await scraper start to avoid blocking server startup
-    scraperService.start().catch((err) => {
-      Logger.error('Failed to start scraper:', err);
-    });
+    // Start background scraper (optional - can disable in production)
+    let scraperService: any = null;
+    if (!envConfig.disableScraper) {
+      const { ScraperService } = await import(
+        '@modules/scraper/scraper.service'
+      );
+      scraperService = new ScraperService();
+      // Don't await scraper start to avoid blocking server startup
+      scraperService.start().catch((err: any) => {
+        Logger.error('Failed to start scraper:', err);
+      });
+      Logger.info('Background scraper enabled');
+    } else {
+      Logger.info('Background scraper disabled (DISABLE_SCRAPER=true)');
+    }
 
     // Start job cleanup service
     const { JobCleanupService } = await import(
@@ -95,7 +103,9 @@ const startServer = async (): Promise<void> => {
     const shutdown = async () => {
       Logger.info('Shutting down server...');
 
-      scraperService.stop();
+      if (scraperService) {
+        scraperService.stop();
+      }
       await telegramService.stop();
 
       server.close(() => {

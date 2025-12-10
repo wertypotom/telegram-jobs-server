@@ -2,6 +2,7 @@ export const envConfig = {
   // Server
   port: process.env.PORT || 3000,
   nodeEnv: process.env.NODE_ENV || 'development',
+  disableScraper: process.env.DISABLE_SCRAPER === 'true',
 
   // Database
   mongodbUri: process.env.MONGODB_URI || '',
