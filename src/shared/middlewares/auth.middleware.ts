@@ -34,9 +34,11 @@ export const authenticate = async (
 
     next();
   } catch (error) {
+    // Pass error to Express error handler (don't throw)
     if (error instanceof UnauthorizedError) {
-      throw error;
+      next(error);
+    } else {
+      next(new UnauthorizedError('Invalid or expired session'));
     }
-    throw new UnauthorizedError('Invalid or expired session');
   }
 };
