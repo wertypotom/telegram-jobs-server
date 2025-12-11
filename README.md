@@ -1,19 +1,21 @@
 # Telegram Job Scraper Backend
 
-**AI-powered job aggregation platform** that monitors Telegram channels, parses job postings with AI, and generates tailored resumes for each opportunity.
+**AI-powered job aggregation platform** that monitors Telegram channels, parses job postings with AI, generates tailored resumes, and sends real-time notifications for matching opportunities.
 
-## 🎯 What I'm Building
+## 🎯 Overview
 
-A comprehensive job discovery and application automation system that:
+Comprehensive job discovery and application automation system:
 
-- **Aggregates** job postings from multiple Telegram channels in real-time
-- **Parses** unstructured job posts into structured data using AI (Abacus.ai)
-- **Filters** jobs by tech stack, experience level, location type, and custom criteria
+- **Aggregates** job postings from Telegram channels in real-time
+- **Parses** unstructured posts into structured data using AI (Gemini/Abacus)
+- **Filters** jobs by tech stack, experience, location, and custom criteria
 - **Tailors** resumes automatically for each job using AI
-- **Generates** professional PDF/DOCX resumes optimized for specific positions
-- **Tracks** user interactions (views, likes, applications) for personalized recommendations
+- **Generates** professional PDF/DOCX resumes optimized for positions
+- **Notifies** users via Telegram bot when matching jobs appear
+- **Tracks** user interactions (views, applications) for insights
+- **Provides** platform statistics and curated channel bundles
 
-This is a **full-stack backend service** designed to eliminate manual job hunting and resume customization, allowing developers to focus on interview preparation rather than application logistics.
+Full-stack backend service eliminating manual job hunting and resume customization.
 
 ## 🏗️ Architecture & Approach
 
@@ -60,6 +62,12 @@ I follow a **pragmatic, layered architecture** with these core principles:
 src/
 ├── index.ts                    # App entry: middleware, routes, startup
 ├── modules/                    # Feature modules (domain-driven)
+│   ├── bundle/                # Channel bundles (onboarding packs)
+│   │   ├── bundle.controller.ts
+│   │   ├── bundle.service.ts
+│   │   ├── bundle.model.ts
+│   │   ├── bundle.routes.ts
+│   │   └── bundle.seed.ts     # Bundle seeding
 │   ├── channel/               # Telegram channel management
 │   │   ├── channel.controller.ts
 │   │   ├── channel.service.ts
@@ -70,36 +78,64 @@ src/
 │   │   ├── channel.config.ts  # Recommended channels
 │   │   ├── channel.seed.ts    # Database seeding
 │   │   └── channel.cleanup.ts # Data maintenance
+│   ├── feedback/              # User feedback collection
+│   │   ├── feedback.controller.ts
+│   │   ├── feedback.model.ts
+│   │   └── feedback.routes.ts
 │   ├── job/                   # Job feed & filtering
 │   │   ├── job.controller.ts  # Advanced filter handling
 │   │   ├── job.service.ts     # Business logic + AI parsing
 │   │   ├── job.repository.ts  # Complex MongoDB queries
 │   │   ├── job.model.ts       # Mongoose schema
 │   │   ├── job.routes.ts
-│   │   └── job.types.ts       # Filter options, DTOs
+│   │   ├── job.types.ts       # Filter options, DTOs
+│   │   └── job-cleanup.service.ts # Cleanup old jobs
+│   ├── notification/          # Telegram notification system
+│   │   ├── notification.controller.ts
+│   │   ├── notification.service.ts
+│   │   ├── notification.routes.ts
+│   │   └── telegram-bot.service.ts # Bot instance
 │   ├── resume/                # Resume upload & parsing
-│   ├── sniper/                # AI resume tailoring
-│   │   ├── sniper.service.ts  # Orchestration
-│   │   └── services/          # Specialized sub-services
-│   │       ├── ai-tailor.service.ts    # Abacus.ai integration
-│   │       ├── pdf-generator.service.ts
-│   │       └── docx-generator.service.ts
+│   │   ├── resume.controller.ts
+│   │   ├── resume.service.ts
+│   │   └── resume.routes.ts
 │   ├── scraper/               # Background job scraper
+│   │   ├── scraper.service.ts
+│   │   └── page-scraper.service.ts # External page scraping
+│   ├── sniper/                # AI resume tailoring
+│   │   ├── sniper.controller.ts
+│   │   ├── sniper.service.ts  # Orchestration
+│   │   ├── sniper.routes.ts
+│   │   └── sniper.validator.ts
+│   ├── stats/                 # Platform statistics
+│   │   ├── stats.controller.ts
+│   │   ├── stats.service.ts
+│   │   └── stats.routes.ts
 │   ├── telegram/              # GramJS listener service
-│   └── user/                  # User management & auth
+│   │   └── telegram.service.ts
+│   └── user/                  # User management & preferences
+│       ├── user.model.ts
+│       ├── user.routes.ts
+│       ├── user-preferences.controller.ts
+│       └── user-preferences.service.ts
+├── migrations/                # Database migrations
+├── scripts/                   # Utility scripts
 └── shared/                    # Cross-cutting concerns
     ├── config/                # Environment & database
     │   ├── env.config.ts      # Centralized env vars
     │   └── database.config.ts # MongoDB connection
+    ├── constants/             # App constants
     ├── middlewares/           # Express middleware
     │   ├── auth.middleware.ts # JWT verification
     │   ├── error.middleware.ts # Global error handler
     │   └── validation.middleware.ts # Joi schemas
-    ├── utils/                 # Utilities
-    │   ├── logger.ts          # Structured logging
-    │   ├── errors.ts          # Custom error classes
-    │   └── response.ts        # Standardized API responses
-    └── types/                 # Shared TypeScript types
+    ├── providers/             # External service integrations
+    │   └── ai/                # AI providers (Gemini, Abacus)
+    ├── types/                 # Shared TypeScript types
+    └── utils/                 # Utilities
+        ├── logger.ts          # Structured logging
+        ├── errors.ts          # Custom error classes
+        └── response.ts        # Standardized API responses
 ```
 
 ### Key Architectural Decisions
@@ -178,6 +214,7 @@ Strict TypeScript with:
 - Auto-join recommended channels on first run
 - Persistent session management
 - Graceful reconnection on network failures
+- Optional scraper disable flag for production (`DISABLE_SCRAPER`)
 
 #### 2. **AI Job Parsing**
 
@@ -187,7 +224,9 @@ Strict TypeScript with:
   - Experience level (Junior/Mid/Senior)
   - Location type (Remote/Hybrid/Onsite)
   - Job function (Frontend/Backend/Full Stack/etc.)
-- Powered by Abacus.ai LLM API
+  - Years of experience (min/max)
+- Dual AI provider support: Gemini (default) or Abacus.ai
+- External page scraping for digest messages with links
 
 #### 3. **Advanced Job Filtering**
 
@@ -195,17 +234,20 @@ Strict TypeScript with:
 - **Experience Level**: Junior/Mid/Senior
 - **Location Type**: Remote/Hybrid/Onsite
 - **Job Function**: Frontend/Backend/Full Stack/DevOps/etc.
+- **Experience Years**: Min/Max range
 - **Excluded Titles**: Blacklist specific roles
 - **Mute Keywords**: Filter out unwanted terms
-- Pagination support (limit/offset)
+- POST-based search with complex filter bodies
+- Pagination support
 
 #### 4. **Resume Management**
 
 - Upload master resume (PDF/DOCX)
-- Automatic text extraction
+- Automatic text extraction (pdf-parse, mammoth)
 - Storage in MongoDB + file system
+- File type validation and size limits
 
-#### 5. **AI Resume Tailoring**
+#### 5. **AI Resume Tailoring (Sniper)**
 
 - Analyzes job requirements vs. master resume
 - Generates customized:
@@ -214,57 +256,132 @@ Strict TypeScript with:
   - Cover letter
   - Telegram application message
 - Exports to PDF and DOCX
+- Request validation via Joi schemas
 
-#### 6. **User Interaction Tracking**
+#### 6. **Telegram Notification System**
+
+- **Telegram Bot Integration** (always runs in production)
+  - Real-time job notifications via bot
+  - Subscription via unique tokens
+  - `/start` command with subscription link
+  - Webhook support for production deployments
+- **Notification Settings**
+  - Enable/disable notifications
+  - Custom filter preferences per user
+  - Quiet hours configuration with timezone support
+  - Test notification endpoint
+- **Smart Filtering**
+  - Match jobs against user's saved filters
+  - Prevent duplicate notifications
+  - Track notification count and last sent time
+
+#### 7. **Channel Bundles (Onboarding)**
+
+- Curated channel packs for new users
+- Category-based organization
+- Dynamic bundle data from backend
+- Auto-seeding on server startup
+
+#### 8. **User Interaction Tracking**
 
 - Mark jobs as viewed
-- Like/unlike jobs
-- Track applications
-- Personalized recommendations (future)
+- Track subscription changes
+- Monthly swap limits for free tier (6 swaps/month)
+- Onboarding completion status
+- Notification preferences persistence
+
+#### 9. **Platform Statistics**
+
+- Public stats endpoint (no auth)
+- Total jobs, channels, users
+- Recent activity metrics
+- Growth indicators
+
+#### 10. **Feedback System**
+
+- Authenticated user feedback submission
+- Structured feedback collection
+- Future analytics potential
+
+#### 11. **Job Cleanup Service**
+
+- Automatic removal of old jobs (>7 days)
+- Runs on schedule (every 7 days)
+- Keeps database lean
 
 ## 📡 API Endpoints
 
-### Authentication
+### Jobs
 
 ```http
-POST /api/auth/register
-POST /api/auth/login
+POST /api/jobs/search              # Search jobs with filters (authenticated)
+GET  /api/jobs/:id                 # Get job details
+POST /api/jobs/:id/view            # Mark job as viewed
+GET  /api/jobs/skills/search       # Autocomplete tech skills
+GET  /api/jobs/functions/search    # Autocomplete job functions
+```
+
+**Example Search Request:**
+
+```json
+POST /api/jobs/search
+{
+  "stack": ["react", "typescript"],
+  "level": ["Mid", "Senior"],
+  "locationType": ["Remote"],
+  "jobFunction": ["Frontend"],
+  "experienceYears": { "min": 2, "max": 5 },
+  "limit": 20,
+  "offset": 0
+}
 ```
 
 ### Channels
 
 ```http
-GET  /api/channels              # List all channels
-GET  /api/channels/recommended  # Get recommended channels
-POST /api/channels/subscribe    # Subscribe to channel
-POST /api/channels/unsubscribe  # Unsubscribe from channel
+GET  /api/channels/available       # Get all channels server monitors (auth)
+GET  /api/channels/user-channels   # Get user's subscribed channels (auth)
+GET  /api/channels/recommended     # Get recommended channels (public)
+GET  /api/channels/categories      # Get all categories (public)
+GET  /api/channels/explore         # Explore channels modal data (auth)
+POST /api/channels/search          # Search channels by query (auth)
+POST /api/channels/subscribe       # Subscribe to channels (auth)
+POST /api/channels/add             # Add channels to subscription (auth)
+POST /api/channels/unsubscribe     # Unsubscribe from channel (auth)
 ```
 
-### Jobs
+### Bundles (Onboarding)
 
 ```http
-GET  /api/jobs                  # Get filtered job feed
-GET  /api/jobs/:id              # Get job details
-POST /api/jobs/:id/view         # Mark job as viewed
-GET  /api/jobs/skills/search    # Autocomplete tech skills
+GET  /api/bundles                  # Get all channel bundles (public)
+GET  /api/bundles/:id              # Get bundle by ID (public)
 ```
 
-**Example Filter Query:**
+### User Preferences
 
-```bash
-GET /api/jobs?stack=react&stack=typescript&level=Mid&locationType=Remote&limit=20&offset=0
+```http
+GET  /api/users/preferences/filters    # Get saved filter preferences (auth)
+PUT  /api/users/preferences/filters    # Save filter preferences (auth)
 ```
 
 ### Resume
 
 ```http
-POST /api/resume/upload         # Upload master resume (multipart/form-data)
+POST /api/resume/upload            # Upload master resume (multipart/form-data, auth)
+```
+
+**Request:**
+
+```bash
+curl -X POST http://localhost:4000/api/resume/upload \
+  -H "Authorization: Bearer <token>" \
+  -F "resume=@/path/to/resume.pdf"
 ```
 
 ### Sniper (Resume Tailoring)
 
 ```http
-POST /api/sniper/generate       # Generate tailored resume for job
+POST /api/sniper/generate          # Generate tailored resume (auth)
 ```
 
 **Request Body:**
@@ -286,6 +403,59 @@ POST /api/sniper/generate       # Generate tailored resume for job
     "telegramMessage": "Hi! I'm applying for...",
     "coverLetter": "Dear Hiring Manager..."
   }
+}
+```
+
+### Notifications
+
+```http
+GET  /api/notifications/settings           # Get notification settings (auth)
+POST /api/notifications/settings           # Update notification settings (auth)
+POST /api/notifications/test               # Send test notification (auth)
+POST /api/notifications/generate-link      # Generate subscription link (auth)
+POST /api/notifications/telegram/webhook   # Telegram bot webhook (public, validated)
+```
+
+**Update Settings Request:**
+
+```json
+{
+  "enabled": true,
+  "filters": {
+    "stack": ["react", "node"],
+    "level": ["Mid"],
+    "locationType": ["Remote"]
+  },
+  "quietHours": {
+    "enabled": true,
+    "startHour": 22,
+    "endHour": 8,
+    "timezone": "America/New_York"
+  }
+}
+```
+
+### Feedback
+
+```http
+POST /api/feedback                 # Submit user feedback (auth)
+```
+
+### Platform Statistics
+
+```http
+GET  /api/stats/platform           # Get platform statistics (public)
+```
+
+**Response:**
+
+```json
+{
+  "totalJobs": 15243,
+  "totalChannels": 42,
+  "totalUsers": 1523,
+  "activeUsers": 342,
+  "jobsLast24h": 156
 }
 ```
 
@@ -315,41 +485,77 @@ npm run dev
 ### Environment Variables
 
 ```env
-# Server
+# Server Configuration
 PORT=4000
 NODE_ENV=development
 
+# Disable job scraper to optimize server performance in production
+DISABLE_SCRAPER=false
+
 # Database
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/telegram-jobs
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/telegram-jobs?retryWrites=true&w=majority
 
-# Authentication
-JWT_SECRET=your-secret-key-here
+# JWT Authentication
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 JWT_EXPIRES_IN=7d
-NEXTAUTH_SECRET=your-nextauth-secret
 
-# Telegram (optional for scraping)
+# NextAuth (must match client NEXTAUTH_SECRET)
+NEXTAUTH_SECRET=your-secret-here-generate-with-openssl-rand-base64-32
+
+# Telegram Configuration (get from https://my.telegram.org)
 TELEGRAM_API_ID=your_api_id
 TELEGRAM_API_HASH=your_api_hash
+TELEGRAM_SESSION_STRING=
 
-# AI
-ABACUS_API_KEY=your_abacus_key
+# Telegram Bot (for notifications - get from @BotFather)
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+
+# Telegram Webhook (for production - set to your deployed URL)
+TELEGRAM_WEBHOOK_URL=https://your-app.onrender.com/api/notifications/telegram/webhook
+TELEGRAM_WEBHOOK_SECRET=generate-random-32-char-string-here
+
+# AI Provider Configuration (choose: gemini | abacus)
+AI_PROVIDER=gemini
+GEMINI_API_KEY=your_gemini_api_key
+
+# Abacus.ai API Configuration (optional alternative)
+ABACUS_API_KEY=
 ABACUS_API_URL=https://routellm.abacus.ai/v1
 
-# File Uploads
-MAX_FILE_SIZE=10485760
+# File Upload Configuration
+MAX_FILE_SIZE=10485760  # 10MB
 UPLOAD_DIR=./uploads
 TEMP_DIR=./public/temp
 
-# Frontend
+# Application URLs
 FRONTEND_URL=http://localhost:3000
 ```
+
+**Required Variables:**
+
+- `MONGODB_URI` - MongoDB Atlas connection string
+- `JWT_SECRET` - Secret key for JWT tokens
+- `NEXTAUTH_SECRET` - NextAuth secret (must match client)
+- `GEMINI_API_KEY` or `ABACUS_API_KEY` - At least one AI provider
+
+**Optional Variables:**
+
+- `TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `TELEGRAM_SESSION_STRING` - Only if running scraper locally
+- `TELEGRAM_BOT_TOKEN` - Required for notification system
+- `TELEGRAM_WEBHOOK_URL`, `TELEGRAM_WEBHOOK_SECRET` - For production webhook mode
+- `DISABLE_SCRAPER=true` - Disable scraper in production if using same Telegram session elsewhere
 
 ### Scripts
 
 ```bash
-npm run dev      # Development with hot reload (nodemon)
-npm run build    # Compile TypeScript to dist/
-npm start        # Production mode (runs dist/index.js)
+npm run dev               # Development with hot reload (nodemon)
+npm run build             # Compile TypeScript to dist/ (with path aliases)
+npm start                 # Production mode (runs dist/index.js)
+npm run migrate           # Run migrations
+npm run migrate:up        # Run migrations up
+npm run migrate:down      # Run migrations down
+npm run migrate:status    # Check migration status
+npm run seed:channels     # Seed channels to database
 ```
 
 ## 🔐 Security Practices
@@ -428,11 +634,45 @@ async getJob(id: string) {
 
 ```typescript
 {
-  email: string (unique)
-  password: string (hashed)
+  email: string (unique, required)
+  name?: string
+  image?: string
+  emailVerified?: Date
   masterResumeText?: string
-  masterResumeUrl?: string
+  masterResumeFileUrl?: string
+  subscribedChannels: string[] (default: [])
+  plan: 'free' | 'premium' (default: 'free')
+  hasCompletedOnboarding: boolean (default: false)
+  viewedJobs: string[] (default: [])
+
+  // Subscription change tracking (abuse prevention)
+  subscriptionChanges: {
+    count: number (default: 0)
+    lastResetDate: Date (default: now)
+  }
+
+  // Telegram Notifications
+  telegramChatId?: string
+  telegramSubscriptionToken?: string (unique, sparse)
+  notificationEnabled: boolean (default: false)
+  notificationFilters?: {
+    stack: string[]
+    level: string[]
+    jobFunction: string[]
+    locationType: string[]
+    experienceYears: { min?: number, max?: number }
+  }
+  quietHours: {
+    enabled: boolean (default: false)
+    startHour: number (default: 22)
+    endHour: number (default: 8)
+    timezone: string (default: 'America/New_York')
+  }
+  lastNotificationSent?: Date
+  notificationCount: number (default: 0)
+
   createdAt: Date
+  updatedAt: Date
 }
 ```
 
@@ -443,6 +683,7 @@ async getJob(id: string) {
   channelId: ObjectId
   messageId: number
   rawText: string
+
   parsedData: {
     jobTitle?: string
     company?: string
@@ -452,8 +693,17 @@ async getJob(id: string) {
     isRemote?: boolean
     locationType?: 'Remote' | 'Hybrid' | 'Onsite'
     jobFunction?: string
+    experienceYears?: { min?: number, max?: number }
+    location?: string
+    description?: string
   }
+
+  // External scraping
+  externalUrl?: string
+  scrapedContent?: string
+
   createdAt: Date
+  updatedAt: Date
 }
 ```
 
@@ -461,13 +711,43 @@ async getJob(id: string) {
 
 ```typescript
 {
-  username: string (unique)
-  title: string
+  username: string (unique, required)
+  title: string (required)
   description?: string
   category?: string
   memberCount?: string
-  isActive: boolean
+  isActive: boolean (default: true)
+  isRecommended: boolean (default: false)
   lastScrapedAt?: Date
+  createdAt: Date
+  updatedAt: Date
+}
+```
+
+### Bundle
+
+```typescript
+{
+  name: string (required)
+  description?: string
+  channels: string[] (channel usernames)
+  category?: string
+  isActive: boolean (default: true)
+  order: number (for display sorting)
+  createdAt: Date
+  updatedAt: Date
+}
+```
+
+### Feedback
+
+```typescript
+{
+  userId?: ObjectId
+  email?: string
+  message: string (required)
+  type?: string
+  createdAt: Date
 }
 ```
 
@@ -475,34 +755,44 @@ async getJob(id: string) {
 
 ### Phase 1: Core Infrastructure ✅
 
-- [x] Telegram integration
-- [x] AI job parsing
-- [x] Basic job feed
-- [x] Resume upload
-- [x] AI resume tailoring
+- [x] Telegram integration (GramJS + Bot API)
+- [x] AI job parsing (Gemini/Abacus)
+- [x] Basic job feed with pagination
+- [x] Resume upload and parsing
+- [x] AI resume tailoring (Sniper)
+- [x] User authentication (NextAuth/JWT)
 
-### Phase 2: Advanced Features (In Progress)
+### Phase 2: Advanced Features ✅
 
-- [x] Advanced filtering (tech stack, level, location)
-- [x] Channel management
-- [x] User interaction tracking
-- [ ] Bundle onboarding for new users
-- [ ] Explore modal with search
+- [x] Advanced filtering (tech stack, level, location, experience years)
+- [x] Channel management (subscribe/unsubscribe)
+- [x] User interaction tracking (views, subscription changes)
+- [x] Channel bundles for onboarding
+- [x] User preferences persistence
+- [x] External page scraping for job digests
+- [x] Job cleanup service (auto-delete old jobs)
 
-### Phase 3: Intelligence
+### Phase 3: Intelligence & Engagement ✅
 
-- [ ] Personalized job recommendations
+- [x] Real-time Telegram notifications
+- [x] Custom notification filters per user
+- [x] Quiet hours with timezone support
+- [x] Subscription tracking and limits (free tier: 6 swaps/month)
+- [x] Platform statistics (public endpoint)
+- [x] Feedback collection system
+
+### Phase 4: Scale & Polish (In Progress)
+
+- [ ] Personalized job recommendations (ML-based)
 - [ ] Application success tracking
-- [ ] Resume A/B testing
+- [ ] Resume A/B testing insights
 - [ ] Interview preparation suggestions
-
-### Phase 4: Scale & Polish
-
-- [ ] Rate limiting
-- [ ] API documentation (Swagger)
+- [ ] Rate limiting middleware
+- [ ] API documentation (Swagger/OpenAPI)
 - [ ] Unit & integration tests
-- [ ] Email notifications
-- [ ] Analytics dashboard
+- [ ] Email notifications (alternative to Telegram)
+- [ ] Admin dashboard
+- [ ] Analytics and insights panel
 
 ## 📝 License
 

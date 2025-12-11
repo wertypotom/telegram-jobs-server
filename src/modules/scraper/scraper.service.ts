@@ -17,12 +17,13 @@ export class ScraperService {
   private isRunning: boolean = false;
   private scrapeInterval: NodeJS.Timeout | null = null;
 
-  // Performance Configuration (tunable)
-  private readonly SCRAPE_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes (was 10)
-  private readonly CHANNEL_CONCURRENCY = 3; // Scrape 3 channels simultaneously (was 5)
-  private readonly MESSAGE_LIMIT = 500; // Fetch 500 messages per channel (was 100)
-  private readonly AI_BATCH_SIZE = 10; // Process 10 jobs per AI batch (was 3)
-  private readonly BATCH_DELAY_MS = 500; // Delay between AI batches (was 1000ms)
+  // Performance Configuration (tunable) - Optimized to avoid Telegram FloodWait
+  private readonly SCRAPE_INTERVAL_MS = 60 * 60 * 1000; // 1 hour (reduced to avoid rate limits)
+  private readonly CHANNEL_CONCURRENCY = 1; // Sequential to avoid parallel API hits
+  private readonly MESSAGE_LIMIT = 100; // Sufficient with incremental scraping (minId)
+  private readonly AI_BATCH_SIZE = 10; // Process 10 jobs per AI batch
+  private readonly BATCH_DELAY_MS = 500; // Delay between AI batches
+  private readonly INTER_CHANNEL_DELAY_MS = 2000; // 2s delay between channels
 
   private pageScraperService: PageScraperService;
 
@@ -156,6 +157,13 @@ export class ScraperService {
             totalJobsFound += result.value.jobsFound;
           }
         });
+
+        // Delay between channel batches to avoid Telegram FloodWait
+        if (i + this.CHANNEL_CONCURRENCY < monitoredChannels.length) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, this.INTER_CHANNEL_DELAY_MS)
+          );
+        }
       }
 
       const durationSec = Math.round((Date.now() - startTime) / 1000);
