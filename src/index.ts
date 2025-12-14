@@ -28,6 +28,11 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from temp directory
 app.use('/temp', express.static(path.join(__dirname, '../public/temp')));
 
+// Health check endpoint for UptimeRobot/Render
+app.get('/health', (_req, res) => {
+  res.status(200).send('OK');
+});
+
 // Routes
 app.use('/api', routes);
 
