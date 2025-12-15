@@ -17,6 +17,8 @@ import { migration004 } from './versions/004-normalize-job-titles';
 import { migration005 } from './versions/005-add-channel-category-tags';
 import { migration006 } from './versions/006-add-job-text-index';
 import { migration007 } from './versions/007-add-subscription-changes-field';
+import { migration008 } from './versions/008-reset-last-scraped-message-id';
+import { migration009 } from './versions/009-add-telegram-message-date';
 
 // Register migrations in order
 const migrations: Migration[] = [
@@ -27,6 +29,8 @@ const migrations: Migration[] = [
   migration005,
   migration006,
   migration007,
+  migration008,
+  migration009,
 ];
 
 export class MigrationRunner {

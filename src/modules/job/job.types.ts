@@ -35,4 +35,5 @@ export interface CreateJobDto {
   senderUserId?: string;
   senderUsername?: string;
   rawText: string;
+  telegramMessageDate: Date;
 }

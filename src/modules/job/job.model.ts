@@ -65,6 +65,10 @@ const jobSchema = new Schema<IJobDocument>(
       enum: ['pending_parse', 'parsed', 'failed'],
       default: 'pending_parse',
     },
+    telegramMessageDate: {
+      type: Date,
+      required: true,
+    },
   },
   {
     timestamps: true,

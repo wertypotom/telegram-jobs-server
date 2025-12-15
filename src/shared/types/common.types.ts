@@ -54,6 +54,7 @@ export interface IJob {
   rawText: string;
   parsedData?: ParsedJobData;
   status: 'pending_parse' | 'parsed' | 'failed';
+  telegramMessageDate: Date; // When message was posted on Telegram
   createdAt: Date;
   updatedAt: Date;
 }

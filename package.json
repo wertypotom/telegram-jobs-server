@@ -11,7 +11,8 @@
     "migrate:up": "npm run migrate up",
     "migrate:down": "npm run migrate down",
     "migrate:status": "npm run migrate status",
-    "seed:channels": "ts-node -r tsconfig-paths/register src/scripts/seed-channels.ts"
+    "channels:seed": "ts-node -r tsconfig-paths/register src/scripts/seed-channels.ts",
+    "channels:extract": "ts-node -r tsconfig-paths/register src/scripts/extract-channel-info.ts"
   },
   "keywords": [
     "telegram",

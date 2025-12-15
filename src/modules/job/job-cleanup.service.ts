@@ -6,7 +6,7 @@ import { Logger } from '@utils/logger';
  * Automatically deletes jobs older than specified retention period
  */
 export class JobCleanupService {
-  private readonly RETENTION_DAYS = 3; // Jobs older than 3 days are deleted
+  private readonly RETENTION_DAYS = 7; // Jobs older than 7 days are deleted
   private readonly CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // Run daily
   private cleanupInterval: NodeJS.Timeout | null = null;
 
@@ -54,12 +54,12 @@ export class JobCleanupService {
       cutoffDate.setDate(cutoffDate.getDate() - this.RETENTION_DAYS);
 
       Logger.info(
-        `Starting job cleanup for jobs older than ${cutoffDate.toISOString()}`
+        `Starting job cleanup for jobs with telegramMessageDate older than ${cutoffDate.toISOString()}`
       );
 
       // Count jobs before deletion
       const oldJobCount = await Job.countDocuments({
-        createdAt: { $lt: cutoffDate },
+        telegramMessageDate: { $lt: cutoffDate },
       });
 
       if (oldJobCount === 0) {
@@ -67,13 +67,13 @@ export class JobCleanupService {
         return;
       }
 
-      // Delete old jobs
+      // Delete old jobs based on when they were posted on Telegram
       const result = await Job.deleteMany({
-        createdAt: { $lt: cutoffDate },
+        telegramMessageDate: { $lt: cutoffDate },
       });
 
       Logger.info(
-        `Job cleanup completed. Deleted ${result.deletedCount} jobs older than ${this.RETENTION_DAYS} days.`
+        `Job cleanup completed. Deleted ${result.deletedCount} jobs with telegramMessageDate older than ${this.RETENTION_DAYS} days.`
       );
 
       // Log current database stats

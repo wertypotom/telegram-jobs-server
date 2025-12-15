@@ -21,7 +21,9 @@ export class TelegramService {
     try {
       // Check if Telegram credentials are configured
       if (!envConfig.telegramApiId || !envConfig.telegramApiHash) {
-        Logger.warn('Telegram credentials not configured. Skipping Telegram listener.');
+        Logger.warn(
+          'Telegram credentials not configured. Skipping Telegram listener.'
+        );
         return;
       }
 
@@ -51,7 +53,10 @@ export class TelegramService {
     const client = await this.clientService.getClient();
 
     // Add event handler for new messages
-    client.addEventHandler(this.handleNewMessage.bind(this), new NewMessage({}));
+    client.addEventHandler(
+      this.handleNewMessage.bind(this),
+      new NewMessage({})
+    );
 
     this.isListening = true;
     Logger.info('Listening for new Telegram messages');
@@ -84,6 +89,7 @@ export class TelegramService {
         telegramMessageId: `${channelId}_${message.id}`,
         channelId: channelUsername,
         rawText: text,
+        telegramMessageDate: new Date((message as any).date * 1000), // Convert Unix timestamp to Date
       });
     } catch (error) {
       Logger.error('Error handling Telegram message:', error);

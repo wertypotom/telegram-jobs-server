@@ -492,3 +492,24 @@ export const seedChannels = async (): Promise<void> => {
     throw error;
   }
 };
+
+/* 
+@devops_jobs_feed
+@ru_pythonjobs
+@job_python
+@pythonrabota
+@python_django_work
+@django_jobs_board
+@front_end_dev
+@forwebdev
+@reactjs_jobs
+@react_js_jobs
+@job_dotnet
+@csharpdevjob
+@java_jobs
+@jvmjobs
+@flutterroles
+@dartuz_jobs
+@dartlang_jobs
+@hackdevjob
+*/

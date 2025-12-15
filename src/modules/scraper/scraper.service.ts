@@ -205,10 +205,10 @@ export class ScraperService {
       else {
         const offsetDate = lastScrapedAt
           ? Math.floor(lastScrapedAt.getTime() / 1000)
-          : Math.floor((Date.now() - 3 * 24 * 60 * 60 * 1000) / 1000); // 3 days
+          : Math.floor((Date.now() - 7 * 24 * 60 * 60 * 1000) / 1000); // 7 days
 
         Logger.info(
-          `First-time scrape or no message ID for ${channelUsername}, fetching last 3 days`
+          `First-time scrape or no message ID for ${channelUsername}, fetching last 7 days`
         );
         messages = await client.getMessages(channel, {
           limit: this.MESSAGE_LIMIT,
@@ -224,6 +224,7 @@ export class ScraperService {
       const validMessages: Array<{
         id: number;
         text: string;
+        date: number; // Unix timestamp
         fromId?: any;
         sender?: any;
         entities?: any[];
@@ -232,6 +233,7 @@ export class ScraperService {
       // Collect digest messages with external URLs
       const digestMessages: Array<{
         id: number;
+        date: number; // Unix timestamp
         externalUrls: string[];
         fromId?: any;
         sender?: any;
@@ -269,6 +271,7 @@ export class ScraperService {
           if (externalUrls.length > 0) {
             digestMessages.push({
               id: message.id,
+              date: (message as any).date,
               externalUrls,
               fromId: (message as any).fromId,
               sender: (message as any).sender,
@@ -285,6 +288,7 @@ export class ScraperService {
         validMessages.push({
           id: message.id,
           text,
+          date: (message as any).date,
           fromId: (message as any).fromId,
           sender: (message as any).sender,
           entities,
@@ -322,6 +326,7 @@ export class ScraperService {
               senderUserId,
               senderUsername,
               rawText: msg.text,
+              telegramMessageDate: new Date(msg.date * 1000), // Convert Unix timestamp to Date
             });
           })
         );
@@ -381,6 +386,7 @@ export class ScraperService {
               senderUserId,
               senderUsername,
               rawText: pageContent,
+              telegramMessageDate: new Date(digest.date * 1000), // Convert Unix timestamp to Date
             });
 
             jobsFound++;
