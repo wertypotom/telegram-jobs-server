@@ -10,6 +10,41 @@ import { RecommendedChannel } from './channel.types';
 export const CHANNEL_SEED_DATA: RecommendedChannel[] = [
   // ============= GENERAL IT & DIGITAL =============
   {
+    username: '@django_jobs_board',
+    title: 'django_jobs_board',
+    description: 'Вакансии для Django-разработчиков',
+    category: 'Backend',
+    memberCount: '1.8K+',
+  },
+  {
+    username: '@front_end_dev',
+    title: 'FrontEndDev',
+    description: 'Статьи и туториалы по frontend разработке',
+    category: 'Frontend',
+    memberCount: '27.9K+',
+  },
+  {
+    username: '@forwebdev',
+    title: 'For Web — фронтенд, дизайн, программирование',
+    description: 'Frontend development news and resources',
+    category: 'Frontend',
+    memberCount: '14.1K+',
+  },
+  {
+    username: '@reactjs_jobs',
+    title: 'React.js Jobs',
+    description: 'React.js developer positions',
+    category: 'Frontend',
+    memberCount: '5.8K+',
+  },
+  {
+    username: '@react_js_jobs',
+    title: 'React Jobs работа связанная с reactjs проектами',
+    description: 'Вакансии по React JS и NextJS проектам',
+    category: 'Frontend',
+    memberCount: '1.9K+',
+  },
+  {
     username: '@geekjobs',
     title: 'Job in IT&Digital',
     description: 'Вакансии от крупных российских и международных компаний',
@@ -477,6 +512,14 @@ export const CHANNEL_SEED_DATA: RecommendedChannel[] = [
     category: 'Database',
     memberCount: '10K+',
   },
+  // ============= TEST =============
+  {
+    username: '@frontend_devs_test',
+    title: 'Works for frontend',
+    description: 'Frontend developer positions',
+    category: 'Frontend',
+    memberCount: '1+',
+  },
 ];
 
 /**
@@ -522,11 +565,6 @@ export const seedChannels = async (): Promise<void> => {
 };
 
 /* 
-@django_jobs_board
-@front_end_dev
-@forwebdev
-@reactjs_jobs
-@react_js_jobs
 @job_dotnet
 @csharpdevjob
 @java_jobs

@@ -1,6 +1,6 @@
-import TelegramBot from 'node-telegram-bot-api';
-import { envConfig } from '@shared/config/env.config';
+import { envConfig } from '@config/env.config';
 import { Logger } from '@utils/logger';
+import TelegramBot from 'node-telegram-bot-api';
 import { User } from '@modules/user/user.model';
 import { Feedback } from '@modules/feedback/feedback.model';
 
@@ -398,9 +398,11 @@ Manage filters: https://jobsniper.com/settings/notifications
       const text = `
 ⏸️ Notifications Paused
 
-You won't receive job alerts until you resume.
+Your Telegram is still linked, but notifications are disabled.
 
-Resume anytime from the menu or web app.
+✅ Resume easily:
+• Click "Resume" below
+• Or use /menu command
       `;
 
       const keyboard = {
@@ -480,16 +482,16 @@ Manage settings: https://jobsniper.com/settings/notifications
       await user.save();
 
       const text = `
-🔓 Completely Unsubscribed
+🔓 Telegram Unlinked
 
-Your Telegram account has been unlinked from JobSniper.
+Your Telegram has been completely disconnected from your account.
 
-To re-subscribe:
-1. Visit https://jobsniper.com/settings/notifications
-2. Click "Open in Telegram"
-3. You'll be linked again automatically
+🔄 To re-enable notifications:
+1. Visit https://jobsniper.work/settings/notifications
+2. Click "Connect Telegram"
+3. Return to this bot
 
-Thank you for using JobSniper! 👋
+💡 Tip: Use "Pause" instead if you just want to temporarily stop notifications.
       `;
 
       const keyboard = {
@@ -550,12 +552,6 @@ Quiet hours: ${
       const keyboard = {
         inline_keyboard: [
           [{ text: '🔕 Pause Notifications', callback_data: 'unsubscribe' }],
-          [
-            {
-              text: '🎯 Manage Filters',
-              url: 'https://jobsniper.com/settings/notifications',
-            },
-          ],
           [{ text: '« Back', callback_data: 'main_menu' }],
         ],
       };
@@ -710,6 +706,12 @@ What would you like to do?
               },
             ],
         [{ text: '📊 Check Status', callback_data: 'status' }],
+        [
+          {
+            text: '⚙️ Settings',
+            url: `${envConfig.frontendUrl}/settings/notifications`,
+          },
+        ],
         [{ text: '💬 Send Feedback', callback_data: 'feedback' }],
         // Full unsubscribe option (only if subscribed)
         isSubscribed
@@ -735,7 +737,7 @@ What would you like to do?
 
 To enable notifications:
 
-1. Visit https://jobsniper.com/settings/notifications
+1. Visit https://jobsniper.work/settings/notifications
 2. Copy your User ID
 3. Send: /subscribe YOUR_USER_ID
 
@@ -927,7 +929,7 @@ ${job.parsedData.jobTitle || 'Job Position'} at ${
 🏠 ${job.parsedData.isRemote ? 'Remote' : job.parsedData.location || 'On-site'}
 ⏰ Just posted
 
-🔗 View & Apply: ${process.env.FRONTEND_URL}/jobs/${job._id}
+🔗 View & Apply: ${envConfig.frontendUrl}/jobs/${job._id}
     `;
 
     const keyboard = {
@@ -935,10 +937,9 @@ ${job.parsedData.jobTitle || 'Job Position'} at ${
         [
           {
             text: '🔗 Open Job',
-            url: `${process.env.FRONTEND_URL}/jobs/${job._id}`,
+            url: `${envConfig.frontendUrl}/jobs/${job._id}`,
           },
         ],
-        [{ text: '⚙️ Settings', callback_data: 'settings' }],
       ],
     };
 
