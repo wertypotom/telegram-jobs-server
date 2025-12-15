@@ -85,7 +85,11 @@ Raw Description: ${rawDescription}
 
 Create a concise description:`;
 
-    const response = await aiProvider.generateContent(prompt, systemPrompt);
+    const response = await aiProvider.generateContent(
+      prompt,
+      systemPrompt,
+      false
+    ); // Plain text mode
     const summary = response.trim().replace(/^["']|["']$/g, ''); // Remove quotes if present
 
     // Fallback if AI response is too long or empty
@@ -162,7 +166,11 @@ Channel Description: ${description}
 
 What is the most appropriate category?`;
 
-    const response = await aiProvider.generateContent(prompt, systemPrompt);
+    const response = await aiProvider.generateContent(
+      prompt,
+      systemPrompt,
+      false
+    ); // Plain text mode
     const category = response.trim().replace(/["']/g, '');
 
     // Validate it's a known category

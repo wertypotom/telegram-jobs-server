@@ -15,16 +15,26 @@ export class GeminiProvider implements AIProvider {
     this.model = 'gemini-3-pro-preview'; // Latest Gemini model
   }
 
-  async generateContent(prompt: string, systemPrompt: string): Promise<string> {
+  async generateContent(
+    prompt: string,
+    systemPrompt: string,
+    jsonMode: boolean = true
+  ): Promise<string> {
     try {
+      const config: any = {
+        systemInstruction: systemPrompt,
+        temperature: 0.3,
+      };
+
+      // Only set JSON mime type if jsonMode is enabled
+      if (jsonMode) {
+        config.responseMimeType = 'application/json';
+      }
+
       const response = await this.client.models.generateContent({
         model: this.model,
         contents: prompt,
-        config: {
-          systemInstruction: systemPrompt,
-          temperature: 0.3,
-          responseMimeType: 'application/json',
-        },
+        config,
       });
 
       const text = response.text;

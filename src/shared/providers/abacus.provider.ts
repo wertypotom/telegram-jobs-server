@@ -15,19 +15,29 @@ export class AbacusProvider implements AIProvider {
     this.apiUrl = envConfig.abacusApiUrl;
   }
 
-  async generateContent(prompt: string, systemPrompt: string): Promise<string> {
+  async generateContent(
+    prompt: string,
+    systemPrompt: string,
+    jsonMode: boolean = true
+  ): Promise<string> {
     try {
+      const requestBody: any = {
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.3,
+      };
+
+      // Only add response_format for JSON mode
+      if (jsonMode) {
+        requestBody.response_format = { type: 'json_object' };
+      }
+
       const response = await axios.post(
         `${this.apiUrl}/chat/completions`,
-        {
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: prompt },
-          ],
-          temperature: 0.3,
-          response_format: { type: 'json_object' },
-        },
+        requestBody,
         {
           headers: {
             Authorization: `Bearer ${this.apiKey}`,
@@ -53,6 +63,11 @@ export class AbacusProvider implements AIProvider {
           statusText: error.response?.statusText,
           data: error.response?.data,
           message: error.message,
+          requestUrl: `${this.apiUrl}/chat/completions`,
+          requestModel: 'gpt-4o-mini',
+          promptLength: prompt.length,
+          systemPromptLength: systemPrompt.length,
+          headers: error.response?.headers,
         });
       } else {
         Logger.error('Abacus API error:', error);

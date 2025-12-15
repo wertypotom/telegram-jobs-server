@@ -147,6 +147,34 @@ export const CHANNEL_SEED_DATA: RecommendedChannel[] = [
 
   // ============= BACKEND =============
   {
+    username: '@ru_pythonjobs',
+    title: 'Вакансии для Python-разработчиков / Python Jobs',
+    description: 'Вакансии для Python-разработчиков',
+    category: 'Backend',
+    memberCount: '10.7K+',
+  },
+  {
+    username: '@job_python',
+    title: 'Python Job | Вакансии | Стажировки',
+    description: 'Вакансии и стажировки для Python-разработчиков',
+    category: 'Backend',
+    memberCount: '20.7K+',
+  },
+  {
+    username: '@pythonrabota',
+    title: 'Python работа',
+    description: 'Вакансии по Python с прямым контактом с работодателями',
+    category: 'Backend',
+    memberCount: '11.3K+',
+  },
+  {
+    username: '@python_django_work',
+    title: 'Python Django Jobs',
+    description: 'Python Django job opportunities',
+    category: 'Backend',
+    memberCount: '12K+',
+  },
+  {
     username: '@nodejs_jobs',
     title: 'Node.js Jobs',
     description: 'Node.js developer positions',
@@ -494,11 +522,6 @@ export const seedChannels = async (): Promise<void> => {
 };
 
 /* 
-@devops_jobs_feed
-@ru_pythonjobs
-@job_python
-@pythonrabota
-@python_django_work
 @django_jobs_board
 @front_end_dev
 @forwebdev
