@@ -1,5 +1,6 @@
 import { Logger } from '@utils/logger';
 import { BadRequestError } from '@utils/errors';
+import { ErrorCode } from '@shared/types/error-codes';
 import { UserRepository } from '@modules/user/user.repository';
 import { ChannelRepository } from './channel.repository';
 import { TelegramClientService } from '@modules/telegram/services/telegram-client.service';
@@ -398,7 +399,8 @@ export class ChannelService {
         const swapCheck = await this.checkAndConsumeSwap(userId, user);
         if (!swapCheck.allowed) {
           throw new BadRequestError(
-            `You have used all ${this.MAX_FREE_SWAPS} channel swaps this month. Upgrade to Premium for unlimited changes.`
+            `You have used all ${this.MAX_FREE_SWAPS} channel swaps this month. Upgrade to Premium for unlimited changes.`,
+            ErrorCode.SWAP_LIMIT_EXCEEDED
           );
         }
       }
@@ -424,7 +426,8 @@ export class ChannelService {
         throw new BadRequestError(
           `Plan limit exceeded. ${
             user.plan === 'free' ? 'Free' : 'Premium'
-          } plan allows max ${maxAllowed} channels total.`
+          } plan allows max ${maxAllowed} channels total.`,
+          ErrorCode.CHANNEL_LIMIT_EXCEEDED
         );
       }
 
@@ -482,7 +485,8 @@ export class ChannelService {
       const swapCheck = await this.checkAndConsumeSwap(userId, user);
       if (!swapCheck.allowed) {
         throw new BadRequestError(
-          `You have used all ${this.MAX_FREE_SWAPS} channel swaps this month. Upgrade to Premium for unlimited changes.`
+          `You have used all ${this.MAX_FREE_SWAPS} channel swaps this month. Upgrade to Premium for unlimited changes.`,
+          ErrorCode.SWAP_LIMIT_EXCEEDED
         );
       }
 
@@ -540,7 +544,8 @@ export class ChannelService {
       Logger.warn(`Failed to add channel ${username} to database:`, error);
       // STRICT VALIDATION: Throw error if channel doesn't exist
       throw new BadRequestError(
-        `Channel @${username} does not exist or is not accessible`
+        `Channel @${username} does not exist or is not accessible`,
+        ErrorCode.CHANNEL_NOT_FOUND
       );
     }
   }
