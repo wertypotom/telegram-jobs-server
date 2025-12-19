@@ -10,6 +10,63 @@ import { RecommendedChannel } from './channel.types';
 export const CHANNEL_SEED_DATA: RecommendedChannel[] = [
   // ============= GENERAL IT & DIGITAL =============
   {
+    username: '@job_dotnet',
+    title: 'C# & .NET Jobs | Работа и стажировки',
+    description: 'Вакансии и стажировки для C# инженеров',
+    category: 'Backend',
+    memberCount: '2.8K+',
+  },
+  {
+    username: '@csharpdevjob',
+    title: 'C# jobs — вакансии по C#, .NET, Unity',
+    description: 'C# and .NET job opportunities',
+    category: 'GameDev',
+    memberCount: '9.9K+',
+  },
+  {
+    username: '@java_jobs',
+    title: 'Java Jobs',
+    description: 'Java and Kotlin job opportunities',
+    category: 'Backend',
+    memberCount: '6.8K+',
+  },
+  {
+    username: '@jvmjobs',
+    title: 'pro.JVM Jobs',
+    description: 'Вакансии для разработчиков на JVM',
+    category: 'Backend',
+    memberCount: '13.1K+',
+  },
+  {
+    username: '@flutterroles',
+    title: 'Flutter Jobs/Internships',
+    description: 'Flutter job and internship opportunities',
+    category: 'Mobile',
+    memberCount: '5.6K+',
+  },
+  {
+    username: '@dartuz_jobs',
+    title: 'Jobs Dart | Flutter 🇺🇿',
+    description: 'Вакансии для разработчиков на Dart и Flutter',
+    category: 'Mobile',
+    memberCount: '2.2K+',
+  },
+  {
+    username: '@dartlang_jobs',
+    title: 'Dart Jobs',
+    description: 'Dart (Flutter) job postings',
+    category: 'Mobile',
+    memberCount: '8.6K+',
+  },
+  {
+    username: '@hackdevjob',
+    title:
+      'InfoSec Jobs — вакансии по информационной безопасности, infosec, pentesting, пентестингу, security engineer, инфобезу, DevSecOps',
+    description: 'Вакансии в области информационной безопасности',
+    category: 'InfoSec',
+    memberCount: '2.3K+',
+  },
+  {
     username: '@django_jobs_board',
     title: 'django_jobs_board',
     description: 'Вакансии для Django-разработчиков',
@@ -512,14 +569,6 @@ export const CHANNEL_SEED_DATA: RecommendedChannel[] = [
     category: 'Database',
     memberCount: '10K+',
   },
-  // ============= TEST =============
-  {
-    username: '@frontend_devs_test',
-    title: 'Works for frontend',
-    description: 'Frontend developer positions',
-    category: 'Frontend',
-    memberCount: '1+',
-  },
 ];
 
 /**
@@ -563,14 +612,3 @@ export const seedChannels = async (): Promise<void> => {
     throw error;
   }
 };
-
-/* 
-@job_dotnet
-@csharpdevjob
-@java_jobs
-@jvmjobs
-@flutterroles
-@dartuz_jobs
-@dartlang_jobs
-@hackdevjob
-*/

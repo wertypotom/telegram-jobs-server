@@ -20,10 +20,14 @@ import { AIProviderFactory } from '@shared/providers/ai-provider.factory';
 
 // Add your channel usernames here (with or without @)
 const CHANNELS_TO_EXTRACT = [
-  '@ru_pythonjobs',
-  '@job_python',
-  '@pythonrabota',
-  '@python_django_work',
+  '@job_dotnet',
+  '@csharpdevjob',
+  '@java_jobs',
+  '@jvmjobs',
+  '@flutterroles',
+  '@dartuz_jobs',
+  '@dartlang_jobs',
+  '@hackdevjob',
 ];
 
 interface ChannelInfo {
