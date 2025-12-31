@@ -299,9 +299,8 @@ export class ChannelService {
 
       // Plan-based channel limit enforcement
       const MAX_FREE_CHANNELS = 5;
-      const MAX_PREMIUM_CHANNELS = 50;
-      const maxAllowed =
-        user.plan === 'premium' ? MAX_PREMIUM_CHANNELS : MAX_FREE_CHANNELS;
+      // Premium users have unlimited channels
+      const maxAllowed = user.plan === 'premium' ? Infinity : MAX_FREE_CHANNELS;
 
       if (channelUsernames.length > maxAllowed) {
         throw new BadRequestError(
@@ -418,9 +417,8 @@ export class ChannelService {
 
       // Plan-based channel limit enforcement
       const MAX_FREE_CHANNELS = 5;
-      const MAX_PREMIUM_CHANNELS = 50;
-      const maxAllowed =
-        user.plan === 'premium' ? MAX_PREMIUM_CHANNELS : MAX_FREE_CHANNELS;
+      // Premium users have unlimited channels
+      const maxAllowed = user.plan === 'premium' ? Infinity : MAX_FREE_CHANNELS;
 
       if (updatedChannels.length > maxAllowed) {
         throw new BadRequestError(

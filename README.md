@@ -555,7 +555,8 @@ npm run migrate           # Run migrations
 npm run migrate:up        # Run migrations up
 npm run migrate:down      # Run migrations down
 npm run migrate:status    # Check migration status
-npm run seed:channels     # Seed channels to database
+npm run channels:seed     # Seed channels to database
+npm run channels:extract  # Extract channel info from Telegram
 ```
 
 ## 🔐 Security Practices
