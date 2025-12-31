@@ -8,17 +8,23 @@ let mongoServer: MongoMemoryServer;
 jest.setTimeout(30000);
 
 beforeAll(async () => {
+  // Start in-memory MongoDB
+  mongoServer = await MongoMemoryServer.create();
+  const uri = mongoServer.getUri();
+  await mongoose.connect(uri);
+});
+
+beforeEach(async () => {
   // Mute logger during tests to keep output clean
+  // We use beforeEach because restoreMocks: true in jest.config.ts restores spies between tests
   jest.spyOn(Logger, 'info').mockImplementation(() => {});
   jest.spyOn(Logger, 'error').mockImplementation(() => {});
   jest.spyOn(Logger, 'warn').mockImplementation(() => {});
   jest.spyOn(Logger, 'debug').mockImplementation(() => {});
 
-  // Start in-memory MongoDB
-  mongoServer = await MongoMemoryServer.create();
-  const uri = mongoServer.getUri();
-
-  await mongoose.connect(uri);
+  // Optionally silence console.error/warn directly if Logger is bypassed
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
 afterAll(async () => {
@@ -34,5 +40,5 @@ afterEach(async () => {
       await collection.deleteMany({});
     }
   }
-  jest.clearAllMocks();
+  // No need for jest.clearAllMocks() as clearMocks: true is in jest.config.ts
 });
