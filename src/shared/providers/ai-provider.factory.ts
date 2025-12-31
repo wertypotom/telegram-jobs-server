@@ -1,8 +1,9 @@
 import { envConfig } from '@config/env.config';
 import { Logger } from '@utils/logger';
+
+import { AbacusProvider } from './abacus.provider';
 import { AIProvider, AIProviderType } from './ai-provider.interface';
 import { GeminiProvider } from './gemini.provider';
-import { AbacusProvider } from './abacus.provider';
 
 /**
  * Factory to create AI provider based on environment configuration
@@ -27,9 +28,7 @@ export class AIProviderFactory {
           this.instance = new AbacusProvider();
           break;
         default:
-          Logger.warn(
-            `Unknown AI provider: ${providerType}, defaulting to Gemini`
-          );
+          Logger.warn(`Unknown AI provider: ${providerType}, defaulting to Gemini`);
           this.instance = new GeminiProvider();
       }
     }

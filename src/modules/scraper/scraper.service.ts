@@ -1,8 +1,9 @@
-import { TelegramClientService } from '@modules/telegram/services/telegram-client.service';
 import { ChannelRepository } from '@modules/channel/channel.repository';
 import { JobService } from '@modules/job/job.service';
-import { PageScraperService } from './page-scraper.service';
+import { TelegramClientService } from '@modules/telegram/services/telegram-client.service';
 import { Logger } from '@utils/logger';
+
+import { PageScraperService } from './page-scraper.service';
 
 /**
  * ScraperService - Background job scraper
@@ -54,11 +55,7 @@ export class ScraperService {
       await this.scrapeAllChannels();
     }, this.SCRAPE_INTERVAL_MS);
 
-    Logger.info(
-      `Scraper scheduled to run every ${
-        this.SCRAPE_INTERVAL_MS / 1000 / 60
-      } minutes`
-    );
+    Logger.info(`Scraper scheduled to run every ${this.SCRAPE_INTERVAL_MS / 1000 / 60} minutes`);
   }
 
   /**
@@ -98,28 +95,17 @@ export class ScraperService {
 
       const monitoredChannels = await this.channelRepository.findMonitored();
       Logger.info(`Found ${monitoredChannels.length} monitored channels`);
-      Logger.info(
-        `Processing in batches of ${this.CHANNEL_CONCURRENCY} channels`
-      );
+      Logger.info(`Processing in batches of ${this.CHANNEL_CONCURRENCY} channels`);
 
       let totalJobsFound = 0;
       const startTime = Date.now();
 
       // Process channels in parallel batches
-      for (
-        let i = 0;
-        i < monitoredChannels.length;
-        i += this.CHANNEL_CONCURRENCY
-      ) {
-        const channelBatch = monitoredChannels.slice(
-          i,
-          i + this.CHANNEL_CONCURRENCY
-        );
+      for (let i = 0; i < monitoredChannels.length; i += this.CHANNEL_CONCURRENCY) {
+        const channelBatch = monitoredChannels.slice(i, i + this.CHANNEL_CONCURRENCY);
 
         Logger.info(
-          `Processing channel batch ${
-            Math.floor(i / this.CHANNEL_CONCURRENCY) + 1
-          }/${Math.ceil(
+          `Processing channel batch ${Math.floor(i / this.CHANNEL_CONCURRENCY) + 1}/${Math.ceil(
             monitoredChannels.length / this.CHANNEL_CONCURRENCY
           )} (${channelBatch.length} channels)`
         );
@@ -135,17 +121,11 @@ export class ScraperService {
               );
 
               // Update last scraped timestamp and message ID
-              await this.channelRepository.updateLastScraped(
-                channel.username,
-                highestMessageId
-              );
+              await this.channelRepository.updateLastScraped(channel.username, highestMessageId);
 
               return { channel: channel.username, jobsFound };
             } catch (error) {
-              Logger.error(
-                `Failed to scrape channel ${channel.username}:`,
-                error
-              );
+              Logger.error(`Failed to scrape channel ${channel.username}:`, error);
               return { channel: channel.username, jobsFound: 0 };
             }
           })
@@ -160,9 +140,7 @@ export class ScraperService {
 
         // Delay between channel batches to avoid Telegram FloodWait
         if (i + this.CHANNEL_CONCURRENCY < monitoredChannels.length) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, this.INTER_CHANNEL_DELAY_MS)
-          );
+          await new Promise((resolve) => setTimeout(resolve, this.INTER_CHANNEL_DELAY_MS));
         }
       }
 
@@ -193,9 +171,7 @@ export class ScraperService {
 
       // Use message ID-based scraping if available (incremental)
       if (lastScrapedMessageId) {
-        Logger.info(
-          `Fetching messages after ID ${lastScrapedMessageId} from ${channelUsername}`
-        );
+        Logger.info(`Fetching messages after ID ${lastScrapedMessageId} from ${channelUsername}`);
         messages = await client.getMessages(channel, {
           limit: this.MESSAGE_LIMIT,
           minId: lastScrapedMessageId, // Only get messages newer than this
@@ -216,9 +192,7 @@ export class ScraperService {
         });
       }
 
-      Logger.info(
-        `Fetched ${messages.length} messages from ${channelUsername}`
-      );
+      Logger.info(`Fetched ${messages.length} messages from ${channelUsername}`);
 
       // Collect messages that pass pre-filter
       const validMessages: Array<{
@@ -249,12 +223,8 @@ export class ScraperService {
 
         // Extract URLs from message entities
         const urls = this.extractUrlsFromEntities(entities);
-        const externalUrls = urls.filter(
-          (url) => !PageScraperService.isTelegramLink(url)
-        );
-        const telegramUrls = urls.filter((url) =>
-          PageScraperService.isTelegramLink(url)
-        );
+        const externalUrls = urls.filter((url) => !PageScraperService.isTelegramLink(url));
+        const telegramUrls = urls.filter((url) => PageScraperService.isTelegramLink(url));
 
         // Digest detection: message has multiple links
         if (urls.length >= 3) {
@@ -299,9 +269,7 @@ export class ScraperService {
         `${validMessages.length} regular jobs, ${digestMessages.length} digest messages in ${channelUsername}`
       );
 
-      Logger.info(
-        `${validMessages.length} messages passed pre-filter in ${channelUsername}`
-      );
+      Logger.info(`${validMessages.length} messages passed pre-filter in ${channelUsername}`);
 
       // Process in batches with AI parsing (increased for better throughput)
       const BATCH_SIZE = this.AI_BATCH_SIZE;
@@ -315,9 +283,7 @@ export class ScraperService {
           batch.map((msg) => {
             // Extract sender info
             const senderUserId =
-              msg.fromId?.userId?.toString() ||
-              msg.fromId?.toString() ||
-              undefined;
+              msg.fromId?.userId?.toString() || msg.fromId?.toString() || undefined;
             const senderUsername = msg.sender?.username || undefined;
 
             return this.jobService.createJobSync({
@@ -336,18 +302,13 @@ export class ScraperService {
           if (result.status === 'fulfilled') {
             jobsFound++;
           } else {
-            Logger.warn(
-              `Batch job failed for message ${batch[idx].id}`,
-              result.reason
-            );
+            Logger.warn(`Batch job failed for message ${batch[idx].id}`, result.reason);
           }
         });
 
         // Add delay between batches to avoid overwhelming API
         if (i + BATCH_SIZE < validMessages.length) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, this.BATCH_DELAY_MS)
-          );
+          await new Promise((resolve) => setTimeout(resolve, this.BATCH_DELAY_MS));
         }
       }
 
@@ -357,17 +318,11 @@ export class ScraperService {
           `Processing digest message ${digest.id} with ${digest.externalUrls.length} external URLs`
         );
 
-        for (
-          let urlIndex = 0;
-          urlIndex < digest.externalUrls.length;
-          urlIndex++
-        ) {
+        for (let urlIndex = 0; urlIndex < digest.externalUrls.length; urlIndex++) {
           const url = digest.externalUrls[urlIndex];
 
           try {
-            const pageContent = await this.pageScraperService.scrapeJobPage(
-              url
-            );
+            const pageContent = await this.pageScraperService.scrapeJobPage(url);
 
             if (!pageContent) {
               Logger.debug('Failed to fetch job page content', { url });
@@ -375,9 +330,7 @@ export class ScraperService {
             }
 
             const senderUserId =
-              digest.fromId?.userId?.toString() ||
-              digest.fromId?.toString() ||
-              undefined;
+              digest.fromId?.userId?.toString() || digest.fromId?.toString() || undefined;
             const senderUsername = digest.sender?.username || undefined;
 
             await this.jobService.createJobSync({
@@ -402,22 +355,14 @@ export class ScraperService {
       Logger.info(`Found ${jobsFound} potential jobs in ${channelUsername}`);
 
       // Find highest message ID from all processed messages
-      const allMessageIds = [
-        ...validMessages.map((m) => m.id),
-        ...digestMessages.map((m) => m.id),
-      ];
-      const highestMessageId =
-        allMessageIds.length > 0 ? Math.max(...allMessageIds) : undefined;
+      const allMessageIds = [...validMessages.map((m) => m.id), ...digestMessages.map((m) => m.id)];
+      const highestMessageId = allMessageIds.length > 0 ? Math.max(...allMessageIds) : undefined;
 
       return { jobsFound, highestMessageId };
     } catch (error: any) {
       // Handle Telegram FloodWait error (rate limiting)
-      if (
-        error?.message?.includes('FloodWaitError') ||
-        error?.message?.includes('wait of')
-      ) {
-        const waitSeconds =
-          error.message.match(/(\d+) seconds/)?.[1] || 'unknown';
+      if (error?.message?.includes('FloodWaitError') || error?.message?.includes('wait of')) {
+        const waitSeconds = error.message.match(/(\d+) seconds/)?.[1] || 'unknown';
         Logger.warn(
           `Rate limited on ${channelUsername}. Telegram requires waiting ${waitSeconds} seconds. Skipping for now.`
         );

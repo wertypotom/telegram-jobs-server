@@ -1,8 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
-import { ResumeService } from './resume.service';
-import { ApiResponse } from '@utils/response';
-import { AuthRequest } from '@middlewares/auth.middleware';
+import { AuthRequest } from '@shared/middlewares/auth.middleware';
 import { BadRequestError } from '@utils/errors';
+import { ApiResponse } from '@utils/response';
+import { NextFunction, Response } from 'express';
+
+import { ResumeService } from './resume.service';
 
 export class ResumeController {
   private resumeService: ResumeService;

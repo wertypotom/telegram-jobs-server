@@ -1,7 +1,6 @@
-import mongoose from 'mongoose';
-import { envConfig } from '@config/env.config';
 import { User } from '@modules/user/user.model';
 import { Logger } from '@utils/logger';
+
 import { Migration } from '../types';
 
 export const migration001: Migration = {
@@ -13,10 +12,7 @@ export const migration001: Migration = {
 
     // Find all users without viewedJobs field
     const usersToUpdate = await User.find({
-      $or: [
-        { viewedJobs: { $exists: false } },
-        { viewedJobs: null },
-      ],
+      $or: [{ viewedJobs: { $exists: false } }, { viewedJobs: null }],
     });
 
     Logger.info(`Found ${usersToUpdate.length} users to update`);
@@ -35,7 +31,7 @@ export const migration001: Migration = {
     }));
 
     const result = await User.bulkWrite(bulkOps);
-    
+
     Logger.info('Migration 001 completed', {
       matched: result.matchedCount,
       modified: result.modifiedCount,
@@ -44,11 +40,8 @@ export const migration001: Migration = {
 
   async down() {
     Logger.info('Rolling back migration 001: Remove viewedJobs field');
-    
-    await User.updateMany(
-      {},
-      { $unset: { viewedJobs: '' } }
-    );
+
+    await User.updateMany({}, { $unset: { viewedJobs: '' } });
 
     Logger.info('Migration 001 rolled back');
   },

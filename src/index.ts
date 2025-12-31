@@ -1,11 +1,13 @@
 import 'tsconfig-paths/register';
 import 'dotenv/config';
+
 import { connectDatabase } from '@config/database.config';
 import { envConfig } from '@config/env.config';
-import { Logger } from '@utils/logger';
-import app from './app';
-import { promises as fs } from 'fs';
 import { TelegramService } from '@modules/telegram/telegram.service';
+import { Logger } from '@utils/logger';
+import { promises as fs } from 'fs';
+
+import app from './app';
 
 // Initialize server
 const startServer = async (): Promise<void> => {
@@ -18,9 +20,7 @@ const startServer = async (): Promise<void> => {
 
     // Seed default channels
     const { seedChannels } = await import('@modules/channel/channel.seed');
-    const { cleanupInvalidChannels } = await import(
-      '@modules/channel/channel.cleanup'
-    );
+    const { cleanupInvalidChannels } = await import('@modules/channel/channel.cleanup');
     await cleanupInvalidChannels();
     await seedChannels();
 
@@ -29,9 +29,7 @@ const startServer = async (): Promise<void> => {
     await seedBundles();
 
     // Initialize Telegram notification bot (always runs - uses TELEGRAM_BOT_TOKEN)
-    const { TelegramBotService } = await import(
-      '@modules/notification/telegram-bot.service'
-    );
+    const { TelegramBotService } = await import('@modules/notification/telegram-bot.service');
     TelegramBotService.getInstance();
     Logger.info('Telegram notification bot initialized');
 
@@ -43,9 +41,7 @@ const startServer = async (): Promise<void> => {
       telegramService = new TelegramService();
       await telegramService.start();
 
-      const { ScraperService } = await import(
-        '@modules/scraper/scraper.service'
-      );
+      const { ScraperService } = await import('@modules/scraper/scraper.service');
       scraperService = new ScraperService();
       scraperService.start().catch((err: any) => {
         Logger.error('Failed to start scraper:', err);
@@ -56,9 +52,7 @@ const startServer = async (): Promise<void> => {
     }
 
     // Start job cleanup service
-    const { JobCleanupService } = await import(
-      '@modules/job/job-cleanup.service'
-    );
+    const { JobCleanupService } = await import('@modules/job/job-cleanup.service');
     const cleanupService = new JobCleanupService();
     cleanupService.start();
     Logger.info('Job cleanup service started (runs every 7 days)');
@@ -89,7 +83,7 @@ const startServer = async (): Promise<void> => {
     };
 
     // Global error handlers (CRITICAL: prevent crashes)
-    process.on('unhandledRejection', (reason, promise) => {
+    process.on('unhandledRejection', (reason) => {
       Logger.error('Unhandled Promise Rejection:', reason);
       // Don't crash the server - just log
     });

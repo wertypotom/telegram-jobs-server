@@ -1,6 +1,6 @@
+import { Logger } from '@utils/logger';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
-import { Logger } from '@utils/logger';
 
 let mongoServer: MongoMemoryServer;
 

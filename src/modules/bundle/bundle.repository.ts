@@ -1,5 +1,6 @@
+// Logger unused import removed
+
 import { Bundle, IBundleDocument } from './bundle.model';
-import { Logger } from '@utils/logger';
 
 export class BundleRepository {
   async findAll(): Promise<IBundleDocument[]> {
@@ -15,10 +16,7 @@ export class BundleRepository {
     return bundle.save();
   }
 
-  async update(
-    id: string,
-    data: Partial<IBundleDocument>
-  ): Promise<IBundleDocument | null> {
+  async update(id: string, data: Partial<IBundleDocument>): Promise<IBundleDocument | null> {
     return Bundle.findOneAndUpdate({ id }, data, { new: true }).exec();
   }
 

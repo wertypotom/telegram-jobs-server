@@ -1,5 +1,6 @@
-import { Job } from '../job/job.model';
 import { Logger } from '@utils/logger';
+
+import { Job } from '../job/job.model';
 
 /**
  * Job Cleanup Service
@@ -29,9 +30,7 @@ export class JobCleanupService {
       this.performCleanup();
     }, this.CLEANUP_INTERVAL_MS);
 
-    Logger.info(
-      `Job cleanup service started. Will run every ${this.RETENTION_DAYS} days.`
-    );
+    Logger.info(`Job cleanup service started. Will run every ${this.RETENTION_DAYS} days.`);
   }
 
   /**

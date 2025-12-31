@@ -1,5 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
 import { IUser } from '@shared/types/common.types';
+import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IUserDocument extends Omit<IUser, '_id'>, Document {}
 

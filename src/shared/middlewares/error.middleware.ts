@@ -1,14 +1,15 @@
-import { Request, Response, NextFunction } from 'express';
-import { AppError } from '@utils/errors';
-import { ErrorCode } from '../types/error-codes';
-import { Logger } from '@utils/logger';
 import { envConfig } from '@config/env.config';
+import { AppError } from '@utils/errors';
+import { Logger } from '@utils/logger';
+import { NextFunction, Request, Response } from 'express';
+
+import { ErrorCode } from '../types/error-codes';
 
 export const errorHandler = (
   err: Error | AppError,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
   if (err instanceof AppError) {
     Logger.error(`Operational error: ${err.message}`, {
@@ -33,8 +34,7 @@ export const errorHandler = (
   Logger.error('Unhandled error:', err);
 
   const statusCode = 500;
-  const message =
-    envConfig.nodeEnv === 'development' ? err.message : 'Internal Server Error';
+  const message = envConfig.nodeEnv === 'development' ? err.message : 'Internal Server Error';
 
   const response: any = {
     success: false,
@@ -52,11 +52,7 @@ export const errorHandler = (
   res.status(statusCode).json(response);
 };
 
-export const notFoundHandler = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
+export const notFoundHandler = (req: Request, res: Response): void => {
   res.status(404).json({
     success: false,
     error: {

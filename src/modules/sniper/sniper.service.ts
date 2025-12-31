@@ -1,11 +1,12 @@
-import { UserRepository } from '@modules/user/user.repository';
 import { JobRepository } from '@modules/job/job.repository';
-import { AiTailorService } from './services/ai-tailor.service';
-import { PdfGeneratorService } from './services/pdf-generator.service';
-import { DocxGeneratorService } from './services/docx-generator.service';
-import { TailoredResumeResponse } from './sniper.types';
+import { UserRepository } from '@modules/user/user.repository';
 import { BadRequestError, NotFoundError } from '@utils/errors';
 import { Logger } from '@utils/logger';
+
+import { AiTailorService } from './services/ai-tailor.service';
+import { DocxGeneratorService } from './services/docx-generator.service';
+import { PdfGeneratorService } from './services/pdf-generator.service';
+import { TailoredResumeResponse } from './sniper.types';
 
 export class SniperService {
   private userRepository: UserRepository;

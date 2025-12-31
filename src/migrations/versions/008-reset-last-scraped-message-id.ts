@@ -1,5 +1,6 @@
 import { Channel } from '@modules/channel/channel.model';
 import { Logger } from '@utils/logger';
+
 import { Migration } from '../types';
 
 export const migration008: Migration = {
@@ -7,9 +8,7 @@ export const migration008: Migration = {
   name: 'reset-last-scraped-message-id',
 
   async up() {
-    Logger.info(
-      'Running migration 008: Reset lastScrapedMessageId for all channels'
-    );
+    Logger.info('Running migration 008: Reset lastScrapedMessageId for all channels');
 
     try {
       // Remove lastScrapedMessageId from all channels to force full 7-day rescrape

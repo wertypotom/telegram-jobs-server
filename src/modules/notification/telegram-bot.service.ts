@@ -1,8 +1,8 @@
 import { envConfig } from '@config/env.config';
+import { Feedback } from '@modules/feedback/feedback.model';
+import { User } from '@modules/user/user.model';
 import { Logger } from '@utils/logger';
 import TelegramBot from 'node-telegram-bot-api';
-import { User } from '@modules/user/user.model';
-import { Feedback } from '@modules/feedback/feedback.model';
 
 interface ISession {
   lastMessageId?: number;
@@ -64,9 +64,7 @@ export class TelegramBotService {
     // Register command handlers
     this.bot.onText(/\/start/, (msg) => this.handleStart(msg));
     this.bot.onText(/\/menu/, (msg) => this.handleMenu(msg));
-    this.bot.onText(/\/subscribe (.+)/, (msg, match) =>
-      this.handleSubscribe(msg, match)
-    );
+    this.bot.onText(/\/subscribe (.+)/, (msg, match) => this.handleSubscribe(msg, match));
     this.bot.onText(/\/unsubscribe/, (msg) => this.handleUnsubscribe(msg));
     this.bot.onText(/\/status/, (msg) => this.handleStatus(msg));
     this.bot.onText(/\/help/, (msg) => this.handleHelp(msg));
@@ -190,8 +188,8 @@ What would you like to do?
         isSubscribed && !isPaused
           ? [{ text: '⏸️ Pause Notifications', callback_data: 'pause' }]
           : isSubscribed && isPaused
-          ? [{ text: '▶️ Resume Notifications', callback_data: 'resume' }]
-          : [],
+            ? [{ text: '▶️ Resume Notifications', callback_data: 'resume' }]
+            : [],
         [{ text: '📊 Check Status', callback_data: 'status' }],
         [{ text: '💬 Send Feedback', callback_data: 'feedback' }],
         // Full unsubscribe option (only if subscribed)
@@ -222,10 +220,7 @@ What would you like to do?
   /**
    * Handle token-based subscription (from deep link)
    */
-  private async handleTokenSubscription(
-    chatId: number,
-    token: string
-  ): Promise<void> {
+  private async handleTokenSubscription(chatId: number, token: string): Promise<void> {
     try {
       // Find user by token
       const user = await User.findOne({ telegramSubscriptionToken: token });
@@ -274,10 +269,7 @@ Manage your preferences:
       Logger.info(`User ${user._id} subscribed via token link`);
     } catch (error) {
       Logger.error('Token subscription error:', error);
-      await this.bot?.sendMessage(
-        chatId,
-        '❌ An error occurred. Please try again later.'
-      );
+      await this.bot?.sendMessage(chatId, '❌ An error occurred. Please try again later.');
     }
   }
 
@@ -339,10 +331,7 @@ Manage filters: https://jobsniper.com/settings/notifications
       Logger.info(`User ${userId} subscribed to notifications`);
     } catch (error) {
       Logger.error('Subscribe error:', error);
-      await this.bot?.sendMessage(
-        chatId,
-        '❌ An error occurred. Please try again later.'
-      );
+      await this.bot?.sendMessage(chatId, '❌ An error occurred. Please try again later.');
     }
   }
 
@@ -356,10 +345,7 @@ Manage filters: https://jobsniper.com/settings/notifications
       const user = await User.findOne({ telegramChatId: chatId.toString() });
 
       if (!user) {
-        await this.bot?.sendMessage(
-          chatId,
-          '⚠️ You are not subscribed to notifications.'
-        );
+        await this.bot?.sendMessage(chatId, '⚠️ You are not subscribed to notifications.');
         return;
       }
 
@@ -373,10 +359,7 @@ Manage filters: https://jobsniper.com/settings/notifications
       Logger.info(`User ${user._id} unsubscribed from notifications`);
     } catch (error) {
       Logger.error('Unsubscribe error:', error);
-      await this.bot?.sendMessage(
-        chatId,
-        '❌ An error occurred. Please try again later.'
-      );
+      await this.bot?.sendMessage(chatId, '❌ An error occurred. Please try again later.');
     }
   }
 
@@ -416,10 +399,7 @@ Your Telegram is still linked, but notifications are disabled.
       Logger.info(`User ${user._id} paused notifications`);
     } catch (error) {
       Logger.error('Pause error:', error);
-      await this.bot?.sendMessage(
-        chatId,
-        '❌ An error occurred. Please try again later.'
-      );
+      await this.bot?.sendMessage(chatId, '❌ An error occurred. Please try again later.');
     }
   }
 
@@ -457,10 +437,7 @@ Manage settings: https://jobsniper.com/settings/notifications
       Logger.info(`User ${user._id} resumed notifications`);
     } catch (error) {
       Logger.error('Resume error:', error);
-      await this.bot?.sendMessage(
-        chatId,
-        '❌ An error occurred. Please try again later.'
-      );
+      await this.bot?.sendMessage(chatId, '❌ An error occurred. Please try again later.');
     }
   }
 
@@ -495,19 +472,14 @@ Your Telegram has been completely disconnected from your account.
       `;
 
       const keyboard = {
-        inline_keyboard: [
-          [{ text: '🏠 Main Menu', callback_data: 'main_menu' }],
-        ],
+        inline_keyboard: [[{ text: '🏠 Main Menu', callback_data: 'main_menu' }]],
       };
 
       await this.bot?.sendMessage(chatId, text, { reply_markup: keyboard });
       Logger.info(`User ${user._id} fully unsubscribed and unlinked Telegram`);
     } catch (error) {
       Logger.error('Full unsubscribe error:', error);
-      await this.bot?.sendMessage(
-        chatId,
-        '❌ An error occurred. Please try again later.'
-      );
+      await this.bot?.sendMessage(chatId, '❌ An error occurred. Please try again later.');
     }
   }
 
@@ -532,15 +504,9 @@ Your Telegram has been completely disconnected from your account.
 ⚙️ Notification Settings
 
 Status: ✅ Active
-Filters: ${
-        user.notificationFilters
-          ? Object.keys(user.notificationFilters).length
-          : 0
-      } active
+Filters: ${user.notificationFilters ? Object.keys(user.notificationFilters).length : 0} active
 Last notification: ${
-        user.lastNotificationSent
-          ? new Date(user.lastNotificationSent).toLocaleString()
-          : 'Never'
+        user.lastNotificationSent ? new Date(user.lastNotificationSent).toLocaleString() : 'Never'
       }
 Quiet hours: ${
         user.quietHours?.enabled
@@ -561,10 +527,7 @@ Quiet hours: ${
       });
     } catch (error) {
       Logger.error('Status error:', error);
-      await this.bot?.sendMessage(
-        chatId,
-        '❌ An error occurred. Please try again later.'
-      );
+      await this.bot?.sendMessage(chatId, '❌ An error occurred. Please try again later.');
     }
   }
 
@@ -596,9 +559,7 @@ Quiet hours: ${
   /**
    * Handle callback queries from inline keyboards
    */
-  private async handleCallbackQuery(
-    query: TelegramBot.CallbackQuery
-  ): Promise<void> {
+  private async handleCallbackQuery(query: TelegramBot.CallbackQuery): Promise<void> {
     const chatId = query.message?.chat.id;
     const data = query.data;
 
@@ -698,13 +659,13 @@ What would you like to do?
         isSubscribed && !isPaused
           ? [{ text: '⏸️ Pause Notifications', callback_data: 'pause' }]
           : isSubscribed && isPaused
-          ? [{ text: '▶️ Resume Notifications', callback_data: 'resume' }]
-          : [
-              {
-                text: '🔔 Subscribe to Notifications',
-                callback_data: 'subscribe_info',
-              },
-            ],
+            ? [{ text: '▶️ Resume Notifications', callback_data: 'resume' }]
+            : [
+                {
+                  text: '🔔 Subscribe to Notifications',
+                  callback_data: 'subscribe_info',
+                },
+              ],
         [{ text: '📊 Check Status', callback_data: 'status' }],
         [
           {
@@ -778,10 +739,7 @@ What would you like to share?
   /**
    * Start feedback flow
    */
-  private async startFeedbackFlow(
-    chatId: number,
-    categoryData: string
-  ): Promise<void> {
+  private async startFeedbackFlow(chatId: number, categoryData: string): Promise<void> {
     const categoryMap = {
       fb_bug: { category: 'BUG' as const, emoji: '🐛', title: 'Bug Report' },
       fb_feature: {
@@ -806,8 +764,7 @@ What would you like to share?
       },
     };
 
-    const { category, emoji, title } =
-      categoryMap[categoryData as keyof typeof categoryMap];
+    const { category, emoji, title } = categoryMap[categoryData as keyof typeof categoryMap];
 
     this.sessions.set(chatId.toString(), {
       awaitingFeedback: {
@@ -849,10 +806,7 @@ What would you like to share?
   /**
    * Save feedback with rating
    */
-  private async saveFeedbackRating(
-    chatId: number,
-    rating: number
-  ): Promise<void> {
+  private async saveFeedbackRating(chatId: number, rating: number): Promise<void> {
     const session = this.sessions.get(chatId.toString());
 
     if (!session?.awaitingFeedback?.awaitingRating) return;
@@ -884,19 +838,14 @@ Thank you for helping us improve JobSniper! 🚀
       `;
 
       const keyboard = {
-        inline_keyboard: [
-          [{ text: '🏠 Main Menu', callback_data: 'main_menu' }],
-        ],
+        inline_keyboard: [[{ text: '🏠 Main Menu', callback_data: 'main_menu' }]],
       };
 
       await this.bot?.sendMessage(chatId, text, { reply_markup: keyboard });
       Logger.info(`Feedback received from chat ${chatId}`);
     } catch (error) {
       Logger.error('Save feedback error:', error);
-      await this.bot?.sendMessage(
-        chatId,
-        '❌ An error occurred. Please try again later.'
-      );
+      await this.bot?.sendMessage(chatId, '❌ An error occurred. Please try again later.');
     }
   }
 
@@ -922,9 +871,7 @@ Thank you for helping us improve JobSniper! 🚀
     const text = `
 🚀 New Job Match!
 
-${job.parsedData.jobTitle || 'Job Position'} at ${
-      job.parsedData.company || 'Company'
-    }
+${job.parsedData.jobTitle || 'Job Position'} at ${job.parsedData.company || 'Company'}
 💰 ${job.parsedData.salary || 'Salary not specified'}
 🏠 ${job.parsedData.isRemote ? 'Remote' : job.parsedData.location || 'On-site'}
 ⏰ Just posted

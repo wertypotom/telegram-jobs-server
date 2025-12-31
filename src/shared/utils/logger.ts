@@ -16,9 +16,8 @@ export class Logger {
   }
 
   static error(message: string, error?: any): void {
-    const errorDetails = error instanceof Error 
-      ? { message: error.message, stack: error.stack }
-      : error;
+    const errorDetails =
+      error instanceof Error ? { message: error.message, stack: error.stack } : error;
     console.error(this.formatMessage('ERROR', message, errorDetails));
   }
 

@@ -1,6 +1,7 @@
-import axios from 'axios';
 import { envConfig } from '@config/env.config';
 import { Logger } from '@utils/logger';
+import axios from 'axios';
+
 import { AIProvider } from './ai-provider.interface';
 
 /**
@@ -35,16 +36,12 @@ export class AbacusProvider implements AIProvider {
         requestBody.response_format = { type: 'json_object' };
       }
 
-      const response = await axios.post(
-        `${this.apiUrl}/chat/completions`,
-        requestBody,
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await axios.post(`${this.apiUrl}/chat/completions`, requestBody, {
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
       const content = response.data.choices[0].message.content;
       if (!content) {

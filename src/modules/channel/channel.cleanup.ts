@@ -6,12 +6,7 @@ import { Logger } from '@utils/logger';
  */
 export async function cleanupInvalidChannels(): Promise<void> {
   try {
-    const invalidChannels = [
-      '@remote_jobs_cis',
-      '@react_jobs',
-      '@python_jobs',
-      '@devops_jobs',
-    ];
+    const invalidChannels = ['@remote_jobs_cis', '@react_jobs', '@python_jobs', '@devops_jobs'];
 
     for (const username of invalidChannels) {
       const result = await Channel.deleteOne({ username });

@@ -1,4 +1,4 @@
-import { Schema, model, Document } from 'mongoose';
+import { Document, model, Schema } from 'mongoose';
 
 export interface IUserPreferences extends Document {
   userId: Schema.Types.ObjectId;
@@ -46,7 +46,4 @@ const userPreferencesSchema = new Schema<IUserPreferences>(
   }
 );
 
-export const UserPreferences = model<IUserPreferences>(
-  'UserPreferences',
-  userPreferencesSchema
-);
+export const UserPreferences = model<IUserPreferences>('UserPreferences', userPreferencesSchema);

@@ -1,5 +1,6 @@
 import { Job } from '@modules/job/job.model';
 import { Logger } from '@utils/logger';
+
 import { Migration } from '../types';
 
 export const migration009: Migration = {
@@ -12,16 +13,13 @@ export const migration009: Migration = {
     try {
       // For existing jobs without telegramMessageDate, use createdAt as fallback
       // This is a reasonable approximation since most jobs were scraped shortly after posting
-      const result = await Job.updateMany(
-        { telegramMessageDate: { $exists: false } },
-        [
-          {
-            $set: {
-              telegramMessageDate: '$createdAt',
-            },
+      const result = await Job.updateMany({ telegramMessageDate: { $exists: false } }, [
+        {
+          $set: {
+            telegramMessageDate: '$createdAt',
           },
-        ]
-      );
+        },
+      ]);
 
       Logger.info(
         `Migration 009 completed: Added telegramMessageDate to ${result.modifiedCount} existing jobs (using createdAt as fallback)`
@@ -33,9 +31,7 @@ export const migration009: Migration = {
   },
 
   async down() {
-    Logger.info(
-      'Rolling back migration 009: Remove telegramMessageDate field from jobs'
-    );
+    Logger.info('Rolling back migration 009: Remove telegramMessageDate field from jobs');
 
     try {
       const result = await Job.updateMany(

@@ -1,8 +1,9 @@
+import { Channel } from '@modules/channel/channel.model';
+import { NotFoundError } from '@utils/errors';
+import { Logger } from '@utils/logger';
+
 import { BundleRepository } from './bundle.repository';
 import { BundleInfo } from './bundle.types';
-import { Logger } from '@utils/logger';
-import { NotFoundError } from '@utils/errors';
-import { Channel } from '@modules/channel/channel.model';
 
 export class BundleService {
   private bundleRepository: BundleRepository;
@@ -14,10 +15,7 @@ export class BundleService {
   /**
    * Validate and repair bundle channels - replace missing channels with valid ones
    */
-  private async validateBundleChannels(
-    channels: string[],
-    category: string
-  ): Promise<string[]> {
+  private async validateBundleChannels(channels: string[], category: string): Promise<string[]> {
     const validChannels: string[] = [];
 
     for (const username of channels) {
@@ -63,10 +61,7 @@ export class BundleService {
           title: bundle.title,
           description: bundle.description,
           icon: bundle.icon,
-          channels: await this.validateBundleChannels(
-            bundle.channels,
-            bundle.category
-          ),
+          channels: await this.validateBundleChannels(bundle.channels, bundle.category),
           order: bundle.order,
           category: bundle.category,
         }))
@@ -92,10 +87,7 @@ export class BundleService {
         title: bundle.title,
         description: bundle.description,
         icon: bundle.icon,
-        channels: await this.validateBundleChannels(
-          bundle.channels,
-          bundle.category
-        ),
+        channels: await this.validateBundleChannels(bundle.channels, bundle.category),
         order: bundle.order,
         category: bundle.category,
       };

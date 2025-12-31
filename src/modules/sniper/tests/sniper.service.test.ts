@@ -1,9 +1,9 @@
-import { SniperService } from '../sniper.service';
-import { UserRepository } from '../../user/user.repository';
 import { JobRepository } from '../../job/job.repository';
+import { UserRepository } from '../../user/user.repository';
 import { AiTailorService } from '../services/ai-tailor.service';
-import { PdfGeneratorService } from '../services/pdf-generator.service';
 import { DocxGeneratorService } from '../services/docx-generator.service';
+import { PdfGeneratorService } from '../services/pdf-generator.service';
+import { SniperService } from '../sniper.service';
 
 // Mock dependencies
 jest.mock('../../user/user.repository');
@@ -27,10 +27,8 @@ describe('SniperService', () => {
     mockUserRepo = (UserRepository as unknown as jest.Mock).mock.instances[0];
     mockJobRepo = (JobRepository as unknown as jest.Mock).mock.instances[0];
     mockAiTailor = (AiTailorService as unknown as jest.Mock).mock.instances[0];
-    mockPdfGen = (PdfGeneratorService as unknown as jest.Mock).mock
-      .instances[0];
-    mockDocxGen = (DocxGeneratorService as unknown as jest.Mock).mock
-      .instances[0];
+    mockPdfGen = (PdfGeneratorService as unknown as jest.Mock).mock.instances[0];
+    mockDocxGen = (DocxGeneratorService as unknown as jest.Mock).mock.instances[0];
   });
 
   describe('generateTailoredResume', () => {
@@ -85,9 +83,9 @@ describe('SniperService', () => {
         masterResumeText: null,
       } as any);
 
-      await expect(
-        service.generateTailoredResume('user-1', 'job-1')
-      ).rejects.toThrow(/upload your master resume/);
+      await expect(service.generateTailoredResume('user-1', 'job-1')).rejects.toThrow(
+        /upload your master resume/
+      );
     });
 
     it('should throw BadRequestError if job is not parsed', async () => {
@@ -97,9 +95,9 @@ describe('SniperService', () => {
         parsedData: null,
       } as any);
 
-      await expect(
-        service.generateTailoredResume('user-1', 'job-1')
-      ).rejects.toThrow(/Job has not been parsed/);
+      await expect(service.generateTailoredResume('user-1', 'job-1')).rejects.toThrow(
+        /Job has not been parsed/
+      );
     });
   });
 });

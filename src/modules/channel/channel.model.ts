@@ -1,5 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
 import { IChannel } from '@shared/types/common.types';
+import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IChannelDocument extends Omit<IChannel, '_id'>, Document {}
 
@@ -61,7 +61,4 @@ channelSchema.index({ isMonitored: 1 });
 channelSchema.index({ category: 1 });
 channelSchema.index({ tags: 1 });
 
-export const Channel = mongoose.model<IChannelDocument>(
-  'Channel',
-  channelSchema
-);
+export const Channel = mongoose.model<IChannelDocument>('Channel', channelSchema);

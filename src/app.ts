@@ -1,12 +1,14 @@
 import 'tsconfig-paths/register';
 import 'dotenv/config';
-import express, { Application } from 'express';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
+
 import { envConfig } from '@config/env.config';
 import { errorHandler, notFoundHandler } from '@middlewares/error.middleware';
-import routes from './modules';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import express, { Application } from 'express';
 import path from 'path';
+
+import routes from './modules';
 
 const app: Application = express();
 

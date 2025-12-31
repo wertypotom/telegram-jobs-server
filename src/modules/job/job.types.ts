@@ -1,4 +1,4 @@
-import { IJob, ParsedJobData } from '../../shared/types/common.types';
+import { ParsedJobData } from '../../shared/types/common.types';
 
 export interface JobFilterOptions {
   channelIds?: string[]; // Filter by subscribed channels

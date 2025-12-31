@@ -8,9 +8,7 @@ export const envConfig = {
   mongodbUri: process.env.MONGODB_URI || '',
 
   // JWT
-  jwtSecret: String(
-    process.env.JWT_SECRET || 'default-secret-change-in-production'
-  ),
+  jwtSecret: String(process.env.JWT_SECRET || 'default-secret-change-in-production'),
   jwtExpiresIn: (process.env.JWT_EXPIRES_IN || '7d') as string | number,
 
   // Telegram

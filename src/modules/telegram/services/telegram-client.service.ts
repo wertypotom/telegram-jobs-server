@@ -1,9 +1,9 @@
-import { TelegramClient } from 'telegram';
-import { StringSession } from 'telegram/sessions';
 import { envConfig } from '@config/env.config';
 import { Logger } from '@utils/logger';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { TelegramClient } from 'telegram';
+import { StringSession } from 'telegram/sessions';
 
 export class TelegramClientService {
   private client: TelegramClient | null = null;
@@ -70,10 +70,7 @@ export class TelegramClientService {
 
   private async saveSession(sessionString: string): Promise<void> {
     try {
-      await fs.writeFile(
-        this.sessionPath,
-        JSON.stringify({ session: sessionString }, null, 2)
-      );
+      await fs.writeFile(this.sessionPath, JSON.stringify({ session: sessionString }, null, 2));
       Logger.info('Telegram session saved');
     } catch (error) {
       Logger.error('Failed to save session:', error);

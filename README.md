@@ -557,6 +557,9 @@ npm run migrate:down      # Run migrations down
 npm run migrate:status    # Check migration status
 npm run channels:seed     # Seed channels to database
 npm run channels:extract  # Extract channel info from Telegram
+npm test                  # Run test suite
+npm run test:watch        # Run tests in watch mode
+npm run test:coverage     # Generate coverage report
 ```
 
 ## 🔐 Security Practices
@@ -784,16 +787,40 @@ async getJob(id: string) {
 
 ### Phase 4: Scale & Polish (In Progress)
 
+- [x] Unit & integration tests
+- [x] CI/CD Pipeline (GitHub Actions)
 - [ ] Personalized job recommendations (ML-based)
 - [ ] Application success tracking
 - [ ] Resume A/B testing insights
 - [ ] Interview preparation suggestions
 - [ ] Rate limiting middleware
 - [ ] API documentation (Swagger/OpenAPI)
-- [ ] Unit & integration tests
 - [ ] Email notifications (alternative to Telegram)
 - [ ] Admin dashboard
 - [ ] Analytics and insights panel
+
+## 🧪 Testing
+
+The project maintains comprehensive test coverage using **Jest**, **Supertest**, and **MongoDB Memory Server**.
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Generate coverage report
+npm run test:coverage
+```
+
+### Test Architecture
+
+- **Unit Tests**: Focus on Services and utilities, mocking dependencies/repositories.
+- **Integration Tests**: Focus on Routes/Controllers, using an in-memory MongoDB instance to verify end-to-end flows.
+- **CI/CD**: Tests run automatically on every push/PR via GitHub Actions.
 
 ## 📝 License
 

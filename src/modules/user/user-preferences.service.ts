@@ -1,7 +1,4 @@
-import {
-  UserPreferencesRepository,
-  JobFilters,
-} from './user-preferences.repository';
+import { JobFilters, UserPreferencesRepository } from './user-preferences.repository';
 
 export class UserPreferencesService {
   private preferencesRepository: UserPreferencesRepository;
@@ -29,10 +26,7 @@ export class UserPreferencesService {
   }
 
   async saveFilters(userId: string, filters: JobFilters): Promise<JobFilters> {
-    const preferences = await this.preferencesRepository.upsertFilters(
-      userId,
-      filters
-    );
+    const preferences = await this.preferencesRepository.upsertFilters(userId, filters);
     return preferences.jobFilters;
   }
 }

@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
 import { Channel } from '@modules/channel/channel.model';
 import { Logger } from '@utils/logger';
+
 import { Migration } from '../types';
 
 export const migration005: Migration = {
@@ -8,9 +8,7 @@ export const migration005: Migration = {
   name: 'add-channel-category-tags',
 
   async up() {
-    Logger.info(
-      'Running migration 002: Add category and tags fields to channels'
-    );
+    Logger.info('Running migration 002: Add category and tags fields to channels');
 
     // Find all channels without category or tags fields
     const channelsToUpdate = await Channel.find({
@@ -44,9 +42,7 @@ export const migration005: Migration = {
       modified: result.modifiedCount,
     });
 
-    Logger.warn(
-      'IMPORTANT: Re-run channel seed to populate correct categories and tags'
-    );
+    Logger.warn('IMPORTANT: Re-run channel seed to populate correct categories and tags');
   },
 
   async down() {

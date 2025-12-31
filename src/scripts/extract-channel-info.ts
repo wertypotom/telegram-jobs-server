@@ -1,13 +1,12 @@
+import { envConfig } from '@config/env.config';
+import { AIProviderFactory } from '@shared/providers/ai-provider.factory';
+import { Logger } from '@utils/logger';
 import dotenv from 'dotenv';
 import path from 'path';
+import { Api, TelegramClient } from 'telegram';
+import { StringSession } from 'telegram/sessions';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-
-import { TelegramClient, Api } from 'telegram';
-import { StringSession } from 'telegram/sessions';
-import { envConfig } from '@config/env.config';
-import { Logger } from '@utils/logger';
-import { AIProviderFactory } from '@shared/providers/ai-provider.factory';
 
 /**
  * Extract Telegram Channel Information Script
@@ -57,10 +56,7 @@ function formatMemberCount(count: number | undefined): string {
 /**
  * Use AI to create a concise, professional description matching the app's format
  */
-async function summarizeDescription(
-  title: string,
-  rawDescription: string
-): Promise<string> {
+async function summarizeDescription(title: string, rawDescription: string): Promise<string> {
   try {
     const aiProvider = AIProviderFactory.getProvider();
 
@@ -89,11 +85,7 @@ Raw Description: ${rawDescription}
 
 Create a concise description:`;
 
-    const response = await aiProvider.generateContent(
-      prompt,
-      systemPrompt,
-      false
-    ); // Plain text mode
+    const response = await aiProvider.generateContent(prompt, systemPrompt, false); // Plain text mode
     const summary = response.trim().replace(/^["']|["']$/g, ''); // Remove quotes if present
 
     // Fallback if AI response is too long or empty
@@ -103,7 +95,7 @@ Create a concise description:`;
 
     return summary;
   } catch (error) {
-    Logger.warn('AI summarization failed, using fallback');
+    Logger.warn('AI summarization failed, using fallback', error);
     return fallbackSummarizeDescription(rawDescription);
   }
 }
@@ -111,12 +103,9 @@ Create a concise description:`;
 /**
  * Fallback description summarization (simple truncation)
  */
-function fallbackSummarizeDescription(
-  description: string,
-  maxLength: number = 60
-): string {
+function fallbackSummarizeDescription(description: string, maxLength: number = 60): string {
   // Remove URLs, mentions, and extra whitespace
-  let clean = description
+  const clean = description
     .replace(/https?:\/\/\S+/g, '') // Remove URLs
     .replace(/@\w+/g, '') // Remove mentions
     .replace(/\n+/g, ' ') // Replace newlines with spaces
@@ -141,10 +130,7 @@ function fallbackSummarizeDescription(
 /**
  * Use AI to suggest the most appropriate category
  */
-async function suggestCategoryWithAI(
-  title: string,
-  description: string
-): Promise<string> {
+async function suggestCategoryWithAI(title: string, description: string): Promise<string> {
   try {
     const aiProvider = AIProviderFactory.getProvider();
 
@@ -170,11 +156,7 @@ Channel Description: ${description}
 
 What is the most appropriate category?`;
 
-    const response = await aiProvider.generateContent(
-      prompt,
-      systemPrompt,
-      false
-    ); // Plain text mode
+    const response = await aiProvider.generateContent(prompt, systemPrompt, false); // Plain text mode
     const category = response.trim().replace(/["']/g, '');
 
     // Validate it's a known category
@@ -199,7 +181,7 @@ What is the most appropriate category?`;
     // Fallback to keyword matching
     return suggestCategoryKeywords(title, description);
   } catch (error) {
-    Logger.warn('AI categorization failed, using keyword matching');
+    Logger.warn('AI categorization failed, using keyword matching', error);
     return suggestCategoryKeywords(title, description);
   }
 }
@@ -214,16 +196,7 @@ function suggestCategoryKeywords(title: string, description: string): string {
 
   // Category mapping with keywords
   const categories = {
-    DevOps: [
-      'devops',
-      'kubernetes',
-      'docker',
-      'aws',
-      'azure',
-      'gcp',
-      'cloud',
-      'infrastructure',
-    ],
+    DevOps: ['devops', 'kubernetes', 'docker', 'aws', 'azure', 'gcp', 'cloud', 'infrastructure'],
     Backend: [
       'backend',
       'nodejs',
@@ -254,16 +227,7 @@ function suggestCategoryKeywords(title: string, description: string): string {
       'web dev',
       'webdev',
     ],
-    Mobile: [
-      'ios',
-      'android',
-      'mobile',
-      'swift',
-      'kotlin',
-      'react native',
-      'flutter',
-      'xamarin',
-    ],
+    Mobile: ['ios', 'android', 'mobile', 'swift', 'kotlin', 'react native', 'flutter', 'xamarin'],
     'Data Science': [
       'data science',
       'machine learning',
@@ -275,39 +239,12 @@ function suggestCategoryKeywords(title: string, description: string): string {
       'data engineer',
       'nlp',
     ],
-    Blockchain: [
-      'blockchain',
-      'crypto',
-      'ethereum',
-      'defi',
-      'web3',
-      'solidity',
-      'smart contract',
-    ],
-    QA: [
-      'qa',
-      'quality assurance',
-      'testing',
-      'test automation',
-      'тестирование',
-    ],
+    Blockchain: ['blockchain', 'crypto', 'ethereum', 'defi', 'web3', 'solidity', 'smart contract'],
+    QA: ['qa', 'quality assurance', 'testing', 'test automation', 'тестирование'],
     GameDev: ['gamedev', 'game dev', 'unity', 'unreal', 'game development'],
-    InfoSec: [
-      'security',
-      'cybersecurity',
-      'infosec',
-      'pentesting',
-      'безопасность',
-    ],
+    InfoSec: ['security', 'cybersecurity', 'infosec', 'pentesting', 'безопасность'],
     Database: ['database', 'mongodb', 'postgresql', 'mysql', 'sql', 'dba'],
-    'General IT': [
-      'junior',
-      'it jobs',
-      'developer',
-      'tech jobs',
-      'remote',
-      'вакансии',
-    ],
+    'General IT': ['junior', 'it jobs', 'developer', 'tech jobs', 'remote', 'вакансии'],
   };
 
   // First check title (higher priority)
@@ -362,9 +299,7 @@ async function extractChannelInfo() {
 
     const channelInfos: ChannelInfo[] = [];
 
-    Logger.info(
-      `\n📊 Extracting info for ${CHANNELS_TO_EXTRACT.length} channels...\n`
-    );
+    Logger.info(`\n📊 Extracting info for ${CHANNELS_TO_EXTRACT.length} channels...\n`);
 
     for (const username of CHANNELS_TO_EXTRACT) {
       try {
@@ -401,10 +336,7 @@ async function extractChannelInfo() {
 
         // Use AI for category suggestion
         Logger.info(`  Analyzing category...`);
-        const suggestedCategory = await suggestCategoryWithAI(
-          title,
-          rawDescription
-        );
+        const suggestedCategory = await suggestCategoryWithAI(title, rawDescription);
 
         const info: ChannelInfo = {
           username: normalizedUsername,
@@ -416,9 +348,7 @@ async function extractChannelInfo() {
 
         channelInfos.push(info);
         Logger.info(
-          `  ✓ ${title} - ${formatMemberCount(
-            memberCount
-          )} members (${suggestedCategory})`
+          `  ✓ ${title} - ${formatMemberCount(memberCount)} members (${suggestedCategory})`
         );
 
         // Delay to avoid rate limiting

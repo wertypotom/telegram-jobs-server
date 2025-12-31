@@ -1,4 +1,4 @@
-import { User, IUserDocument } from '@modules/user/user.model';
+import { IUserDocument, User } from '@modules/user/user.model';
 import { IUser } from '@shared/types/common.types';
 
 export class UserRepository {

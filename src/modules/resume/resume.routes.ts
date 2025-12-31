@@ -1,9 +1,10 @@
+import { envConfig } from '@config/env.config';
+import { authenticate } from '@middlewares/auth.middleware';
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
+
 import { ResumeController } from './resume.controller';
-import { authenticate } from '@middlewares/auth.middleware';
-import { envConfig } from '@config/env.config';
 
 const router = Router();
 const resumeController = new ResumeController();

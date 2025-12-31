@@ -1,7 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
 import { AuthRequest } from '@shared/middlewares/auth.middleware';
-import { JobService } from './job.service';
 import { ApiResponse } from '@utils/response';
+import { NextFunction, Request, Response } from 'express';
+
+import { JobService } from './job.service';
 import { JobFilterOptions } from './job.types';
 
 export class JobController {
@@ -11,11 +12,7 @@ export class JobController {
     this.jobService = new JobService();
   }
 
-  getJobs = async (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  getJobs = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { filters = {}, pagination = {} } = req.body;
       const { limit = 20, offset = 0 } = pagination;
@@ -42,11 +39,7 @@ export class JobController {
     }
   };
 
-  getJobById = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  getJobById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
       const job = await this.jobService.getJobById(id);
@@ -56,11 +49,7 @@ export class JobController {
     }
   };
 
-  markJobAsViewed = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  markJobAsViewed = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
       const userId = (req as any).userId;
@@ -72,11 +61,7 @@ export class JobController {
     }
   };
 
-  searchSkills = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  searchSkills = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { q } = req.query;
       const skills = await this.jobService.searchSkills(q as string);
@@ -86,21 +71,11 @@ export class JobController {
     }
   };
 
-  searchJobFunctions = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  searchJobFunctions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { q } = req.query;
-      const jobFunctions = await this.jobService.searchJobFunctions(
-        q as string
-      );
-      ApiResponse.success(
-        res,
-        jobFunctions,
-        'Job functions retrieved successfully'
-      );
+      const jobFunctions = await this.jobService.searchJobFunctions(q as string);
+      ApiResponse.success(res, jobFunctions, 'Job functions retrieved successfully');
     } catch (error) {
       next(error);
     }

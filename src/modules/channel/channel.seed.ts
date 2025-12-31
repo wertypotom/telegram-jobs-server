@@ -1,4 +1,5 @@
 import { Logger } from '@utils/logger';
+
 import { Channel } from './channel.model';
 import { RecommendedChannel } from './channel.types';
 

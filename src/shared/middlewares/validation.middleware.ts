@@ -1,11 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { Schema } from 'joi';
 import { BadRequestError } from '@utils/errors';
-
-interface ValidationError {
-  field: string;
-  message: string;
-}
+import { NextFunction, Request, Response } from 'express';
+import { Schema } from 'joi';
 
 export const validate = (schema: Schema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -15,11 +10,6 @@ export const validate = (schema: Schema) => {
     });
 
     if (error) {
-      const errors: ValidationError[] = error.details.map((detail) => ({
-        field: detail.path.join('.'),
-        message: detail.message,
-      }));
-
       throw new BadRequestError('Validation failed');
     }
 

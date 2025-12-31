@@ -1,12 +1,13 @@
-import { Logger } from '@utils/logger';
-import { BadRequestError } from '@utils/errors';
-import { ErrorCode } from '@shared/types/error-codes';
-import { UserRepository } from '@modules/user/user.repository';
-import { ChannelRepository } from './channel.repository';
-import { TelegramClientService } from '@modules/telegram/services/telegram-client.service';
 import { ScraperService } from '@modules/scraper/scraper.service';
-import { ChannelInfo, RecommendedChannel } from './channel.types';
+import { TelegramClientService } from '@modules/telegram/services/telegram-client.service';
+import { UserRepository } from '@modules/user/user.repository';
+import { ErrorCode } from '@shared/types/error-codes';
+import { BadRequestError } from '@utils/errors';
+import { Logger } from '@utils/logger';
+
 import { recommendedChannels } from './channel.config';
+import { ChannelRepository } from './channel.repository';
+import { ChannelInfo, RecommendedChannel } from './channel.types';
 
 /**
  * ChannelService - Service-Centric Implementation
@@ -53,8 +54,7 @@ export class ChannelService {
     const lastReset = new Date(changes.lastResetDate);
     const now = new Date();
     const isNewMonth =
-      now.getMonth() !== lastReset.getMonth() ||
-      now.getFullYear() !== lastReset.getFullYear();
+      now.getMonth() !== lastReset.getMonth() || now.getFullYear() !== lastReset.getFullYear();
 
     if (isNewMonth) {
       changes.count = 0;
@@ -106,9 +106,7 @@ export class ChannelService {
 
       // Get channel details from DB
       const channels = await Promise.all(
-        user.subscribedChannels.map((username) =>
-          this.channelRepository.findByUsername(username)
-        )
+        user.subscribedChannels.map((username) => this.channelRepository.findByUsername(username))
       );
 
       return channels
@@ -313,9 +311,7 @@ export class ChannelService {
       // CURATED CHANNELS ONLY: Validate all channels exist in DB
       const validationResults = await Promise.all(
         channelUsernames.map(async (username) => {
-          const existing = await this.channelRepository.findByUsername(
-            username
-          );
+          const existing = await this.channelRepository.findByUsername(username);
           return { username, exists: !!existing };
         })
       );
@@ -344,9 +340,7 @@ export class ChannelService {
         hasCompletedOnboarding: true,
       });
 
-      Logger.info(
-        `User ${userId} subscribed to ${channelUsernames.length} channels`
-      );
+      Logger.info(`User ${userId} subscribed to ${channelUsernames.length} channels`);
 
       // IMMEDIATE SCRAPE: Trigger scraping for newly subscribed channels (if they haven't been scraped recently)
       if (newChannels.length > 0) {
@@ -359,9 +353,7 @@ export class ChannelService {
         });
       }
 
-      Logger.info(
-        `User ${userId} subscribed to ${channelUsernames.length} channels`
-      );
+      Logger.info(`User ${userId} subscribed to ${channelUsernames.length} channels`);
 
       return {
         success: true,
@@ -442,8 +434,7 @@ export class ChannelService {
       const swapsRemaining =
         updatedUser?.plan === 'premium'
           ? -1 // -1 indicates unlimited
-          : this.MAX_FREE_SWAPS -
-            (updatedUser?.subscriptionChanges?.count || 0);
+          : this.MAX_FREE_SWAPS - (updatedUser?.subscriptionChanges?.count || 0);
 
       await this.userRepository.update(userId, {
         subscribedChannels: updatedChannels,
@@ -501,8 +492,7 @@ export class ChannelService {
       const swapsRemaining =
         updatedUser?.plan === 'premium'
           ? -1
-          : this.MAX_FREE_SWAPS -
-            (updatedUser?.subscriptionChanges?.count || 0);
+          : this.MAX_FREE_SWAPS - (updatedUser?.subscriptionChanges?.count || 0);
 
       Logger.info(
         `User ${userId} unsubscribed from ${channelUsername}. Total channels: ${updatedChannels.length}`
@@ -553,9 +543,7 @@ export class ChannelService {
    * Private helper method
    */
   private async scrapeNewChannels(channelUsernames: string[]): Promise<void> {
-    Logger.info(
-      `Starting immediate scrape for ${channelUsernames.length} new channels`
-    );
+    Logger.info(`Starting immediate scrape for ${channelUsernames.length} new channels`);
 
     for (const username of channelUsernames) {
       try {
@@ -594,10 +582,7 @@ export class ChannelService {
 
       return dailyAverage;
     } catch (error) {
-      Logger.error(
-        `Failed to calculate daily job count for ${channelUsername}:`,
-        error
-      );
+      Logger.error(`Failed to calculate daily job count for ${channelUsername}:`, error);
       return 0;
     }
   }

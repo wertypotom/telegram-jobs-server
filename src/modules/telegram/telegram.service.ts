@@ -1,9 +1,10 @@
-import { NewMessage, NewMessageEvent } from 'telegram/events';
-import { TelegramClientService } from './services/telegram-client.service';
-import { ChannelManagerService } from './services/channel-manager.service';
+import { envConfig } from '@config/env.config';
 import { JobService } from '@modules/job/job.service';
 import { Logger } from '@utils/logger';
-import { envConfig } from '@config/env.config';
+import { NewMessage, NewMessageEvent } from 'telegram/events';
+
+import { ChannelManagerService } from './services/channel-manager.service';
+import { TelegramClientService } from './services/telegram-client.service';
 
 export class TelegramService {
   private clientService: TelegramClientService;
@@ -21,9 +22,7 @@ export class TelegramService {
     try {
       // Check if Telegram credentials are configured
       if (!envConfig.telegramApiId || !envConfig.telegramApiHash) {
-        Logger.warn(
-          'Telegram credentials not configured. Skipping Telegram listener.'
-        );
+        Logger.warn('Telegram credentials not configured. Skipping Telegram listener.');
         return;
       }
 
@@ -53,10 +52,7 @@ export class TelegramService {
     const client = await this.clientService.getClient();
 
     // Add event handler for new messages
-    client.addEventHandler(
-      this.handleNewMessage.bind(this),
-      new NewMessage({})
-    );
+    client.addEventHandler(this.handleNewMessage.bind(this), new NewMessage({}));
 
     this.isListening = true;
     Logger.info('Listening for new Telegram messages');

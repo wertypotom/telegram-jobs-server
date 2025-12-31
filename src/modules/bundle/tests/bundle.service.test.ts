@@ -1,7 +1,7 @@
-import { BundleService } from '../bundle.service';
-import { BundleRepository } from '../bundle.repository';
 import { Channel } from '@modules/channel/channel.model';
-import { NotFoundError } from '@utils/errors';
+
+import { BundleRepository } from '../bundle.repository';
+import { BundleService } from '../bundle.service';
 
 // Mock dependencies
 jest.mock('../bundle.repository');
@@ -15,8 +15,7 @@ describe('BundleService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     service = new BundleService();
-    mockBundleRepo = (BundleRepository as unknown as jest.Mock).mock
-      .instances[0];
+    mockBundleRepo = (BundleRepository as unknown as jest.Mock).mock.instances[0];
 
     // Default Channel mocks
     (Channel.findOne as jest.Mock).mockImplementation(() => ({
@@ -56,9 +55,7 @@ describe('BundleService', () => {
 
       // ch1 exists, ch2 missing
       (Channel.findOne as jest.Mock).mockImplementation(({ username }) => {
-        return username === 'ch1'
-          ? Promise.resolve({ username })
-          : Promise.resolve(null);
+        return username === 'ch1' ? Promise.resolve({ username }) : Promise.resolve(null);
       });
 
       // Replacement finding
@@ -99,9 +96,7 @@ describe('BundleService', () => {
     it('should throw NotFoundError if bundle not found', async () => {
       mockBundleRepo.findById.mockResolvedValue(null);
 
-      await expect(service.getBundleById('invalid')).rejects.toThrow(
-        /not found/
-      );
+      await expect(service.getBundleById('invalid')).rejects.toThrow(/not found/);
     });
   });
 });

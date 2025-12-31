@@ -1,9 +1,10 @@
-import request from 'supertest';
-import app from '../../../app';
+import mongoose from 'mongoose';
 import { getToken } from 'next-auth/jwt';
+import request from 'supertest';
+
+import app from '../../../app';
 import { UserRepository } from '../../user/user.repository';
 import { FileExtractorService } from '../services/file-extractor.service';
-import mongoose from 'mongoose';
 
 // Mock dependencies
 jest.mock('next-auth/jwt');

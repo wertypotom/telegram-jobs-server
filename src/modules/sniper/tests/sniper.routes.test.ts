@@ -1,12 +1,13 @@
-import request from 'supertest';
-import app from '../../../app';
-import { getToken } from 'next-auth/jwt';
-import { UserRepository } from '../../user/user.repository';
-import { JobRepository } from '../../job/job.repository';
-import { AiTailorService } from '../services/ai-tailor.service';
-import { PdfGeneratorService } from '../services/pdf-generator.service';
-import { DocxGeneratorService } from '../services/docx-generator.service';
 import mongoose from 'mongoose';
+import { getToken } from 'next-auth/jwt';
+import request from 'supertest';
+
+import app from '../../../app';
+import { JobRepository } from '../../job/job.repository';
+import { UserRepository } from '../../user/user.repository';
+import { AiTailorService } from '../services/ai-tailor.service';
+import { DocxGeneratorService } from '../services/docx-generator.service';
+import { PdfGeneratorService } from '../services/pdf-generator.service';
 
 // Mock dependencies
 jest.mock('next-auth/jwt');
@@ -34,12 +35,12 @@ describe('Sniper Routes Integration Tests', () => {
     });
 
     // Mock Generators
-    (
-      PdfGeneratorService.prototype.generateResume as jest.Mock
-    ).mockResolvedValue('/tmp/resume.pdf');
-    (
-      DocxGeneratorService.prototype.generateResume as jest.Mock
-    ).mockResolvedValue('/tmp/resume.docx');
+    (PdfGeneratorService.prototype.generateResume as jest.Mock).mockResolvedValue(
+      '/tmp/resume.pdf'
+    );
+    (DocxGeneratorService.prototype.generateResume as jest.Mock).mockResolvedValue(
+      '/tmp/resume.docx'
+    );
 
     // Seed Data
     const userRepo = new UserRepository();
@@ -66,9 +67,7 @@ describe('Sniper Routes Integration Tests', () => {
 
   describe('POST /api/sniper/generate', () => {
     it('should generate tailored resume returning URLs', async () => {
-      const response = await request(app)
-        .post('/api/sniper/generate')
-        .send({ jobId: mockJobId });
+      const response = await request(app).post('/api/sniper/generate').send({ jobId: mockJobId });
 
       expect(response.status).toBe(200);
       expect(response.body.data.pdfUrl).toBeTruthy();
@@ -83,9 +82,7 @@ describe('Sniper Routes Integration Tests', () => {
       const userRepo = new UserRepository();
       await userRepo.updateById(mockUserId, { masterResumeText: null } as any);
 
-      const response = await request(app)
-        .post('/api/sniper/generate')
-        .send({ jobId: mockJobId });
+      const response = await request(app).post('/api/sniper/generate').send({ jobId: mockJobId });
 
       expect(response.status).toBe(400);
       expect(response.body.error.message).toMatch(/upload your master resume/);

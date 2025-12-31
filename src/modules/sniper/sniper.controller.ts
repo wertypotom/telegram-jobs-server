@@ -1,7 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
-import { SniperService } from './sniper.service';
+import { AuthRequest } from '@shared/middlewares/auth.middleware';
 import { ApiResponse } from '@utils/response';
-import { AuthRequest } from '@middlewares/auth.middleware';
+import { NextFunction, Response } from 'express';
+
+import { SniperService } from './sniper.service';
 import { TailorResumeRequest } from './sniper.types';
 
 export class SniperController {

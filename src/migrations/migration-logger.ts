@@ -1,7 +1,8 @@
+import { Logger } from '@utils/logger';
 import fs from 'fs/promises';
 import path from 'path';
+
 import { MigrationLog, MigrationLogEntry } from './types';
-import { Logger } from '@utils/logger';
 
 const LOG_FILE_PATH = path.join(__dirname, 'migration-log.json');
 
@@ -42,9 +43,7 @@ export class MigrationLogger {
   }
 
   hasMigration(version: number): boolean {
-    return this.log.migrations.some(
-      (m) => m.version === version && m.status === 'success'
-    );
+    return this.log.migrations.some((m) => m.version === version && m.status === 'success');
   }
 
   getAllMigrations(): MigrationLogEntry[] {

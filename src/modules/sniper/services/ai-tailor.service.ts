@@ -1,8 +1,9 @@
-import axios from 'axios';
 import { envConfig } from '@config/env.config';
-import { Logger } from '@utils/logger';
-import { TailoredContent } from '../sniper.types';
 import { InternalServerError } from '@utils/errors';
+import { Logger } from '@utils/logger';
+import axios from 'axios';
+
+import { TailoredContent } from '../sniper.types';
 
 export class AiTailorService {
   private apiKey: string;
@@ -13,10 +14,7 @@ export class AiTailorService {
     this.apiUrl = envConfig.abacusApiUrl;
   }
 
-  async tailorResume(
-    masterResume: string,
-    jobDescription: string
-  ): Promise<TailoredContent> {
+  async tailorResume(masterResume: string, jobDescription: string): Promise<TailoredContent> {
     try {
       const prompt = this.buildTailoringPrompt(masterResume, jobDescription);
 
@@ -61,10 +59,7 @@ export class AiTailorService {
     }
   }
 
-  private buildTailoringPrompt(
-    masterResume: string,
-    jobDescription: string
-  ): string {
+  private buildTailoringPrompt(masterResume: string, jobDescription: string): string {
     return `I need you to tailor a resume for a specific job posting. 
 
 Master Resume:

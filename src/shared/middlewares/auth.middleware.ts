@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
-import { getToken } from 'next-auth/jwt';
 import { envConfig } from '@config/env.config';
 import { UnauthorizedError } from '@utils/errors';
+import { NextFunction, Request, Response } from 'express';
+import { getToken } from 'next-auth/jwt';
 
 export interface AuthRequest extends Request {
   userId?: string;

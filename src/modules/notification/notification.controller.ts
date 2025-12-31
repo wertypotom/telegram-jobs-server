@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
 import { AuthRequest } from '@middlewares/auth.middleware';
-import { ApiResponse } from '@utils/response';
 import { UserRepository } from '@modules/user/user.repository';
 import { Logger } from '@utils/logger';
+import { ApiResponse } from '@utils/response';
 import crypto from 'crypto';
+import { NextFunction, Request, Response } from 'express';
 
 export class NotificationController {
   private userRepository: UserRepository;
@@ -16,11 +16,7 @@ export class NotificationController {
    * GET /api/notifications/settings
    * Get user's notification settings
    */
-  getSettings = async (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  getSettings = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.userId!;
       const user = await this.userRepository.findById(userId);
@@ -60,11 +56,7 @@ export class NotificationController {
    * POST /api/notifications/settings
    * Update user's notification settings
    */
-  updateSettings = async (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  updateSettings = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.userId!;
       const { enabled, filters, quietHours } = req.body;
@@ -211,17 +203,12 @@ Manage settings: https://jobsniper.com/settings/notifications
       });
 
       // Create deep link
-      const botUsername =
-        process.env.TELEGRAM_BOT_USERNAME || 'jobsniper_v2_bot';
+      const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'jobsniper_v2_bot';
       const deepLink = `https://t.me/${botUsername}?start=${token}`;
 
       Logger.info('Generated subscription link', { userId });
 
-      ApiResponse.success(
-        res,
-        { deepLink, token },
-        'Subscription link generated'
-      );
+      ApiResponse.success(res, { deepLink, token }, 'Subscription link generated');
     } catch (error) {
       Logger.error('Generate subscription link error:', error);
       next(error);
@@ -232,11 +219,7 @@ Manage settings: https://jobsniper.com/settings/notifications
    * POST /api/notifications/telegram/webhook
    * Handle incoming Telegram webhook updates
    */
-  handleWebhook = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  handleWebhook = async (req: Request, res: Response): Promise<void> => {
     try {
       const update = req.body;
       const secretToken = req.headers['x-telegram-bot-api-secret-token'];
