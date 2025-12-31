@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Response, NextFunction } from 'express';
 import { Feedback } from './feedback.model';
 import { AppError } from '@utils/errors';
 import { Logger } from '@utils/logger';
@@ -8,15 +8,19 @@ export class FeedbackController {
   /**
    * Submit feedback from web app
    */
-  static async submitFeedback(req: AuthRequest, res: Response): Promise<void> {
+  static async submitFeedback(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     const { category, message, contactConsent } = req.body;
     const userId = req.userId;
 
-    if (!category || !message) {
-      throw new AppError(400, 'Category and message are required');
-    }
-
     try {
+      if (!category || !message) {
+        throw new AppError(400, 'Category and message are required');
+      }
+
       const feedback = new Feedback({
         userId,
         source: 'WEB',
@@ -35,8 +39,8 @@ export class FeedbackController {
         message: 'Feedback submitted successfully',
       });
     } catch (error) {
-      Logger.error('Error submitting feedback:', error);
-      throw new AppError(500, 'Failed to submit feedback');
+      // Pass error to global error handler
+      next(error);
     }
   }
 }
