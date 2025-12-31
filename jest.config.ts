@@ -9,7 +9,7 @@ const config: Config = {
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
     prefix: '<rootDir>/src/',
   }),
-  setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/src/shared/tests/setup.ts'],
   testMatch: ['**/*.test.ts'],
   verbose: true,
   forceExit: true,

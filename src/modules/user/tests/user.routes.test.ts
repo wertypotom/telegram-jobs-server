@@ -1,8 +1,8 @@
 import request from 'supertest';
-import app from '../../app';
+import app from '../../../app';
 import { getToken } from 'next-auth/jwt';
 import mongoose from 'mongoose';
-import { UserPreferencesRepository } from '@modules/user/user-preferences.repository';
+import { UserPreferencesRepository } from '../user-preferences.repository';
 
 // Mock next-auth/jwt
 jest.mock('next-auth/jwt');

@@ -1,5 +1,5 @@
-import { authenticate } from '@middlewares/auth.middleware';
-import { errorHandler } from '@middlewares/error.middleware';
+import { authenticate } from '../auth.middleware';
+import { errorHandler } from '../error.middleware';
 import { AppError, UnauthorizedError } from '@utils/errors';
 import { getToken } from 'next-auth/jwt';
 import { Request, Response, NextFunction } from 'express';

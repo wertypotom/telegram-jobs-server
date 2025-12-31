@@ -1,8 +1,8 @@
-import { UserPreferencesService } from '@modules/user/user-preferences.service';
-import { UserPreferencesRepository } from '@modules/user/user-preferences.repository';
+import { UserPreferencesService } from '../user-preferences.service';
+import { UserPreferencesRepository } from '../user-preferences.repository';
 
 // Mock repository
-jest.mock('@modules/user/user-preferences.repository');
+jest.mock('../user-preferences.repository');
 
 describe('UserPreferencesService', () => {
   let service: UserPreferencesService;
