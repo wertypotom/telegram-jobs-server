@@ -153,10 +153,10 @@ Using TypeScript path mapping (`@modules/*`, `@config/*`, etc.):
 
 ```typescript
 // ❌ Bad: Relative imports
-import { Logger } from '../../../shared/utils/logger';
+import { Logger } from "../../../shared/utils/logger";
 
 // ✅ Good: Clean aliases
-import { Logger } from '@utils/logger';
+import { Logger } from "@utils/logger";
 ```
 
 #### 3. **Error Handling Strategy**
@@ -164,9 +164,9 @@ import { Logger } from '@utils/logger';
 Custom error classes extend `AppError` with HTTP status codes:
 
 ```typescript
-throw new NotFoundError('Job not found'); // 404
-throw new BadRequestError('Invalid filter'); // 400
-throw new UnauthorizedError('Token expired'); // 401
+throw new NotFoundError("Job not found"); // 404
+throw new BadRequestError("Invalid filter"); // 400
+throw new UnauthorizedError("Token expired"); // 401
 ```
 
 - **Operational errors** (user mistakes) → Handled gracefully
@@ -560,6 +560,8 @@ npm run channels:extract  # Extract channel info from Telegram
 npm test                  # Run test suite
 npm run test:watch        # Run tests in watch mode
 npm run test:coverage     # Generate coverage report
+npm run lint              # Run linting check
+npm run format            # Fix linting and formatting errors
 ```
 
 ## 🔐 Security Practices
@@ -821,6 +823,13 @@ npm run test:coverage
 - **Unit Tests**: Focus on Services and utilities, mocking dependencies/repositories.
 - **Integration Tests**: Focus on Routes/Controllers, using an in-memory MongoDB instance to verify end-to-end flows.
 - **CI/CD**: Tests run automatically on every push/PR via GitHub Actions.
+
+## 🧹 Linting & Code Style
+
+The project uses **ESLint** and **Prettier** to ensure code quality and consistent formatting.
+
+- **Pre-commit Hooks**: **Husky** ensures that all staged files are linted and formatted before committing.
+- **Auto-fix**: `npm run format` (or the pre-commit hook) will automatically fix most issues including import sorting.
 
 ## 📝 License
 
