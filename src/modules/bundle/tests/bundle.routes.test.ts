@@ -1,9 +1,10 @@
-import request from 'supertest';
-import app from '../../../app';
-import { getToken } from 'next-auth/jwt';
-import { BundleRepository } from '../bundle.repository';
-import { ChannelRepository } from '../../channel/channel.repository';
 import mongoose from 'mongoose';
+import { getToken } from 'next-auth/jwt';
+import request from 'supertest';
+
+import app from '../../../app';
+import { ChannelRepository } from '../../channel/channel.repository';
+import { BundleRepository } from '../bundle.repository';
 
 // Mock next-auth/jwt
 jest.mock('next-auth/jwt');

@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IFeedback {
   _id: string;
@@ -60,7 +60,4 @@ const feedbackSchema = new Schema<IFeedbackDocument>(
   }
 );
 
-export const Feedback = mongoose.model<IFeedbackDocument>(
-  'Feedback',
-  feedbackSchema
-);
+export const Feedback = mongoose.model<IFeedbackDocument>('Feedback', feedbackSchema);

@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
 import { Job } from '@modules/job/job.model';
 import { Logger } from '@utils/logger';
+
 import { Migration } from '../types';
 
 export const migration006: Migration = {
@@ -48,9 +48,7 @@ export const migration006: Migration = {
   },
 
   async down() {
-    Logger.info(
-      'Rolling back migration 003: Remove text index from Job collection'
-    );
+    Logger.info('Rolling back migration 003: Remove text index from Job collection');
 
     try {
       await Job.collection.dropIndex('job_text_search_idx');

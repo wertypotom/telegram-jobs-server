@@ -1,5 +1,5 @@
-import { NotificationService } from '../notification.service';
 import { User } from '../../user/user.model';
+import { NotificationService } from '../notification.service';
 import { TelegramBotService } from '../telegram-bot.service';
 
 // Mock dependencies
@@ -9,13 +9,12 @@ jest.mock('@utils/logger');
 
 describe('NotificationService', () => {
   let service: NotificationService;
-  let mockBotService: jest.Mocked<TelegramBotService>;
 
   beforeEach(() => {
     jest.clearAllMocks();
     service = new NotificationService();
     // Get the singleton instance mock
-    mockBotService = (TelegramBotService.getInstance as jest.Mock)();
+    (TelegramBotService.getInstance as jest.Mock)();
   });
 
   describe('findMatchingUsers (Filter Matching)', () => {

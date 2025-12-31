@@ -1,6 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
-import { StatsService } from './stats.service';
 import { ApiResponse } from '@utils/response';
+import { NextFunction, Request, Response } from 'express';
+
+import { StatsService } from './stats.service';
 
 export class StatsController {
   private statsService: StatsService;
@@ -13,11 +14,7 @@ export class StatsController {
    * GET /api/stats/platform
    * Public endpoint - no authentication required
    */
-  getPlatformStats = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  getPlatformStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const stats = await this.statsService.getPlatformStats();
       ApiResponse.success(res, stats, 'Platform stats retrieved');

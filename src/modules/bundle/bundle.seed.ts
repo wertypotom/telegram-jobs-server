@@ -1,5 +1,6 @@
-import { Bundle } from './bundle.model';
 import { Logger } from '@utils/logger';
+
+import { Bundle } from './bundle.model';
 
 /**
  * Bundle seed data - aligned with categories from channel.seed.ts
@@ -27,13 +28,7 @@ const BUNDLE_SEED_DATA = [
     title: 'Backend Essentials',
     description: 'Node, Python, Go • 5 Channels',
     icon: 'Server',
-    channels: [
-      '@nodejs_jobs',
-      '@forpython',
-      '@golang_jobs',
-      '@backend_jobs',
-      '@php_jobs',
-    ],
+    channels: ['@nodejs_jobs', '@forpython', '@golang_jobs', '@backend_jobs', '@php_jobs'],
     order: 2,
     category: 'Backend',
     isActive: true,
@@ -43,13 +38,7 @@ const BUNDLE_SEED_DATA = [
     title: 'Mobile Development',
     description: 'iOS, Android, React Native • 5 Channels',
     icon: 'Smartphone',
-    channels: [
-      '@ios_jobs',
-      '@android_jobs',
-      '@react_native_jobs',
-      '@swift_jobs',
-      '@kotlin_jobs',
-    ],
+    channels: ['@ios_jobs', '@android_jobs', '@react_native_jobs', '@swift_jobs', '@kotlin_jobs'],
     order: 3,
     category: 'Mobile',
     isActive: true,

@@ -1,8 +1,6 @@
-import { ChannelService } from '../channel.service';
-import { ChannelRepository } from '../channel.repository';
 import { UserRepository } from '../../user/user.repository';
-import { BadRequestError } from '@utils/errors';
-import { ScraperService } from '@modules/scraper/scraper.service';
+import { ChannelRepository } from '../channel.repository';
+import { ChannelService } from '../channel.service';
 
 // Mock dependencies
 jest.mock('../channel.repository');
@@ -15,16 +13,12 @@ describe('ChannelService', () => {
   let service: ChannelService;
   let mockChannelRepo: jest.Mocked<ChannelRepository>;
   let mockUserRepo: jest.Mocked<UserRepository>;
-  let mockScraperService: jest.Mocked<ScraperService>;
 
   beforeEach(() => {
     jest.clearAllMocks();
     service = new ChannelService();
-    mockChannelRepo = (ChannelRepository as unknown as jest.Mock).mock
-      .instances[0];
+    mockChannelRepo = (ChannelRepository as unknown as jest.Mock).mock.instances[0];
     mockUserRepo = (UserRepository as unknown as jest.Mock).mock.instances[0];
-    mockScraperService = (ScraperService as unknown as jest.Mock).mock
-      .instances[0];
   });
 
   describe('subscribeToChannels', () => {
@@ -58,9 +52,9 @@ describe('ChannelService', () => {
       mockUserRepo.findById.mockResolvedValue(mockUser as any);
       const channels = ['ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6'];
 
-      await expect(
-        service.subscribeToChannels('user-1', channels)
-      ).rejects.toThrow(/Plan limit exceeded/);
+      await expect(service.subscribeToChannels('user-1', channels)).rejects.toThrow(
+        /Plan limit exceeded/
+      );
     });
 
     it('should allow premium users unlimited channels', async () => {
@@ -85,9 +79,9 @@ describe('ChannelService', () => {
         .mockResolvedValueOnce({ _id: 'valid' } as any)
         .mockResolvedValueOnce(null); // Second channel invalid
 
-      await expect(
-        service.subscribeToChannels('user-1', ['valid', 'invalid'])
-      ).rejects.toThrow(/not available/);
+      await expect(service.subscribeToChannels('user-1', ['valid', 'invalid'])).rejects.toThrow(
+        /not available/
+      );
     });
   });
 

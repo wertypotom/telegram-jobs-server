@@ -1,7 +1,8 @@
-import { IJob } from '@shared/types/common.types';
 import { User } from '@modules/user/user.model';
-import { TelegramBotService } from './telegram-bot.service';
+import { IJob } from '@shared/types/common.types';
 import { Logger } from '@utils/logger';
+
+import { TelegramBotService } from './telegram-bot.service';
 
 /**
  * NotificationService - Handles job matching and notification delivery
@@ -31,9 +32,7 @@ export class NotificationService {
         this.matchesFilters(job, user.notificationFilters)
       );
 
-      Logger.info(
-        `Found ${matchingUsers.length} matching users for job ${job._id}`
-      );
+      Logger.info(`Found ${matchingUsers.length} matching users for job ${job._id}`);
       return matchingUsers;
     } catch (error) {
       Logger.error('Error finding matching users:', error);
@@ -90,16 +89,10 @@ export class NotificationService {
     if (filters.experienceYears) {
       const jobExp = job.parsedData.experienceYears;
       if (jobExp !== undefined) {
-        if (
-          filters.experienceYears.min &&
-          jobExp < filters.experienceYears.min
-        ) {
+        if (filters.experienceYears.min && jobExp < filters.experienceYears.min) {
           return false;
         }
-        if (
-          filters.experienceYears.max &&
-          jobExp > filters.experienceYears.max
-        ) {
+        if (filters.experienceYears.max && jobExp > filters.experienceYears.max) {
           return false;
         }
       }
@@ -143,9 +136,7 @@ export class NotificationService {
       user.lastNotificationSent > oneHourAgo &&
       user.notificationCount >= 10
     ) {
-      Logger.warn(
-        `User ${user._id} rate limited (${user.notificationCount}/10)`
-      );
+      Logger.warn(`User ${user._id} rate limited (${user.notificationCount}/10)`);
       return false;
     }
 
@@ -196,15 +187,11 @@ export class NotificationService {
       }
 
       // Send notifications (non-blocking)
-      const notificationPromises = matchingUsers.map((user) =>
-        this.notifyUser(user, job)
-      );
+      const notificationPromises = matchingUsers.map((user) => this.notifyUser(user, job));
 
       await Promise.allSettled(notificationPromises);
 
-      Logger.info(
-        `Processed ${matchingUsers.length} notifications for job ${job._id}`
-      );
+      Logger.info(`Processed ${matchingUsers.length} notifications for job ${job._id}`);
     } catch (error) {
       Logger.error('Error processing new job:', error);
     }

@@ -1,8 +1,9 @@
 import 'tsconfig-paths/register';
 import 'dotenv/config';
-import mongoose from 'mongoose';
+
 import { envConfig } from '@config/env.config';
 import { Job } from '@modules/job/job.model';
+import mongoose from 'mongoose';
 
 async function analyzeJobs() {
   try {

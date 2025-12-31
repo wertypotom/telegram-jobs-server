@@ -1,14 +1,11 @@
-import dotenv from 'dotenv';
-import path from 'path';
-
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-
-import mongoose from 'mongoose';
 import { envConfig } from '@config/env.config';
 import { Logger } from '@utils/logger';
+import dotenv from 'dotenv';
+import mongoose from 'mongoose';
+import path from 'path';
+
 import { MigrationLogger } from './migration-logger';
 import { Migration } from './types';
-
 // Import all migrations
 import { migration001 } from './versions/001-add-viewed-jobs-field';
 import { migration002 } from './versions/002-update-schemas';
@@ -19,6 +16,8 @@ import { migration006 } from './versions/006-add-job-text-index';
 import { migration007 } from './versions/007-add-subscription-changes-field';
 import { migration008 } from './versions/008-reset-last-scraped-message-id';
 import { migration009 } from './versions/009-add-telegram-message-date';
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 // Register migrations in order
 const migrations: Migration[] = [
@@ -52,9 +51,7 @@ export class MigrationRunner {
       Logger.info(`Last applied migration version: ${lastVersion}`);
 
       // Find pending migrations
-      const pendingMigrations = migrations.filter(
-        (m) => m.version > lastVersion
-      );
+      const pendingMigrations = migrations.filter((m) => m.version > lastVersion);
 
       if (pendingMigrations.length === 0) {
         Logger.info('✅ No pending migrations');
@@ -66,9 +63,7 @@ export class MigrationRunner {
 
       // Run each pending migration
       for (const migration of pendingMigrations) {
-        Logger.info(
-          `Running migration ${migration.version}: ${migration.name}`
-        );
+        Logger.info(`Running migration ${migration.version}: ${migration.name}`);
 
         try {
           await migration.up();
@@ -80,12 +75,9 @@ export class MigrationRunner {
             status: 'success',
           });
 
-          Logger.info(
-            `✅ Migration ${migration.version} completed successfully`
-          );
+          Logger.info(`✅ Migration ${migration.version} completed successfully`);
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : String(error);
+          const errorMessage = error instanceof Error ? error.message : String(error);
 
           await this.logger.recordMigration({
             version: migration.version,
@@ -125,9 +117,7 @@ export class MigrationRunner {
         return;
       }
 
-      Logger.info(
-        `Rolling back from version ${currentVersion} to ${rollbackTo}`
-      );
+      Logger.info(`Rolling back from version ${currentVersion} to ${rollbackTo}`);
 
       // Get migrations to rollback (in reverse order)
       const migrationsToRollback = migrations
@@ -136,15 +126,11 @@ export class MigrationRunner {
 
       for (const migration of migrationsToRollback) {
         if (!migration.down) {
-          Logger.warn(
-            `Migration ${migration.version} has no rollback function`
-          );
+          Logger.warn(`Migration ${migration.version} has no rollback function`);
           continue;
         }
 
-        Logger.info(
-          `Rolling back migration ${migration.version}: ${migration.name}`
-        );
+        Logger.info(`Rolling back migration ${migration.version}: ${migration.name}`);
         await migration.down();
         Logger.info(`✅ Rolled back migration ${migration.version}`);
       }
@@ -173,9 +159,7 @@ export class MigrationRunner {
     } else {
       history.forEach((entry) => {
         const status = entry.status === 'success' ? '✅' : '❌';
-        console.log(
-          `  ${status} v${entry.version}: ${entry.name} (${entry.appliedAt})`
-        );
+        console.log(`  ${status} v${entry.version}: ${entry.name} (${entry.appliedAt})`);
         if (entry.error) {
           console.log(`     Error: ${entry.error}`);
         }
@@ -183,9 +167,7 @@ export class MigrationRunner {
       console.log('');
     }
 
-    const pending = migrations.filter(
-      (m) => m.version > this.logger.getLastVersion()
-    );
+    const pending = migrations.filter((m) => m.version > this.logger.getLastVersion());
     if (pending.length > 0) {
       console.log('Pending migrations:');
       pending.forEach((m) => {
@@ -208,19 +190,18 @@ async function main() {
       await runner.run();
       break;
     case 'down':
-    case 'rollback':
+    case 'rollback': {
       const version = process.argv[3] ? parseInt(process.argv[3]) : undefined;
       await runner.rollback(version);
       break;
+    }
     case 'status':
       await runner.status();
       break;
     default:
       console.log('Usage:');
       console.log('  npm run migrate up       - Run pending migrations');
-      console.log(
-        '  npm run migrate down [v] - Rollback to version (default: previous)'
-      );
+      console.log('  npm run migrate down [v] - Rollback to version (default: previous)');
       console.log('  npm run migrate status   - Show migration status');
       process.exit(1);
   }

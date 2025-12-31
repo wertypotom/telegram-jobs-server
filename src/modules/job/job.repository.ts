@@ -1,7 +1,8 @@
-import { Job, IJobDocument } from './job.model';
 import { IJob } from '@shared/types/common.types';
+
+// Logger unused import removed
+import { IJobDocument, Job } from './job.model';
 import { JobFilterOptions } from './job.types';
-import { Logger } from '@utils/logger';
 
 export class JobRepository {
   async create(jobData: Partial<IJob>): Promise<IJobDocument> {
@@ -31,10 +32,7 @@ export class JobRepository {
     return await Job.findOne({ telegramMessageId: messageId });
   }
 
-  async updateById(
-    id: string,
-    data: Partial<IJob>
-  ): Promise<IJobDocument | null> {
+  async updateById(id: string, data: Partial<IJob>): Promise<IJobDocument | null> {
     return await Job.findByIdAndUpdate(id, data, { new: true });
   }
 
@@ -112,7 +110,7 @@ export class JobRepository {
       const jobFunctionConditions = jobFunction.map((func) => {
         // Split by spaces, commas, parentheses, slashes, AND dots
         // This makes "Node.js" -> ["Node", "js"] instead of ["Node.js"]
-        const keywords = func.split(/[\s,()\/\.]+/).filter((word) => {
+        const keywords = func.split(/[\s,()/.]+/).filter((word) => {
           if (!word) return false; // Skip empty strings
           const normalized = word.toLowerCase();
           return word.length > 2 || importantShortWords.includes(normalized);
@@ -232,9 +230,7 @@ export class JobRepository {
     }).lean();
 
     // Map by username (not _id)
-    const channelMap = new Map(
-      channels.map((ch: any) => [ch.username, ch.username])
-    );
+    const channelMap = new Map(channels.map((ch: any) => [ch.username, ch.username]));
 
     const jobsWithChannel = jobs.map((job: any) => ({
       ...job,

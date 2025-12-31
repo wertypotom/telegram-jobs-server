@@ -1,6 +1,7 @@
-import { Router } from 'express';
-import { ChannelController } from './channel.controller';
 import { authenticate } from '@middlewares/auth.middleware';
+import { Router } from 'express';
+
+import { ChannelController } from './channel.controller';
 
 const router = Router();
 const channelController = new ChannelController();

@@ -1,6 +1,7 @@
-import mongoose from 'mongoose';
-import { envConfig } from './env.config';
 import { Logger } from '@utils/logger';
+import mongoose from 'mongoose';
+
+import { envConfig } from './env.config';
 
 export const connectDatabase = async (): Promise<void> => {
   try {

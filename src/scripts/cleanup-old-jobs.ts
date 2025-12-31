@@ -5,8 +5,8 @@
  * node run-script.js src/scripts/cleanup-old-jobs.ts
  */
 
-import { connectDatabase } from '../shared/config/database.config';
 import { JobCleanupService } from '../modules/job/job-cleanup.service';
+import { connectDatabase } from '../shared/config/database.config';
 import { Logger } from '../shared/utils/logger';
 
 async function main() {

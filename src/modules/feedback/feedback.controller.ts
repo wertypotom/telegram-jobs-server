@@ -1,18 +1,15 @@
-import { Response, NextFunction } from 'express';
-import { Feedback } from './feedback.model';
+import { AuthRequest } from '@middlewares/auth.middleware';
 import { AppError } from '@utils/errors';
 import { Logger } from '@utils/logger';
-import { AuthRequest } from '@middlewares/auth.middleware';
+import { NextFunction, Response } from 'express';
+
+import { Feedback } from './feedback.model';
 
 export class FeedbackController {
   /**
    * Submit feedback from web app
    */
-  static async submitFeedback(
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  static async submitFeedback(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     const { category, message, contactConsent } = req.body;
     const userId = req.userId;
 

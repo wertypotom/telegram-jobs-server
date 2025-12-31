@@ -1,8 +1,8 @@
-import { JobService } from '../job.service';
-import { JobRepository } from '../job.repository';
-import { JobParserService } from '../services/job-parser.service';
 import { UserRepository } from '../../user/user.repository';
+import { JobRepository } from '../job.repository';
+import { JobService } from '../job.service';
 import { CreateJobDto } from '../job.types';
+import { JobParserService } from '../services/job-parser.service';
 
 // Mock dependencies
 jest.mock('../job.repository');
@@ -21,8 +21,7 @@ describe('JobService', () => {
     service = new JobService();
     mockJobRepo = (JobRepository as unknown as jest.Mock).mock.instances[0];
     mockUserRepo = (UserRepository as unknown as jest.Mock).mock.instances[0];
-    mockParserService = (JobParserService as unknown as jest.Mock).mock
-      .instances[0];
+    mockParserService = (JobParserService as unknown as jest.Mock).mock.instances[0];
   });
 
   describe('createJob', () => {

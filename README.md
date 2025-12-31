@@ -153,10 +153,10 @@ Using TypeScript path mapping (`@modules/*`, `@config/*`, etc.):
 
 ```typescript
 // ❌ Bad: Relative imports
-import { Logger } from '../../../shared/utils/logger';
+import { Logger } from "../../../shared/utils/logger";
 
 // ✅ Good: Clean aliases
-import { Logger } from '@utils/logger';
+import { Logger } from "@utils/logger";
 ```
 
 #### 3. **Error Handling Strategy**
@@ -164,9 +164,9 @@ import { Logger } from '@utils/logger';
 Custom error classes extend `AppError` with HTTP status codes:
 
 ```typescript
-throw new NotFoundError('Job not found'); // 404
-throw new BadRequestError('Invalid filter'); // 400
-throw new UnauthorizedError('Token expired'); // 401
+throw new NotFoundError("Job not found"); // 404
+throw new BadRequestError("Invalid filter"); // 400
+throw new UnauthorizedError("Token expired"); // 401
 ```
 
 - **Operational errors** (user mistakes) → Handled gracefully
@@ -557,6 +557,11 @@ npm run migrate:down      # Run migrations down
 npm run migrate:status    # Check migration status
 npm run channels:seed     # Seed channels to database
 npm run channels:extract  # Extract channel info from Telegram
+npm test                  # Run test suite
+npm run test:watch        # Run tests in watch mode
+npm run test:coverage     # Generate coverage report
+npm run lint              # Run linting check
+npm run format            # Fix linting and formatting errors
 ```
 
 ## 🔐 Security Practices
@@ -784,16 +789,47 @@ async getJob(id: string) {
 
 ### Phase 4: Scale & Polish (In Progress)
 
+- [x] Unit & integration tests
+- [x] CI/CD Pipeline (GitHub Actions)
 - [ ] Personalized job recommendations (ML-based)
 - [ ] Application success tracking
 - [ ] Resume A/B testing insights
 - [ ] Interview preparation suggestions
 - [ ] Rate limiting middleware
 - [ ] API documentation (Swagger/OpenAPI)
-- [ ] Unit & integration tests
 - [ ] Email notifications (alternative to Telegram)
 - [ ] Admin dashboard
 - [ ] Analytics and insights panel
+
+## 🧪 Testing
+
+The project maintains comprehensive test coverage using **Jest**, **Supertest**, and **MongoDB Memory Server**.
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Generate coverage report
+npm run test:coverage
+```
+
+### Test Architecture
+
+- **Unit Tests**: Focus on Services and utilities, mocking dependencies/repositories.
+- **Integration Tests**: Focus on Routes/Controllers, using an in-memory MongoDB instance to verify end-to-end flows.
+- **CI/CD**: Tests run automatically on every push/PR via GitHub Actions.
+
+## 🧹 Linting & Code Style
+
+The project uses **ESLint** and **Prettier** to ensure code quality and consistent formatting.
+
+- **Pre-commit Hooks**: **Husky** ensures that all staged files are linted and formatted before committing.
+- **Auto-fix**: `npm run format` (or the pre-commit hook) will automatically fix most issues including import sorting.
 
 ## 📝 License
 

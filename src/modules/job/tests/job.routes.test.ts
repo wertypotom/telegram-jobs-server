@@ -1,9 +1,10 @@
-import request from 'supertest';
-import app from '../../../app';
-import { getToken } from 'next-auth/jwt';
-import { JobRepository } from '../job.repository';
-import { UserRepository } from '../../user/user.repository';
 import mongoose from 'mongoose';
+import { getToken } from 'next-auth/jwt';
+import request from 'supertest';
+
+import app from '../../../app';
+import { UserRepository } from '../../user/user.repository';
+import { JobRepository } from '../job.repository';
 
 // Mock next-auth/jwt
 jest.mock('next-auth/jwt');
@@ -11,7 +12,6 @@ jest.mock('next-auth/jwt');
 describe('Job Routes Integration Tests', () => {
   const mockUserId = new mongoose.Types.ObjectId().toString();
   const mockUserEmail = 'test@example.com';
-  let accessTokenSpy: jest.SpyInstance;
 
   beforeEach(async () => {
     jest.clearAllMocks();

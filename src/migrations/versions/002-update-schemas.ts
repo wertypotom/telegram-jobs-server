@@ -1,7 +1,8 @@
-import { User } from '@modules/user/user.model';
 import { Channel } from '@modules/channel/channel.model';
 import { Job } from '@modules/job/job.model';
+import { User } from '@modules/user/user.model';
 import { Logger } from '@utils/logger';
+
 import { Migration } from '../types';
 
 export const migration002: Migration = {
@@ -13,7 +14,7 @@ export const migration002: Migration = {
 
     // 1. Update Users
     Logger.info('Updating User schema defaults...');
-    const usersResult = await User.updateMany(
+    await User.updateMany(
       {
         $or: [
           { hasCompletedOnboarding: { $exists: false } },
@@ -79,9 +80,7 @@ export const migration002: Migration = {
   },
 
   async down() {
-    Logger.info(
-      'Rolling back migration 002 (No-op as these are default values)'
-    );
+    Logger.info('Rolling back migration 002 (No-op as these are default values)');
     // We generally don't want to remove these fields as they are part of the schema now.
     // But strictly speaking, down should revert changes.
     // Since these are defaults, reverting would mean unsetting them, which might break things if code relies on them.

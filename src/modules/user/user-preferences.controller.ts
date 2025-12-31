@@ -1,7 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
 import { AuthRequest } from '@shared/middlewares/auth.middleware';
-import { UserPreferencesService } from './user-preferences.service';
 import { ApiResponse } from '@utils/response';
+import { NextFunction, Response } from 'express';
+
+import { UserPreferencesService } from './user-preferences.service';
 
 export class UserPreferencesController {
   private preferencesService: UserPreferencesService;
@@ -10,11 +11,7 @@ export class UserPreferencesController {
     this.preferencesService = new UserPreferencesService();
   }
 
-  getFilters = async (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  getFilters = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.userId!;
       const filters = await this.preferencesService.getFilters(userId);
@@ -24,19 +21,12 @@ export class UserPreferencesController {
     }
   };
 
-  saveFilters = async (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  saveFilters = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.userId!;
       const { filters } = req.body;
 
-      const savedFilters = await this.preferencesService.saveFilters(
-        userId,
-        filters
-      );
+      const savedFilters = await this.preferencesService.saveFilters(userId, filters);
 
       ApiResponse.success(res, savedFilters, 'Filters saved successfully');
     } catch (error) {

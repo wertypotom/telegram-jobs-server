@@ -1,6 +1,7 @@
-import { Router } from 'express';
-import { JobController } from './job.controller';
 import { authenticate } from '@middlewares/auth.middleware';
+import { Router } from 'express';
+
+import { JobController } from './job.controller';
 
 const router = Router();
 const jobController = new JobController();

@@ -1,6 +1,6 @@
+import { Logger } from '@utils/logger';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { Logger } from '@utils/logger';
 
 /**
  * PageScraperService - Fetches and extracts text from external job pages
@@ -22,8 +22,7 @@ export class PageScraperService {
         timeout: this.REQUEST_TIMEOUT_MS,
         headers: {
           'User-Agent': this.USER_AGENT,
-          Accept:
-            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           'Accept-Language': 'en-US,en;q=0.9,ru;q=0.8',
         },
         maxRedirects: 5,
@@ -88,9 +87,7 @@ export class PageScraperService {
 
     // Limit length to avoid excessive AI tokens
     const MAX_LENGTH = 5000;
-    return cleanText.length > MAX_LENGTH
-      ? cleanText.substring(0, MAX_LENGTH)
-      : cleanText;
+    return cleanText.length > MAX_LENGTH ? cleanText.substring(0, MAX_LENGTH) : cleanText;
   }
 
   /**

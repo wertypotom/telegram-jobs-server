@@ -1,5 +1,5 @@
-import { UserPreferencesService } from '../user-preferences.service';
 import { UserPreferencesRepository } from '../user-preferences.repository';
+import { UserPreferencesService } from '../user-preferences.service';
 
 // Mock repository
 jest.mock('../user-preferences.repository');
@@ -26,8 +26,7 @@ describe('UserPreferencesService', () => {
     service = new UserPreferencesService();
 
     // Get the instance of the mock
-    mockRepository = (UserPreferencesRepository as unknown as jest.Mock).mock
-      .instances[0];
+    mockRepository = (UserPreferencesRepository as unknown as jest.Mock).mock.instances[0];
   });
 
   describe('getFilters', () => {
@@ -69,10 +68,7 @@ describe('UserPreferencesService', () => {
 
       const filters = await service.saveFilters(mockUserId, mockFilters);
 
-      expect(mockRepository.upsertFilters).toHaveBeenCalledWith(
-        mockUserId,
-        mockFilters
-      );
+      expect(mockRepository.upsertFilters).toHaveBeenCalledWith(mockUserId, mockFilters);
       expect(filters).toEqual(mockFilters);
     });
   });

@@ -1,13 +1,12 @@
+import { envConfig } from '@config/env.config';
+import { Channel } from '@modules/channel/channel.model';
+import { CHANNEL_SEED_DATA } from '@modules/channel/channel.seed';
+import { Logger } from '@utils/logger';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-
-import mongoose from 'mongoose';
-import { envConfig } from '@config/env.config';
-import { Logger } from '@utils/logger';
-import { Channel } from '@modules/channel/channel.model';
-import { CHANNEL_SEED_DATA } from '@modules/channel/channel.seed';
 
 /**
  * Channel Seed Script
@@ -19,20 +18,15 @@ async function seedChannels() {
     await mongoose.connect(envConfig.mongodbUri);
     Logger.info('Connected to MongoDB');
 
-    Logger.info(
-      `Processing ${CHANNEL_SEED_DATA.length} channels from seed data`
-    );
+    Logger.info(`Processing ${CHANNEL_SEED_DATA.length} channels from seed data`);
 
     let updated = 0;
     let created = 0;
-    let skipped = 0;
+    const skipped = 0;
 
     for (const seedChannel of CHANNEL_SEED_DATA) {
       // Derive tags from category
-      const tags = deriveTagsFromCategory(
-        seedChannel.category,
-        seedChannel.title
-      );
+      const tags = deriveTagsFromCategory(seedChannel.category, seedChannel.title);
 
       const channel = await Channel.findOne({ username: seedChannel.username });
 
@@ -45,9 +39,7 @@ async function seedChannels() {
         channel.memberCount = seedChannel.memberCount as any; // Can be string like "80K+"
         await channel.save();
         updated++;
-        Logger.info(
-          `✅ Updated: ${seedChannel.username} (${seedChannel.category})`
-        );
+        Logger.info(`✅ Updated: ${seedChannel.username} (${seedChannel.category})`);
       } else {
         // Create new channel
         await Channel.create({
@@ -60,9 +52,7 @@ async function seedChannels() {
           isMonitored: true,
         });
         created++;
-        Logger.info(
-          `✨ Created: ${seedChannel.username} (${seedChannel.category})`
-        );
+        Logger.info(`✨ Created: ${seedChannel.username} (${seedChannel.category})`);
       }
     }
 

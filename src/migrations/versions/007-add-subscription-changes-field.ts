@@ -1,5 +1,6 @@
 import { User } from '@modules/user/user.model';
 import { Logger } from '@utils/logger';
+
 import { Migration } from '../types';
 
 export const migration007: Migration = {
@@ -7,9 +8,7 @@ export const migration007: Migration = {
   name: 'add-subscription-changes-field',
 
   async up() {
-    Logger.info(
-      'Running migration 007: Add subscriptionChanges field to users'
-    );
+    Logger.info('Running migration 007: Add subscriptionChanges field to users');
 
     try {
       // Find users without subscriptionChanges field
@@ -35,9 +34,7 @@ export const migration007: Migration = {
   },
 
   async down() {
-    Logger.info(
-      'Rolling back migration 007: Remove subscriptionChanges field from users'
-    );
+    Logger.info('Rolling back migration 007: Remove subscriptionChanges field from users');
 
     try {
       const result = await User.updateMany(

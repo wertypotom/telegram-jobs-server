@@ -1,9 +1,10 @@
+import { AppError } from '@utils/errors';
+import { Logger } from '@utils/logger';
+import { NextFunction, Request, Response } from 'express';
+import { getToken } from 'next-auth/jwt';
+
 import { authenticate } from '../auth.middleware';
 import { errorHandler } from '../error.middleware';
-import { AppError, UnauthorizedError } from '@utils/errors';
-import { getToken } from 'next-auth/jwt';
-import { Request, Response, NextFunction } from 'express';
-import { Logger } from '@utils/logger';
 
 // Mock next-auth/jwt
 jest.mock('next-auth/jwt');

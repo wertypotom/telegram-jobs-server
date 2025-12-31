@@ -1,8 +1,8 @@
-import pdfParse from 'pdf-parse';
-import mammoth from 'mammoth';
-import { promises as fs } from 'fs';
-import { Logger } from '@utils/logger';
 import { InternalServerError } from '@utils/errors';
+import { Logger } from '@utils/logger';
+import { promises as fs } from 'fs';
+import mammoth from 'mammoth';
+import pdfParse from 'pdf-parse';
 
 export class FileExtractorService {
   async extractText(filePath: string, mimeType: string): Promise<string> {

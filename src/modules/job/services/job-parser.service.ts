@@ -1,7 +1,7 @@
-import { Logger } from '@utils/logger';
+import { AIProvider, AIProviderFactory } from '@shared/providers';
 import { ParsedJobData } from '@shared/types/common.types';
 import { InternalServerError } from '@utils/errors';
-import { AIProviderFactory, AIProvider } from '@shared/providers';
+import { Logger } from '@utils/logger';
 
 export class JobParserService {
   private provider: AIProvider;
@@ -36,8 +36,7 @@ export class JobParserService {
 
       return {
         jobTitle: parsedData.jobTitle || undefined,
-        normalizedJobTitle:
-          parsedData.normalizedJobTitle || parsedData.jobTitle || undefined,
+        normalizedJobTitle: parsedData.normalizedJobTitle || parsedData.jobTitle || undefined,
         company: parsedData.company || undefined,
         techStack: parsedData.techStack || [],
         salary: parsedData.salary || undefined,
@@ -53,9 +52,7 @@ export class JobParserService {
         benefits: parsedData.benefits || [],
         description: parsedData.description || undefined,
         experienceYears:
-          parsedData.experienceYears !== undefined
-            ? parsedData.experienceYears
-            : null,
+          parsedData.experienceYears !== undefined ? parsedData.experienceYears : null,
       };
     } catch (error) {
       Logger.error('Failed to parse job text:', error);

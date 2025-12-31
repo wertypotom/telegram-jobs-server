@@ -1,6 +1,7 @@
 import { Job } from '@modules/job/job.model';
 import { JobParserService } from '@modules/job/services/job-parser.service';
 import { Logger } from '@utils/logger';
+
 import { Migration } from '../types';
 
 export const migration004: Migration = {
@@ -8,9 +9,7 @@ export const migration004: Migration = {
   name: 'normalize-job-titles',
 
   async up() {
-    Logger.info(
-      'Running migration 004: Normalize job titles for multilingual filtering'
-    );
+    Logger.info('Running migration 004: Normalize job titles for multilingual filtering');
 
     const parser = new JobParserService();
     const CONCURRENT_REQUESTS = 3; // Process 3 jobs in parallel
@@ -71,9 +70,7 @@ export const migration004: Migration = {
             } catch (error) {
               // If AI parsing fails, use original title as fallback
               job.parsedData.normalizedJobTitle = job.parsedData.jobTitle;
-              Logger.warn(
-                `AI parsing failed for job ${job._id}, using original title`
-              );
+              Logger.warn(`AI parsing failed for job ${job._id}, using original title`);
             }
 
             await job.save();
@@ -100,9 +97,7 @@ export const migration004: Migration = {
       }
     }
 
-    Logger.info(
-      `Migration 004 complete: ${processed} normalized, ${failed} failed`
-    );
+    Logger.info(`Migration 004 complete: ${processed} normalized, ${failed} failed`);
   },
 
   async down() {

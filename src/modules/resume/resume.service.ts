@@ -1,8 +1,9 @@
 import { UserRepository } from '@modules/user/user.repository';
-import { FileExtractorService } from './services/file-extractor.service';
-import { ResumeUploadResponse } from './resume.types';
 import { BadRequestError, NotFoundError } from '@utils/errors';
 import { Logger } from '@utils/logger';
+
+import { ResumeUploadResponse } from './resume.types';
+import { FileExtractorService } from './services/file-extractor.service';
 
 export class ResumeService {
   private userRepository: UserRepository;

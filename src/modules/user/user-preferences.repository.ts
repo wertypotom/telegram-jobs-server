@@ -1,4 +1,4 @@
-import { UserPreferences, IUserPreferences } from './user-preferences.model';
+import { IUserPreferences, UserPreferences } from './user-preferences.model';
 
 export interface JobFilters {
   jobFunction: string[];
@@ -14,10 +14,7 @@ export class UserPreferencesRepository {
     return await UserPreferences.findOne({ userId });
   }
 
-  async upsertFilters(
-    userId: string,
-    filters: JobFilters
-  ): Promise<IUserPreferences> {
+  async upsertFilters(userId: string, filters: JobFilters): Promise<IUserPreferences> {
     return await UserPreferences.findOneAndUpdate(
       { userId },
       {

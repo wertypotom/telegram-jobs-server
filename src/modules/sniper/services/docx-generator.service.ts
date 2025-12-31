@@ -1,8 +1,8 @@
-import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
-import { promises as fs } from 'fs';
-import path from 'path';
 import { envConfig } from '@config/env.config';
 import { Logger } from '@utils/logger';
+import { Document, HeadingLevel, Packer, Paragraph } from 'docx';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 export class DocxGeneratorService {
   async generateResume(content: {

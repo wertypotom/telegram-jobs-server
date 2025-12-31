@@ -1,9 +1,10 @@
-import request from 'supertest';
-import app from '../../../app';
-import { getToken } from 'next-auth/jwt';
-import { ChannelRepository } from '../channel.repository';
-import { UserRepository } from '../../user/user.repository';
 import mongoose from 'mongoose';
+import { getToken } from 'next-auth/jwt';
+import request from 'supertest';
+
+import app from '../../../app';
+import { UserRepository } from '../../user/user.repository';
+import { ChannelRepository } from '../channel.repository';
 
 // Mock next-auth/jwt
 jest.mock('next-auth/jwt');
@@ -79,9 +80,7 @@ describe('Channel Routes Integration Tests', () => {
         channels.push(name);
       }
 
-      const response = await request(app)
-        .post('/api/channels/subscribe')
-        .send({ channels });
+      const response = await request(app).post('/api/channels/subscribe').send({ channels });
 
       expect(response.status).toBe(400);
       expect(response.body.error.message).toMatch(/Plan limit exceeded/);

@@ -1,5 +1,6 @@
-import { TelegramClient } from 'telegram';
 import { Logger } from '@utils/logger';
+import { Api, TelegramClient } from 'telegram';
+
 import { defaultChannels } from '../config/channels.config';
 
 export class ChannelManagerService {
@@ -17,7 +18,7 @@ export class ChannelManagerService {
 
       // Join the channel
       await client.invoke(
-        new (require('telegram/tl').Api.channels.JoinChannel)({
+        new Api.channels.JoinChannel({
           channel: username,
         })
       );
@@ -25,7 +26,10 @@ export class ChannelManagerService {
       this.subscribedChannels.add(username);
       Logger.info('Joined Telegram channel', { channel: username });
     } catch (error) {
-      Logger.error('Failed to join channel:', { channel: channelUsername, error });
+      Logger.error('Failed to join channel:', {
+        channel: channelUsername,
+        error,
+      });
       throw error;
     }
   }

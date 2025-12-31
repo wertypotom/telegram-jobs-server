@@ -10,11 +10,7 @@ export interface AIProvider {
    * @param jsonMode - Whether to request JSON response format (default: true)
    * @returns The generated text response
    */
-  generateContent(
-    prompt: string,
-    systemPrompt: string,
-    jsonMode?: boolean
-  ): Promise<string>;
+  generateContent(prompt: string, systemPrompt: string, jsonMode?: boolean): Promise<string>;
 }
 
 export type AIProviderType = 'gemini' | 'abacus';

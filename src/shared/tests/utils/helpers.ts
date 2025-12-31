@@ -1,5 +1,5 @@
-import jwt from 'jsonwebtoken';
 import { envConfig } from '@config/env.config';
+import jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
 
 export const generateTestToken = (userId?: string | Types.ObjectId) => {

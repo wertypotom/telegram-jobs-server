@@ -1,5 +1,6 @@
+// Logger removed
+
 import { Channel, IChannelDocument } from './channel.model';
-import { Logger } from '@utils/logger';
 
 export class ChannelRepository {
   async findByUsername(username: string): Promise<IChannelDocument | null> {
@@ -33,10 +34,7 @@ export class ChannelRepository {
   /**
    * Update last scraped timestamp for a channel
    */
-  async updateLastScraped(
-    username: string,
-    highestMessageId?: number
-  ): Promise<void> {
+  async updateLastScraped(username: string, highestMessageId?: number): Promise<void> {
     const updateData: any = { lastScrapedAt: new Date() };
 
     if (highestMessageId !== undefined) {

@@ -1,10 +1,11 @@
-import { JobRepository } from './job.repository';
-import { JobParserService } from './services/job-parser.service';
-import { JobFilterOptions, JobFeedResponse, CreateJobDto } from './job.types';
 import { UserRepository } from '@modules/user/user.repository';
-import { Logger } from '@utils/logger';
-import { NotFoundError } from '@utils/errors';
 import { JOB_TITLES } from '@shared/constants/job-titles';
+import { NotFoundError } from '@utils/errors';
+import { Logger } from '@utils/logger';
+
+import { JobRepository } from './job.repository';
+import { CreateJobDto, JobFeedResponse, JobFilterOptions } from './job.types';
+import { JobParserService } from './services/job-parser.service';
 
 export class JobService {
   private jobRepository: JobRepository;
@@ -19,9 +20,7 @@ export class JobService {
 
   async createJob(data: CreateJobDto): Promise<void> {
     // Check if job already exists
-    const existing = await this.jobRepository.findByMessageId(
-      data.telegramMessageId
-    );
+    const existing = await this.jobRepository.findByMessageId(data.telegramMessageId);
     if (existing) {
       Logger.debug('Job already exists', { messageId: data.telegramMessageId });
       return;
@@ -48,9 +47,7 @@ export class JobService {
    */
   async createJobSync(data: CreateJobDto): Promise<void> {
     // Check if job already exists
-    const existing = await this.jobRepository.findByMessageId(
-      data.telegramMessageId
-    );
+    const existing = await this.jobRepository.findByMessageId(data.telegramMessageId);
     if (existing) {
       Logger.debug('Job already exists', { messageId: data.telegramMessageId });
       return;
@@ -72,9 +69,8 @@ export class JobService {
         // Trigger notifications asynchronously (non-blocking)
         setImmediate(async () => {
           try {
-            const { NotificationService } = await import(
-              '@modules/notification/notification.service'
-            );
+            const { NotificationService } =
+              await import('@modules/notification/notification.service');
             const notificationService = new NotificationService();
             await notificationService.processNewJob(job as any);
           } catch (error) {
@@ -98,10 +94,7 @@ export class JobService {
     }
   }
 
-  async getJobFeed(
-    options: JobFilterOptions,
-    userId?: string
-  ): Promise<JobFeedResponse> {
+  async getJobFeed(options: JobFilterOptions, userId?: string): Promise<JobFeedResponse> {
     // CRITICAL: Enforce subscription filtering
     let channelIds: string[] | undefined = options.channelIds;
 
@@ -339,9 +332,7 @@ export class JobService {
     }
 
     const lowerQuery = query.toLowerCase();
-    return TECH_SKILLS.filter((skill) =>
-      skill.toLowerCase().includes(lowerQuery)
-    ).slice(0, 20); // Limit to 20 results
+    return TECH_SKILLS.filter((skill) => skill.toLowerCase().includes(lowerQuery)).slice(0, 20); // Limit to 20 results
   }
 
   async searchJobFunctions(query: string = ''): Promise<string[]> {
@@ -350,8 +341,6 @@ export class JobService {
     }
 
     const lowerQuery = query.toLowerCase();
-    return JOB_TITLES.filter((title) =>
-      title.toLowerCase().includes(lowerQuery)
-    ).slice(0, 20); // Limit to 20 results
+    return JOB_TITLES.filter((title) => title.toLowerCase().includes(lowerQuery)).slice(0, 20); // Limit to 20 results
   }
 }

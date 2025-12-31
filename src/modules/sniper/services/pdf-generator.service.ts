@@ -1,8 +1,8 @@
-import PDFDocument from 'pdfkit';
-import { promises as fs } from 'fs';
-import path from 'path';
 import { envConfig } from '@config/env.config';
 import { Logger } from '@utils/logger';
+import fs from 'fs';
+import path from 'path';
+import PDFDocument from 'pdfkit';
 
 export class PdfGeneratorService {
   async generateResume(content: {
@@ -17,7 +17,7 @@ export class PdfGeneratorService {
 
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ margin: 50 });
-      const stream = require('fs').createWriteStream(filePath);
+      const stream = fs.createWriteStream(filePath);
 
       doc.pipe(stream);
 

@@ -1,5 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
 import { IJob, ParsedJobData } from '@shared/types/common.types';
+import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IJobDocument extends Omit<IJob, '_id'>, Document {}
 
