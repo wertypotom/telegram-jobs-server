@@ -43,6 +43,10 @@ export class PaymentService {
             user_id: userId, // Pass user ID for webhook processing
           },
         },
+        productOptions: {
+          // Redirect user back to app after successful payment
+          redirectUrl: `${envConfig.frontendUrl}/jobs?payment=success`,
+        },
       });
 
       if (checkout.error) {
