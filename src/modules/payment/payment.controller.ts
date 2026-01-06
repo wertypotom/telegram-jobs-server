@@ -39,10 +39,16 @@ export class PaymentController {
   async handleWebhook(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const signature = req.headers['x-signature'] as string;
-      const rawBody = JSON.stringify(req.body);
+
+      // Get raw body (stored by middleware before JSON parsing)
+      const rawBody = (req as any).rawBody;
 
       if (!signature) {
         return next(new Error('Missing signature header'));
+      }
+
+      if (!rawBody) {
+        return next(new Error('Missing raw body - check middleware'));
       }
 
       await paymentService.handleWebhook(rawBody, signature);

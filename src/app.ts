@@ -20,6 +20,15 @@ app.use(
   })
 );
 app.use(cookieParser());
+
+// Webhook needs raw body for signature validation
+app.use('/api/payment/webhook', express.raw({ type: 'application/json' }), (req, _res, next) => {
+  // Store raw body for signature verification
+  (req as any).rawBody = req.body.toString('utf8');
+  next();
+});
+
+// Parse JSON for all other routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
