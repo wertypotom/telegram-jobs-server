@@ -233,25 +233,25 @@ export class PaymentService {
 
   /**
    * Handle subscription_payment_success event
+   * Note: This event sends invoice data, which has subscription_id instead of order_id
    */
   private async handlePaymentSuccess(payload: LemonSqueezyWebhookPayload): Promise<void> {
-    const subscription = payload.data.attributes;
-    const subscriptionId = subscription.order_id.toString();
+    const invoice = payload.data.attributes;
 
-    // Update renewal date
+    // For invoice events, use subscription_id
+    const subscriptionId = (invoice as any).subscription_id?.toString();
+
+    if (!subscriptionId) {
+      Logger.warn('No subscription_id in payment success event');
+      return;
+    }
+
+    // Update renewal date (invoice doesn't have renews_at, skip for now)
     await User.findOneAndUpdate(
       { lemonsqueezySubscriptionId: subscriptionId },
       {
-        subscriptionCurrentPeriodEnd: subscription.renews_at
-          ? new Date(subscription.renews_at)
-          : undefined,
-      }
-    );
-
-    await Payment.findOneAndUpdate(
-      { lemonsqueezySubscriptionId: subscriptionId },
-      {
-        currentPeriodEnd: subscription.renews_at ? new Date(subscription.renews_at) : undefined,
+        // Just confirm subscription is still active
+        subscriptionStatus: 'active',
       }
     );
 
