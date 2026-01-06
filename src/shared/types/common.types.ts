@@ -41,6 +41,12 @@ export interface IUser {
   lastNotificationSent?: Date;
   notificationCount: number;
 
+  // LemonSqueezy Subscription
+  lemonsqueezyCustomerId?: string;
+  lemonsqueezySubscriptionId?: string;
+  subscriptionStatus?: 'active' | 'cancelled' | 'past_due' | 'expired';
+  subscriptionCurrentPeriodEnd?: Date;
+
   createdAt: Date;
   updatedAt: Date;
 }

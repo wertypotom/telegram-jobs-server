@@ -34,4 +34,10 @@ export const envConfig = {
 
   // Application
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+
+  // LemonSqueezy Payment
+  lemonsqueezyApiKey: process.env.LEMONSQUEEZY_API_KEY || '',
+  lemonsqueezyStoreId: process.env.LEMONSQUEEZY_STORE_ID || '',
+  lemonsqueezyWebhookSecret: process.env.LEMONSQUEEZY_WEBHOOK_SECRET || '',
+  lemonsqueezyPremiumVariantId: process.env.LEMONSQUEEZY_PREMIUM_VARIANT_ID || '',
 };

@@ -5,6 +5,7 @@ import channelRoutes from './channel/channel.routes';
 import feedbackRoutes from './feedback/feedback.routes';
 import jobRoutes from './job/job.routes';
 import notificationRoutes from './notification/notification.routes';
+import paymentRoutes from './payment/payment.routes';
 import resumeRoutes from './resume/resume.routes';
 import sniperRoutes from './sniper/sniper.routes';
 import statsRoutes from './stats/stats.routes';
@@ -21,5 +22,6 @@ router.use('/users', userRoutes);
 router.use('/bundles', bundleRoutes);
 router.use('/stats', statsRoutes); // Public stats endpoint
 router.use('/notifications', notificationRoutes); // Notification settings
+router.use('/payment', paymentRoutes); // Payment \u0026 subscription management
 
 export default router;
