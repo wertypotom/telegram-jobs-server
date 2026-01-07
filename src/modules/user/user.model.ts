@@ -88,6 +88,21 @@ const userSchema = new Schema<IUserDocument>(
       type: Number,
       default: 0,
     },
+
+    // LemonSqueezy Subscription
+    lemonsqueezyCustomerId: {
+      type: String,
+    },
+    lemonsqueezySubscriptionId: {
+      type: String,
+    },
+    subscriptionStatus: {
+      type: String,
+      enum: ['active', 'cancelled', 'past_due', 'expired'],
+    },
+    subscriptionCurrentPeriodEnd: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
