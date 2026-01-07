@@ -55,6 +55,7 @@ const paymentSchema = new Schema<IPaymentDocument>(
       type: String,
       enum: ['active', 'cancelled', 'past_due', 'expired'],
       required: true,
+      index: true, // Index for faster webhook lookups
     },
     currentPeriodEnd: {
       type: Date,

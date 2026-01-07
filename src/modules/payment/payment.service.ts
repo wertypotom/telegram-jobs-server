@@ -13,6 +13,7 @@ import { Payment } from './payment.model';
 import {
   CancelSubscriptionResponse,
   CreateCheckoutResponse,
+  LemonSqueezyInvoiceAttributes,
   LemonSqueezyWebhookPayload,
   SubscriptionStatusResponse,
 } from './payment.types';
@@ -26,6 +27,9 @@ lemonSqueezySetup({
 export class PaymentService {
   /**
    * Create checkout URL for user to purchase subscription
+   * @param userId - The user's ID
+   * @param variantId - LemonSqueezy variant ID for the product
+   * @returns Checkout URL to redirect user to
    */
   async createCheckoutUrl(userId: string, variantId: string): Promise<CreateCheckoutResponse> {
     try {
@@ -64,7 +68,10 @@ export class PaymentService {
   }
 
   /**
-   * Validate webhook signature
+   * Validate webhook signature using HMAC-SHA256
+   * @param rawBody - Raw request body as string
+   * @param signature - Signature from x-signature header
+   * @returns True if signature is valid
    */
   private validateWebhookSignature(rawBody: string, signature: string): boolean {
     const secret = envConfig.lemonsqueezyWebhookSecret;
@@ -76,6 +83,9 @@ export class PaymentService {
 
   /**
    * Handle incoming webhook from LemonSqueezy
+   * Validates signature and routes to appropriate event handler
+   * @param rawBody - Raw request body for signature validation
+   * @param signature - HMAC signature from LemonSqueezy
    */
   async handleWebhook(rawBody: string, signature: string): Promise<void> {
     // Validate signature
@@ -113,6 +123,7 @@ export class PaymentService {
 
   /**
    * Handle subscription_created event
+   * Upgrades user to premium and creates payment record
    */
   private async handleSubscriptionCreated(payload: LemonSqueezyWebhookPayload): Promise<void> {
     const userId = payload.meta.custom_data?.user_id;
@@ -153,6 +164,7 @@ export class PaymentService {
 
   /**
    * Handle subscription_updated event
+   * Updates user and payment record with new subscription status
    */
   private async handleSubscriptionUpdated(payload: LemonSqueezyWebhookPayload): Promise<void> {
     const subscription = payload.data.attributes;
@@ -183,6 +195,7 @@ export class PaymentService {
 
   /**
    * Handle subscription_cancelled event
+   * User keeps premium access until period end
    */
   private async handleSubscriptionCancelled(payload: LemonSqueezyWebhookPayload): Promise<void> {
     const subscription = payload.data.attributes;
@@ -210,6 +223,7 @@ export class PaymentService {
 
   /**
    * Handle subscription_expired event
+   * Downgrades user to free plan
    */
   private async handleSubscriptionExpired(payload: LemonSqueezyWebhookPayload): Promise<void> {
     const subscription = payload.data.attributes;
@@ -237,13 +251,13 @@ export class PaymentService {
 
   /**
    * Handle subscription_payment_success event
-   * Note: This event sends invoice data, which has subscription_id instead of order_id
+   * Note: This event sends invoice data with different structure than subscription data
    */
   private async handlePaymentSuccess(payload: LemonSqueezyWebhookPayload): Promise<void> {
-    const invoice = payload.data.attributes;
+    // Invoice events have different structure - use type guard
+    const invoice = payload.data.attributes as unknown as LemonSqueezyInvoiceAttributes;
 
-    // For invoice events, use subscription_id
-    const subscriptionId = (invoice as any).subscription_id?.toString();
+    const subscriptionId = invoice.subscription_id?.toString();
 
     if (!subscriptionId) {
       Logger.warn('No subscription_id in payment success event');
@@ -264,6 +278,8 @@ export class PaymentService {
 
   /**
    * Get user's subscription status
+   * @param userId - User's ID
+   * @returns Current subscription details
    */
   async getSubscriptionStatus(userId: string): Promise<SubscriptionStatusResponse> {
     const user = await User.findById(userId);
@@ -280,7 +296,10 @@ export class PaymentService {
   }
 
   /**
-   * Cancel user's subscription
+   * Cancel user's subscription via LemonSqueezy API
+   * Access continues until end of billing period
+   * @param userId - User's ID
+   * @returns Success status and message
    */
   async cancelSubscription(userId: string): Promise<CancelSubscriptionResponse> {
     const user = await User.findById(userId);
@@ -313,7 +332,8 @@ export class PaymentService {
   }
 
   /**
-   * Map LemonSqueezy status to our internal status
+   * Map LemonSqueezy status to internal status enum
+   * Note: 'paused' not supported, mapped to 'expired'
    */
   private mapLemonSqueezyStatus(status: string): 'active' | 'cancelled' | 'past_due' | 'expired' {
     switch (status) {
@@ -326,9 +346,9 @@ export class PaymentService {
       case 'unpaid':
         return 'past_due';
       case 'expired':
-      case 'paused':
         return 'expired';
       default:
+        Logger.warn(`Unknown LemonSqueezy status: ${status}, defaulting to expired`);
         return 'expired';
     }
   }

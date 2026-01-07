@@ -1,4 +1,5 @@
 import { AuthRequest } from '@middlewares/auth.middleware';
+import { BadRequestError, UnauthorizedError } from '@utils/errors';
 import { Logger } from '@utils/logger';
 import { ApiResponse } from '@utils/response';
 import { NextFunction, Response } from 'express';
@@ -15,14 +16,10 @@ export class PaymentController {
   async createCheckout(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.userId;
-      const { variantId } = req.body;
-
-      if (!variantId) {
-        return next(new Error('Variant ID is required'));
-      }
+      const { variantId } = req.body; // Validated by middleware
 
       if (!userId) {
-        return next(new Error('User not authenticated'));
+        throw new UnauthorizedError('User not authenticated');
       }
 
       const result = await paymentService.createCheckoutUrl(userId, variantId);
@@ -44,11 +41,11 @@ export class PaymentController {
       const rawBody = (req as any).rawBody;
 
       if (!signature) {
-        return next(new Error('Missing signature header'));
+        throw new BadRequestError('Missing signature header');
       }
 
       if (!rawBody) {
-        return next(new Error('Missing raw body - check middleware'));
+        throw new BadRequestError('Missing raw body - check middleware configuration');
       }
 
       await paymentService.handleWebhook(rawBody, signature);
@@ -69,7 +66,7 @@ export class PaymentController {
       const userId = req.userId;
 
       if (!userId) {
-        return next(new Error('User not authenticated'));
+        throw new UnauthorizedError('User not authenticated');
       }
 
       const result = await paymentService.getSubscriptionStatus(userId);
@@ -88,7 +85,7 @@ export class PaymentController {
       const userId = req.userId;
 
       if (!userId) {
-        return next(new Error('User not authenticated'));
+        throw new UnauthorizedError('User not authenticated');
       }
 
       const result = await paymentService.cancelSubscription(userId);

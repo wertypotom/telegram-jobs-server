@@ -153,10 +153,10 @@ Using TypeScript path mapping (`@modules/*`, `@config/*`, etc.):
 
 ```typescript
 // ❌ Bad: Relative imports
-import { Logger } from "../../../shared/utils/logger";
+import { Logger } from '../../../shared/utils/logger';
 
 // ✅ Good: Clean aliases
-import { Logger } from "@utils/logger";
+import { Logger } from '@utils/logger';
 ```
 
 #### 3. **Error Handling Strategy**
@@ -164,9 +164,9 @@ import { Logger } from "@utils/logger";
 Custom error classes extend `AppError` with HTTP status codes:
 
 ```typescript
-throw new NotFoundError("Job not found"); // 404
-throw new BadRequestError("Invalid filter"); // 400
-throw new UnauthorizedError("Token expired"); // 401
+throw new NotFoundError('Job not found'); // 404
+throw new BadRequestError('Invalid filter'); // 400
+throw new UnauthorizedError('Token expired'); // 401
 ```
 
 - **Operational errors** (user mistakes) → Handled gracefully
@@ -441,6 +441,46 @@ POST /api/notifications/telegram/webhook   # Telegram bot webhook (public, valid
 POST /api/feedback                 # Submit user feedback (auth)
 ```
 
+### Payment (LemonSqueezy)
+
+```http
+POST /api/payment/checkout         # Create checkout session (auth)
+GET  /api/payment/subscription     # Get subscription status (auth)
+POST /api/payment/cancel           # Cancel subscription (auth)
+POST /api/payment/webhook          # LemonSqueezy webhook (public, signature validated)
+```
+
+**Create Checkout Request:**
+
+```json
+POST /api/payment/checkout
+{
+  "variantId": "123456"  // LemonSqueezy product variant ID
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "checkoutUrl": "https://store.lemonsqueezy.com/checkout/..."
+  }
+}
+```
+
+**Subscription Status Response:**
+
+```json
+{
+  "plan": "premium",
+  "status": "active",
+  "currentPeriodEnd": "2024-02-15T00:00:00.000Z",
+  "cancelAtPeriodEnd": false
+}
+```
+
 ### Platform Statistics
 
 ```http
@@ -526,6 +566,11 @@ ABACUS_API_URL=https://routellm.abacus.ai/v1
 MAX_FILE_SIZE=10485760  # 10MB
 UPLOAD_DIR=./uploads
 TEMP_DIR=./public/temp
+
+# LemonSqueezy Payment Integration
+LEMONSQUEEZY_API_KEY=your_lemonsqueezy_api_key
+LEMONSQUEEZY_STORE_ID=your_store_id
+LEMONSQUEEZY_WEBHOOK_SECRET=webhook_secret_from_dashboard
 
 # Application URLs
 FRONTEND_URL=http://localhost:3000

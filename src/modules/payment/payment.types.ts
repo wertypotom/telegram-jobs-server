@@ -36,13 +36,34 @@ export interface LemonSqueezySubscriptionAttributes {
   variant_name: string;
   user_name: string;
   user_email: string;
-  status: 'active' | 'cancelled' | 'expired' | 'past_due' | 'unpaid' | 'on_trial' | 'paused';
+  status: 'active' | 'cancelled' | 'expired' | 'past_due' | 'unpaid' | 'on_trial';
   status_formatted: string;
   card_brand?: string;
   card_last_four?: string;
   renews_at?: string;
   ends_at?: string;
   trial_ends_at?: string;
+  created_at: string;
+  updated_at: string;
+  test_mode: boolean;
+}
+
+/**
+ * Invoice attributes from subscription_payment_success webhook
+ * Different structure than subscription attributes
+ */
+export interface LemonSqueezyInvoiceAttributes {
+  subscription_id: number;
+  store_id: number;
+  customer_id: number;
+  billing_reason: string;
+  status: string;
+  status_formatted: string;
+  subtotal: number;
+  discount_total: number;
+  tax: number;
+  total: number;
+  currency: string;
   created_at: string;
   updated_at: string;
   test_mode: boolean;
