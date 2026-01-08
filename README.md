@@ -447,8 +447,18 @@ POST /api/feedback                 # Submit user feedback (auth)
 POST /api/payment/checkout         # Create checkout session (auth)
 GET  /api/payment/subscription     # Get subscription status (auth)
 POST /api/payment/cancel           # Cancel subscription (auth)
+POST /api/payment/resume           # Resume cancelled subscription (auth)
 POST /api/payment/webhook          # LemonSqueezy webhook (public, signature validated)
 ```
+
+**Payment Features:**
+
+- Premium subscription management via LemonSqueezy
+- Secure checkout session creation
+- Automatic webhook processing for payment events (subscription.created, subscription.updated, subscription.cancelled, subscription.expired, order.created)
+- Subscription status tracking with period end dates
+- Graceful subscription cancellation (access until period ends)
+- Resume cancelled subscriptions before period ends
 
 **Create Checkout Request:**
 
@@ -480,6 +490,20 @@ POST /api/payment/checkout
   "cancelAtPeriodEnd": false
 }
 ```
+
+**Cancel Subscription:**
+
+- Subscription remains active until current billing period ends
+- `cancelAtPeriodEnd` flag indicates pending cancellation
+- User retains premium access through paid period
+- Payment record updated with `cancelledAt` timestamp
+
+**Resume Subscription:**
+
+- Reactivates cancelled subscriptions before period ends
+- Validates subscription has `cancelledAt` date set
+- Calls LemonSqueezy API to uncancel subscription
+- Clears `cancelledAt` and restores active status
 
 ### Platform Statistics
 
