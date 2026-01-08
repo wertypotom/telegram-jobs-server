@@ -128,6 +128,7 @@ export class PaymentService {
   private async handleSubscriptionCreated(payload: LemonSqueezyWebhookPayload): Promise<void> {
     const userId = payload.meta.custom_data?.user_id;
     const subscription = payload.data.attributes;
+    const subscriptionId = payload.data.id; // Use actual subscription ID for API calls
 
     if (!userId) {
       Logger.error('No user_id in webhook payload');
@@ -138,7 +139,7 @@ export class PaymentService {
     await User.findByIdAndUpdate(userId, {
       plan: 'premium',
       lemonsqueezyCustomerId: subscription.customer_id.toString(),
-      lemonsqueezySubscriptionId: subscription.order_id.toString(),
+      lemonsqueezySubscriptionId: subscriptionId, // Use subscription ID, not order_id
       subscriptionStatus: 'active',
       subscriptionCurrentPeriodEnd: subscription.renews_at
         ? new Date(subscription.renews_at)
@@ -149,7 +150,7 @@ export class PaymentService {
     await Payment.create({
       userId,
       lemonsqueezyCustomerId: subscription.customer_id.toString(),
-      lemonsqueezySubscriptionId: subscription.order_id.toString(),
+      lemonsqueezySubscriptionId: subscriptionId,
       lemonsqueezyOrderId: subscription.order_id.toString(),
       variantId: subscription.variant_id.toString(),
       productName: subscription.product_name,
@@ -287,11 +288,15 @@ export class PaymentService {
       throw new NotFoundError('User not found');
     }
 
+    // Check Payment collection for most recent subscription status
+    // Webhooks update Payment model first, so it's more accurate than User model
+    const payment = await Payment.findOne({ userId }).sort({ createdAt: -1 });
+
     return {
       plan: user.plan,
-      status: user.subscriptionStatus,
+      status: payment?.status || user.subscriptionStatus,
       currentPeriodEnd: user.subscriptionCurrentPeriodEnd?.toISOString(),
-      cancelAtPeriodEnd: user.subscriptionStatus === 'cancelled',
+      cancelAtPeriodEnd: payment?.status === 'cancelled',
     };
   }
 
@@ -323,7 +328,8 @@ export class PaymentService {
       return {
         success: true,
         message:
-          'Subscription cancelled successfully. Access will continue until the end of the billing period.',
+          'Subscription cancelled. Premium access continues until the end of your billing period.',
+        currentPeriodEnd: user.subscriptionCurrentPeriodEnd?.toISOString(),
       };
     } catch (error) {
       Logger.error('Error cancelling subscription:', error);

@@ -1,5 +1,6 @@
 import { User } from '@modules/user/user.model';
 
+import { Payment } from '../payment.model';
 import { PaymentService } from '../payment.service';
 
 // Mock dependencies
@@ -42,7 +43,15 @@ describe('PaymentService', () => {
         subscriptionCurrentPeriodEnd: new Date('2024-12-31'),
       };
 
+      const mockPayment = {
+        userId: 'user-123',
+        status: 'active',
+      };
+
       (User.findById as jest.Mock).mockResolvedValue(mockUser);
+      (Payment.findOne as jest.Mock).mockReturnValue({
+        sort: jest.fn().mockResolvedValue(mockPayment),
+      });
 
       const result = await paymentService.getSubscriptionStatus('user-123');
 
@@ -61,6 +70,9 @@ describe('PaymentService', () => {
       };
 
       (User.findById as jest.Mock).mockResolvedValue(mockUser);
+      (Payment.findOne as jest.Mock).mockReturnValue({
+        sort: jest.fn().mockResolvedValue(null),
+      });
 
       const result = await paymentService.getSubscriptionStatus('user-123');
 

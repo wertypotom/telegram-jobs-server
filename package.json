@@ -7,7 +7,7 @@
     "dev": "nodemon",
     "build": "tsc && tsc-alias",
     "start": "node dist/index.js",
-    "migrate": "ts-node -r tsconfig-paths/register src/migrations/index.ts",
+    "migrate": "ts-node -r dotenv/config -r tsconfig-paths/register src/migrations/index.ts",
     "migrate:up": "npm run migrate up",
     "migrate:down": "npm run migrate down",
     "migrate:status": "npm run migrate status",

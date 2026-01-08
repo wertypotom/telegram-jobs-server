@@ -802,50 +802,6 @@ async getJob(id: string) {
 }
 ```
 
-## 🎯 Roadmap
-
-### Phase 1: Core Infrastructure ✅
-
-- [x] Telegram integration (GramJS + Bot API)
-- [x] AI job parsing (Gemini/Abacus)
-- [x] Basic job feed with pagination
-- [x] Resume upload and parsing
-- [x] AI resume tailoring (Sniper)
-- [x] User authentication (NextAuth/JWT)
-
-### Phase 2: Advanced Features ✅
-
-- [x] Advanced filtering (tech stack, level, location, experience years)
-- [x] Channel management (subscribe/unsubscribe)
-- [x] User interaction tracking (views, subscription changes)
-- [x] Channel bundles for onboarding
-- [x] User preferences persistence
-- [x] External page scraping for job digests
-- [x] Job cleanup service (auto-delete old jobs)
-
-### Phase 3: Intelligence & Engagement ✅
-
-- [x] Real-time Telegram notifications
-- [x] Custom notification filters per user
-- [x] Quiet hours with timezone support
-- [x] Subscription tracking and limits (free tier: 6 swaps/month)
-- [x] Platform statistics (public endpoint)
-- [x] Feedback collection system
-
-### Phase 4: Scale & Polish (In Progress)
-
-- [x] Unit & integration tests
-- [x] CI/CD Pipeline (GitHub Actions)
-- [ ] Personalized job recommendations (ML-based)
-- [ ] Application success tracking
-- [ ] Resume A/B testing insights
-- [ ] Interview preparation suggestions
-- [ ] Rate limiting middleware
-- [ ] API documentation (Swagger/OpenAPI)
-- [ ] Email notifications (alternative to Telegram)
-- [ ] Admin dashboard
-- [ ] Analytics and insights panel
-
 ## 🧪 Testing
 
 The project maintains comprehensive test coverage using **Jest**, **Supertest**, and **MongoDB Memory Server**.

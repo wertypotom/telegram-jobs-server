@@ -16,6 +16,7 @@ import { migration006 } from './versions/006-add-job-text-index';
 import { migration007 } from './versions/007-add-subscription-changes-field';
 import { migration008 } from './versions/008-reset-last-scraped-message-id';
 import { migration009 } from './versions/009-add-telegram-message-date';
+import { migration010 } from './versions/010-fix-subscription-ids';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
@@ -30,6 +31,7 @@ const migrations: Migration[] = [
   migration007,
   migration008,
   migration009,
+  migration010,
 ];
 
 export class MigrationRunner {
