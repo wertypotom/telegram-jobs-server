@@ -3,6 +3,7 @@ import {
   cancelSubscription as lsCancelSubscription,
   createCheckout,
   lemonSqueezySetup,
+  updateSubscription,
 } from '@lemonsqueezy/lemonsqueezy.js';
 import { User } from '@modules/user/user.model';
 import { BadRequestError, NotFoundError } from '@utils/errors';
@@ -15,6 +16,7 @@ import {
   CreateCheckoutResponse,
   LemonSqueezyInvoiceAttributes,
   LemonSqueezyWebhookPayload,
+  ResumeSubscriptionResponse,
   SubscriptionStatusResponse,
 } from './payment.types';
 
@@ -169,7 +171,7 @@ export class PaymentService {
    */
   private async handleSubscriptionUpdated(payload: LemonSqueezyWebhookPayload): Promise<void> {
     const subscription = payload.data.attributes;
-    const subscriptionId = subscription.order_id.toString();
+    const subscriptionId = payload.data.id; // Use actual subscription ID
 
     // Update user subscription status
     await User.findOneAndUpdate(
@@ -199,8 +201,7 @@ export class PaymentService {
    * User keeps premium access until period end
    */
   private async handleSubscriptionCancelled(payload: LemonSqueezyWebhookPayload): Promise<void> {
-    const subscription = payload.data.attributes;
-    const subscriptionId = subscription.order_id.toString();
+    const subscriptionId = payload.data.id; // Use actual subscription ID
 
     // Update user - keep premium until period end
     await User.findOneAndUpdate(
@@ -227,8 +228,7 @@ export class PaymentService {
    * Downgrades user to free plan
    */
   private async handleSubscriptionExpired(payload: LemonSqueezyWebhookPayload): Promise<void> {
-    const subscription = payload.data.attributes;
-    const subscriptionId = subscription.order_id.toString();
+    const subscriptionId = payload.data.id; // Use actual subscription ID
 
     // Downgrade user to free
     await User.findOneAndUpdate(
@@ -318,12 +318,24 @@ export class PaymentService {
 
     try {
       // Cancel via LemonSqueezy API
+      Logger.info(`Attempting to cancel subscription: ${user.lemonsqueezySubscriptionId}`);
       const result = await lsCancelSubscription(user.lemonsqueezySubscriptionId);
 
       if (result.error) {
         Logger.error('Failed to cancel subscription:', result.error);
         throw new BadRequestError('Failed to cancel subscription');
       }
+
+      // Update Payment record immediately so resume works right away
+      await Payment.findOneAndUpdate(
+        { lemonsqueezySubscriptionId: user.lemonsqueezySubscriptionId },
+        {
+          status: 'cancelled',
+          cancelledAt: new Date(),
+        }
+      );
+
+      Logger.info(`Subscription cancelled in database: ${user.lemonsqueezySubscriptionId}`);
 
       return {
         success: true,
@@ -333,6 +345,73 @@ export class PaymentService {
       };
     } catch (error) {
       Logger.error('Error cancelling subscription:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Resume user's cancelled subscription via LemonSqueezy API
+   * Reactivates a subscription that was previously cancelled
+   * @param userId - User's ID
+   * @returns Success status and message
+   */
+  async resumeSubscription(userId: string): Promise<ResumeSubscriptionResponse> {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    if (!user.lemonsqueezySubscriptionId) {
+      throw new BadRequestError('No subscription found');
+    }
+
+    // Check Payment model for cancelled status (more accurate than User model)
+    const payment = await Payment.findOne({
+      lemonsqueezySubscriptionId: user.lemonsqueezySubscriptionId,
+    });
+
+    Logger.info(
+      `Resume validation - subscriptionId: ${user.lemonsqueezySubscriptionId}, payment found: ${!!payment}, payment status: ${payment?.status}, cancelledAt: ${payment?.cancelledAt}`
+    );
+
+    // Check if subscription was cancelled (has cancelledAt date)
+    // Status stays "active" until period ends, so we check cancelledAt field
+    if (!payment || !payment.cancelledAt) {
+      throw new BadRequestError('Subscription is not cancelled');
+    }
+
+    try {
+      // Resume via LemonSqueezy API by setting cancelled to false
+      Logger.info(`Attempting to resume subscription: ${user.lemonsqueezySubscriptionId}`);
+      const result = await updateSubscription(user.lemonsqueezySubscriptionId, {
+        cancelled: false,
+      });
+
+      if (result.error) {
+        Logger.error('Failed to resume subscription:', result.error);
+        throw new BadRequestError('Failed to resume subscription');
+      }
+
+      // Update local records to active
+      await User.findByIdAndUpdate(userId, {
+        subscriptionStatus: 'active',
+      });
+
+      await Payment.findOneAndUpdate(
+        { lemonsqueezySubscriptionId: user.lemonsqueezySubscriptionId },
+        {
+          status: 'active',
+          cancelledAt: null,
+        }
+      );
+
+      return {
+        success: true,
+        message: 'Subscription resumed successfully. Your premium access has been reactivated.',
+        status: 'active',
+      };
+    } catch (error) {
+      Logger.error('Error resuming subscription:', error);
       throw error;
     }
   }

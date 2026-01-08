@@ -24,4 +24,7 @@ router.get('/subscription', authenticate, paymentController.getSubscription);
 // Cancel subscription (authenticated)
 router.post('/cancel', authenticate, paymentController.cancelSubscription);
 
+// Resume subscription (authenticated)
+router.post('/resume', authenticate, paymentController.resumeSubscription);
+
 export default router;

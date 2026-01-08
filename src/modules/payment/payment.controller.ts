@@ -94,6 +94,25 @@ export class PaymentController {
       next(error);
     }
   }
+
+  /**
+   * POST /api/payment/resume
+   * Resume user's cancelled subscription
+   */
+  async resumeSubscription(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.userId;
+
+      if (!userId) {
+        throw new UnauthorizedError('User not authenticated');
+      }
+
+      const result = await paymentService.resumeSubscription(userId);
+      ApiResponse.success(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const paymentController = new PaymentController();

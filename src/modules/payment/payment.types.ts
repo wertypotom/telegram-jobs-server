@@ -92,3 +92,10 @@ export interface CancelSubscriptionResponse {
   message: string;
   currentPeriodEnd?: string;
 }
+
+// Resume subscription response
+export interface ResumeSubscriptionResponse {
+  success: boolean;
+  message: string;
+  status?: 'active' | 'cancelled' | 'past_due' | 'expired';
+}
