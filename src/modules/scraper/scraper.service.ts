@@ -1,6 +1,7 @@
 import { ChannelRepository } from '@modules/channel/channel.repository';
 import { JobService } from '@modules/job/job.service';
 import { TelegramClientService } from '@modules/telegram/services/telegram-client.service';
+import * as Sentry from '@sentry/node';
 import { Logger } from '@utils/logger';
 
 import { PageScraperService } from './page-scraper.service';
@@ -345,6 +346,20 @@ export class ScraperService {
             jobsFound++;
           } catch (error) {
             Logger.warn('Failed to process digest URL', { url, error });
+
+            // Capture digest URL processing failures
+            Sentry.captureException(error, {
+              level: 'warning',
+              tags: {
+                errorType: 'digest_url_failure',
+                channel: channelUsername,
+              },
+              extra: {
+                url,
+                digestMessageId: digest.id,
+                urlIndex,
+              },
+            });
           }
 
           // Small delay between URL fetches to be respectful
@@ -366,6 +381,19 @@ export class ScraperService {
         Logger.warn(
           `Rate limited on ${channelUsername}. Telegram requires waiting ${waitSeconds} seconds. Skipping for now.`
         );
+
+        // Track rate limits in Sentry for monitoring
+        Sentry.captureException(error, {
+          level: 'warning',
+          tags: {
+            errorType: 'telegram_rate_limit',
+            channel: channelUsername,
+          },
+          extra: {
+            waitSeconds,
+          },
+        });
+
         // Return 0 jobs but don't throw - allows scraper to continue
         return { jobsFound: 0 };
       }

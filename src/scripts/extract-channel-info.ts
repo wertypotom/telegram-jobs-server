@@ -1,3 +1,4 @@
+// CRITICAL: Load .env FIRST before any other imports that read process.env
 import { envConfig } from '@config/env.config';
 import { AIProviderFactory } from '@shared/providers/ai-provider.factory';
 import { Logger } from '@utils/logger';
@@ -6,7 +7,7 @@ import path from 'path';
 import { Api, TelegramClient } from 'telegram';
 import { StringSession } from 'telegram/sessions';
 
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 /**
  * Extract Telegram Channel Information Script
@@ -18,16 +19,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
  */
 
 // Add your channel usernames here (with or without @)
-const CHANNELS_TO_EXTRACT = [
-  '@job_dotnet',
-  '@csharpdevjob',
-  '@java_jobs',
-  '@jvmjobs',
-  '@flutterroles',
-  '@dartuz_jobs',
-  '@dartlang_jobs',
-  '@hackdevjob',
-];
+const CHANNELS_TO_EXTRACT = ['@vacancy_it_ulbitv'];
 
 interface ChannelInfo {
   username: string;

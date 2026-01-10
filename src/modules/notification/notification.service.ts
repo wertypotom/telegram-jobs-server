@@ -1,4 +1,5 @@
 import { User } from '@modules/user/user.model';
+import * as Sentry from '@sentry/node';
 import { IJob } from '@shared/types/common.types';
 import { Logger } from '@utils/logger';
 
@@ -169,6 +170,19 @@ export class NotificationService {
       Logger.info(`Notification sent to user ${user._id} for job ${job._id}`);
     } catch (error) {
       Logger.error(`Failed to notify user ${user._id}:`, error);
+
+      Sentry.captureException(error, {
+        level: 'warning',
+        tags: {
+          errorType: 'user_notification_failure',
+          hasChannel: !!user.telegramChatId,
+        },
+        extra: {
+          userId: user._id,
+          jobId: job._id,
+          telegramChatId: user.telegramChatId,
+        },
+      });
     }
   }
 

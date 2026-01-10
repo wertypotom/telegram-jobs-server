@@ -1,4 +1,5 @@
 import { envConfig } from '@config/env.config';
+import * as Sentry from '@sentry/node';
 import { InternalServerError } from '@utils/errors';
 import { Logger } from '@utils/logger';
 import axios from 'axios';
@@ -55,6 +56,18 @@ export class AiTailorService {
       };
     } catch (error) {
       Logger.error('Failed to tailor resume with AI:', error);
+
+      Sentry.captureException(error, {
+        level: 'warning',
+        tags: {
+          errorType: 'ai_resume_tailoring_failure',
+        },
+        extra: {
+          resumeLength: masterResume.length,
+          jobDescLength: jobDescription.length,
+        },
+      });
+
       throw new InternalServerError('Failed to tailor resume');
     }
   }

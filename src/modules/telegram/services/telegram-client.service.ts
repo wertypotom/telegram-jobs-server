@@ -1,4 +1,5 @@
 import { envConfig } from '@config/env.config';
+import * as Sentry from '@sentry/node';
 import { Logger } from '@utils/logger';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -40,6 +41,18 @@ export class TelegramClientService {
       return this.client;
     } catch (error) {
       Logger.error('Failed to initialize Telegram client:', error);
+
+      Sentry.captureException(error, {
+        level: 'error',
+        tags: {
+          errorType: 'telegram_client_init_failure',
+        },
+        extra: {
+          hasApiId: !!envConfig.telegramApiId,
+          hasApiHash: !!envConfig.telegramApiHash,
+        },
+      });
+
       throw error;
     }
   }

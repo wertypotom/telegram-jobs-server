@@ -1,3 +1,4 @@
+// CRITICAL: Load .env FIRST before any other imports that read process.env
 import { envConfig } from '@config/env.config';
 import { Channel } from '@modules/channel/channel.model';
 import { CHANNEL_SEED_DATA } from '@modules/channel/channel.seed';
@@ -6,7 +7,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import path from 'path';
 
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 /**
  * Channel Seed Script
