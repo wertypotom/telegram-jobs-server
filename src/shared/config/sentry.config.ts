@@ -1,7 +1,6 @@
+import { envConfig } from '@config/env.config';
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
-
-import { envConfig } from './env.config';
 
 /**
  * Initialize Sentry for error monitoring and performance tracking

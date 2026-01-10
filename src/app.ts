@@ -13,12 +13,6 @@ import routes from './modules';
 
 const app: Application = express();
 
-// Sentry request handler must be the first middleware
-app.use(Sentry.Handlers.requestHandler());
-
-// Sentry tracing handler for performance monitoring
-app.use(Sentry.Handlers.tracingHandler());
-
 // Middleware
 app.use(
   cors({
@@ -51,7 +45,7 @@ app.get('/health', (_req, res) => {
 app.use('/api', routes);
 
 // Sentry error handler must be before custom error handlers
-app.use(Sentry.Handlers.errorHandler());
+Sentry.setupExpressErrorHandler(app);
 
 // Error handling
 app.use(notFoundHandler);

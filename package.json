@@ -18,7 +18,8 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\"",
-    "prepare": "husky"
+    "prepare": "husky",
+    "check-types": "tsc --noEmit"
   },
   "lint-staged": {
     "*.ts": [
