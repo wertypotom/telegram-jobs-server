@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import { AIProvider, AIProviderFactory } from '@shared/providers';
 import { ParsedJobData } from '@shared/types/common.types';
 import { InternalServerError } from '@utils/errors';
@@ -56,6 +57,19 @@ export class JobParserService {
       };
     } catch (error) {
       Logger.error('Failed to parse job text:', error);
+
+      Sentry.captureException(error, {
+        level: 'warning',
+        tags: {
+          errorType: 'ai_job_parsing_failure',
+          provider: this.provider.constructor.name,
+        },
+        extra: {
+          textLength: rawText.length,
+          textPreview: rawText.substring(0, 200),
+        },
+      });
+
       throw new InternalServerError('Failed to parse job posting');
     }
   }

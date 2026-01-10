@@ -1,5 +1,6 @@
 import { envConfig } from '@config/env.config';
 import { JobService } from '@modules/job/job.service';
+import * as Sentry from '@sentry/node';
 import { Logger } from '@utils/logger';
 import { NewMessage, NewMessageEvent } from 'telegram/events';
 
@@ -59,8 +60,13 @@ export class TelegramService {
   }
 
   private async handleNewMessage(event: NewMessageEvent): Promise<void> {
+    let channelId = 'unknown';
+    let channelUsername = 'unknown';
+    let messageId: number | undefined;
+
     try {
       const message = event.message;
+      messageId = message.id;
 
       // Get message text
       const text = message.text || message.message;
@@ -70,8 +76,8 @@ export class TelegramService {
 
       // Get channel info
       const chat = await event.getChat();
-      const channelId = chat?.id?.toString() || 'unknown';
-      const channelUsername = (chat as any)?.username || channelId;
+      channelId = chat?.id?.toString() || 'unknown';
+      channelUsername = (chat as any)?.username || channelId;
 
       Logger.debug('New Telegram message received', {
         channelId,
@@ -87,8 +93,25 @@ export class TelegramService {
         rawText: text,
         telegramMessageDate: new Date((message as any).date * 1000), // Convert Unix timestamp to Date
       });
-    } catch (error) {
+    } catch (error: any) {
       Logger.error('Error handling Telegram message:', error);
+
+      // Check if duplicate key error (expected, set to info level)
+      const isDuplicateKey = error?.message?.includes('E11000 duplicate key');
+
+      Sentry.captureException(error, {
+        level: isDuplicateKey ? 'info' : 'error',
+        tags: {
+          errorType: isDuplicateKey ? 'duplicate_job' : 'telegram_message_handler',
+          channelId: channelId || 'unknown',
+        },
+        extra: {
+          messageId,
+          channelUsername,
+          isDuplicateKey,
+          errorMessage: error.message,
+        },
+      });
     }
   }
 

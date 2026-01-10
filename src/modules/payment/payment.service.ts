@@ -6,6 +6,7 @@ import {
   updateSubscription,
 } from '@lemonsqueezy/lemonsqueezy.js';
 import { User } from '@modules/user/user.model';
+import * as Sentry from '@sentry/node';
 import { BadRequestError, NotFoundError } from '@utils/errors';
 import { Logger } from '@utils/logger';
 import crypto from 'crypto';
@@ -65,6 +66,18 @@ export class PaymentService {
       };
     } catch (error) {
       Logger.error('Error creating checkout:', error);
+
+      Sentry.captureException(error, {
+        level: 'error',
+        tags: {
+          errorType: 'checkout_creation_failure',
+        },
+        extra: {
+          userId,
+          variantId,
+        },
+      });
+
       throw error;
     }
   }
@@ -90,36 +103,57 @@ export class PaymentService {
    * @param signature - HMAC signature from LemonSqueezy
    */
   async handleWebhook(rawBody: string, signature: string): Promise<void> {
-    // Validate signature
-    if (!this.validateWebhookSignature(rawBody, signature)) {
-      Logger.warn('Invalid webhook signature');
-      throw new BadRequestError('Invalid signature');
-    }
+    let eventName = 'unknown';
+    let userId: string | undefined;
+    let subscriptionId: string | undefined;
 
-    const payload: LemonSqueezyWebhookPayload = JSON.parse(rawBody);
-    const eventName = payload.meta.event_name;
+    try {
+      // Validate signature
+      if (!this.validateWebhookSignature(rawBody, signature)) {
+        Logger.warn('Invalid webhook signature');
+        throw new BadRequestError('Invalid signature');
+      }
 
-    Logger.info(`Processing webhook: ${eventName}`);
+      const payload: LemonSqueezyWebhookPayload = JSON.parse(rawBody);
+      eventName = payload.meta.event_name;
+      userId = payload.meta.custom_data?.user_id;
+      subscriptionId = payload.data.id;
 
-    // Route to appropriate handler
-    switch (eventName) {
-      case 'subscription_created':
-        await this.handleSubscriptionCreated(payload);
-        break;
-      case 'subscription_updated':
-        await this.handleSubscriptionUpdated(payload);
-        break;
-      case 'subscription_cancelled':
-        await this.handleSubscriptionCancelled(payload);
-        break;
-      case 'subscription_expired':
-        await this.handleSubscriptionExpired(payload);
-        break;
-      case 'subscription_payment_success':
-        await this.handlePaymentSuccess(payload);
-        break;
-      default:
-        Logger.info(`Unhandled webhook event: ${eventName}`);
+      Logger.info(`Processing webhook: ${eventName}`);
+
+      // Route to appropriate handler
+      switch (eventName) {
+        case 'subscription_created':
+          await this.handleSubscriptionCreated(payload);
+          break;
+        case 'subscription_updated':
+          await this.handleSubscriptionUpdated(payload);
+          break;
+        case 'subscription_cancelled':
+          await this.handleSubscriptionCancelled(payload);
+          break;
+        case 'subscription_expired':
+          await this.handleSubscriptionExpired(payload);
+          break;
+        case 'subscription_payment_success':
+          await this.handlePaymentSuccess(payload);
+          break;
+        default:
+          Logger.info(`Unhandled webhook event: ${eventName}`);
+      }
+    } catch (error) {
+      Sentry.captureException(error, {
+        level: 'error',
+        tags: {
+          errorType: 'payment_webhook_failure',
+          eventName,
+        },
+        extra: {
+          userId,
+          subscriptionId,
+        },
+      });
+      throw error;
     }
   }
 

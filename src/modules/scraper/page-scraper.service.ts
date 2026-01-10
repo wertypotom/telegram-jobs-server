@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import { Logger } from '@utils/logger';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
@@ -55,6 +56,20 @@ export class PageScraperService {
         url,
         error: error.message || error,
       });
+
+      // Capture scraping failures in Sentry
+      Sentry.captureException(error, {
+        level: 'warning',
+        tags: {
+          errorType: 'page_scrape_failure',
+          domain: this.extractDomain(url),
+        },
+        extra: {
+          url,
+          errorMessage: error.message || error,
+        },
+      });
+
       return null;
     }
   }
@@ -88,6 +103,17 @@ export class PageScraperService {
     // Limit length to avoid excessive AI tokens
     const MAX_LENGTH = 5000;
     return cleanText.length > MAX_LENGTH ? cleanText.substring(0, MAX_LENGTH) : cleanText;
+  }
+
+  /**
+   * Extract domain from URL for error grouping
+   */
+  private extractDomain(url: string): string {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return 'invalid_url';
+    }
   }
 
   /**
