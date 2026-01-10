@@ -3,6 +3,7 @@ import 'dotenv/config';
 
 import { envConfig } from '@config/env.config';
 import { errorHandler, notFoundHandler } from '@middlewares/error.middleware';
+import * as Sentry from '@sentry/node';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { Application } from 'express';
@@ -42,6 +43,9 @@ app.get('/health', (_req, res) => {
 
 // Routes
 app.use('/api', routes);
+
+// Sentry error handler must be before custom error handlers
+Sentry.setupExpressErrorHandler(app);
 
 // Error handling
 app.use(notFoundHandler);

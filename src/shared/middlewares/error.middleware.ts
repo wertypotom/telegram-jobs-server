@@ -1,4 +1,5 @@
 import { envConfig } from '@config/env.config';
+import * as Sentry from '@sentry/node';
 import { AppError } from '@utils/errors';
 import { Logger } from '@utils/logger';
 import { NextFunction, Request, Response } from 'express';
@@ -19,6 +20,21 @@ export const errorHandler = (
       method: req.method,
     });
 
+    // Capture operational errors in Sentry with context
+    Sentry.captureException(err, {
+      tags: {
+        errorCode: err.code,
+        statusCode: err.statusCode.toString(),
+        errorType: 'operational',
+      },
+      extra: {
+        path: req.path,
+        method: req.method,
+        query: req.query,
+        body: req.body,
+      },
+    });
+
     res.status(err.statusCode).json({
       success: false,
       error: {
@@ -32,6 +48,19 @@ export const errorHandler = (
 
   // Unhandled errors (programming errors)
   Logger.error('Unhandled error:', err);
+
+  // Capture unhandled errors in Sentry with full context
+  Sentry.captureException(err, {
+    tags: {
+      errorType: 'unhandled',
+    },
+    extra: {
+      path: req.path,
+      method: req.method,
+      query: req.query,
+      body: req.body,
+    },
+  });
 
   const statusCode = 500;
   const message = envConfig.nodeEnv === 'development' ? err.message : 'Internal Server Error';

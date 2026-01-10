@@ -3,11 +3,16 @@ import 'dotenv/config';
 
 import { connectDatabase } from '@config/database.config';
 import { envConfig } from '@config/env.config';
+// CRITICAL: Initialize Sentry before any other imports
+import { initSentry } from '@config/sentry.config';
 import { TelegramService } from '@modules/telegram/telegram.service';
+import * as Sentry from '@sentry/node';
 import { Logger } from '@utils/logger';
 import { promises as fs } from 'fs';
 
 import app from './app';
+
+initSentry();
 
 // Initialize server
 const startServer = async (): Promise<void> => {
@@ -85,11 +90,13 @@ const startServer = async (): Promise<void> => {
     // Global error handlers (CRITICAL: prevent crashes)
     process.on('unhandledRejection', (reason) => {
       Logger.error('Unhandled Promise Rejection:', reason);
+      Sentry.captureException(reason);
       // Don't crash the server - just log
     });
 
     process.on('uncaughtException', (error) => {
       Logger.error('Uncaught Exception:', error);
+      Sentry.captureException(error);
       // In production, log but continue
       if (envConfig.nodeEnv !== 'production') {
         process.exit(1);
