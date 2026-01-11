@@ -3,8 +3,8 @@ import { Logger } from '@utils/logger';
 
 export interface PlatformStats {
   activeChannels: number;
-  jobsToday: number;
-  totalJobs: number;
+  jobsLast7Days: number; // Changed from jobsToday
+  totalJobs: number; // Now includes archived
 }
 
 /**
@@ -24,32 +24,43 @@ export class StatsService {
   async getPlatformStats(): Promise<PlatformStats> {
     try {
       const { Job } = await import('@modules/job/job.model');
+      const { ArchivedJob } = await import('@modules/job/archived-job.model');
 
       // Count monitored channels
       const activeChannels = await this.channelRepository.countMonitored();
 
-      // Count jobs in last 24 hours (rolling window, timezone-independent)
-      const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      // Count jobs in last 7 days (rolling window)
+      const last7Days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-      const jobsToday = await Job.countDocuments({
-        createdAt: { $gte: last24Hours },
+      const jobsLast7Days = await Job.countDocuments({
+        telegramMessageDate: { $gte: last7Days },
         status: 'parsed', // Only count successfully parsed jobs
       });
 
-      // Total parsed jobs
-      const totalJobs = await Job.countDocuments({
+      // Total parsed jobs (active + archived)
+      const activeJobsCount = await Job.countDocuments({
         status: 'parsed',
       });
 
+      const archivedJobsCount = await ArchivedJob.countDocuments({
+        status: 'parsed',
+      });
+
+      const totalJobs = activeJobsCount + archivedJobsCount;
+
       Logger.info('Platform stats retrieved', {
         activeChannels,
-        jobsToday,
+        jobsLast7Days,
         totalJobs,
+        breakdown: {
+          active: activeJobsCount,
+          archived: archivedJobsCount,
+        },
       });
 
       return {
         activeChannels,
-        jobsToday,
+        jobsLast7Days,
         totalJobs,
       };
     } catch (error) {
@@ -57,7 +68,7 @@ export class StatsService {
       // Return safe defaults on error
       return {
         activeChannels: 0,
-        jobsToday: 0,
+        jobsLast7Days: 0,
         totalJobs: 0,
       };
     }

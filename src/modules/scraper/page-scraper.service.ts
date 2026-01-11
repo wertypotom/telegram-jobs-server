@@ -42,7 +42,7 @@ export class PageScraperService {
 
       if (!text || text.length < 50) {
         Logger.debug('Extracted text too short', { url, length: text?.length });
-        return null;
+        throw new Error(`Extracted text too short for URL: ${url} (length: ${text?.length || 0})`);
       }
 
       Logger.debug('Successfully extracted job page content', {
