@@ -1,4 +1,5 @@
 import { envConfig } from '@config/env.config';
+import * as Sentry from '@sentry/node';
 
 export class Logger {
   private static formatTimestamp(): string {
@@ -15,10 +16,34 @@ export class Logger {
     console.log(this.formatMessage('INFO', message, metadata));
   }
 
-  static error(message: string, error?: any): void {
+  /**
+   * Log error and automatically capture in Sentry (production only)
+   * @param message - Error message
+   * @param error - Error object or metadata
+   * @param options - Optional Sentry context (tags, extra data)
+   */
+  static error(
+    message: string,
+    error?: any,
+    options?: { tags?: Record<string, string>; extra?: Record<string, any> }
+  ): void {
     const errorDetails =
       error instanceof Error ? { message: error.message, stack: error.stack } : error;
     console.error(this.formatMessage('ERROR', message, errorDetails));
+
+    // Automatically capture in Sentry (production only)
+    if (envConfig.nodeEnv === 'production' && error) {
+      const errorToCapture = error instanceof Error ? error : new Error(message);
+
+      Sentry.captureException(errorToCapture, {
+        tags: options?.tags,
+        extra: {
+          ...options?.extra,
+          logMessage: message,
+          errorDetails,
+        },
+      });
+    }
   }
 
   static warn(message: string, metadata?: any): void {
