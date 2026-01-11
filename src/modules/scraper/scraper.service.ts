@@ -327,7 +327,7 @@ export class ScraperService {
 
             if (!pageContent) {
               Logger.debug('Failed to fetch job page content', { url });
-              continue;
+              throw new Error(`Failed to fetch job page content for URL: ${url}`);
             }
 
             const senderUserId =

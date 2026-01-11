@@ -303,11 +303,13 @@ Strict TypeScript with:
 - Structured feedback collection
 - Future analytics potential
 
-#### 11. **Job Cleanup Service**
+#### 11. **Job Archive Service**
 
-- Automatic removal of old jobs (>7 days)
-- Runs on schedule (every 7 days)
-- Keeps database lean
+- Automatic archival of jobs older than 7 days
+- Separate `archived_jobs` collection with metadata-only (no heavy text fields)
+- Preserves job statistics and SEO data while keeping active collection lean
+- Per-job error handling with retry mechanism
+- Runs on daily schedule
 
 ## 📡 API Endpoints
 
@@ -515,13 +517,13 @@ GET  /api/stats/platform           # Get platform statistics (public)
 
 ```json
 {
-  "totalJobs": 15243,
-  "totalChannels": 42,
-  "totalUsers": 1523,
-  "activeUsers": 342,
-  "jobsLast24h": 156
+  "activeChannels": 42,
+  "jobsLast7Days": 156,
+  "totalJobs": 15243
 }
 ```
+
+**Note**: `totalJobs` includes both active jobs and archived historical jobs.
 
 ## ⚙️ Setup & Configuration
 
@@ -642,6 +644,7 @@ npm run format            # Fix linting and formatting errors
 - ✅ **CORS Configuration** - Whitelist frontend origin
 - ✅ **Environment Secrets** - Never commit `.env` files
 - ✅ **Error Message Sanitization** - Hide stack traces in production
+- ✅ **Sentry Error Monitoring** - Real-time error tracking for dev and production environments
 
 **Per-PR Checklist:**
 
@@ -798,6 +801,34 @@ async getJob(id: string) {
   updatedAt: Date
 }
 ```
+
+### ArchivedJob
+
+```typescript
+{
+  telegramMessageId: string (unique, required)
+  channelId: string (required)
+
+  parsedData: {
+    jobTitle?: string
+    normalizedJobTitle?: string
+    company?: string
+    techStack?: string[]
+    salary?: string
+    level?: 'Junior' | 'Mid' | 'Senior'
+    isRemote?: boolean
+    experienceYears?: number
+  }
+
+  status: 'pending_parse' | 'parsed' | 'failed'
+  telegramMessageDate: Date (required)
+  archivedAt: Date (required)
+  createdAt: Date
+  updatedAt: Date
+}
+```
+
+**Note**: ArchivedJob is a lightweight schema that preserves metadata for statistics while omitting heavy text fields (`rawText`, `description`, `responsibilities`, etc.) to reduce storage.
 
 ### Bundle
 
