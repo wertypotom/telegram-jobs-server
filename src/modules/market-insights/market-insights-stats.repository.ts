@@ -41,20 +41,15 @@ export class MarketInsightsStatsRepository {
   /**
    * Build MongoDB match stage from filters
    */
-  private buildMatchStage(
-    filters: InsightsFilters
-  ): FilterQuery<IJobDocument | IArchivedJobDocument> {
-    const match: FilterQuery<IJobDocument | IArchivedJobDocument> = {
-      status: 'parsed',
-    };
+  private buildMatchStage(filters: InsightsFilters) {
+    const match: any = {};
 
     if (filters.category) {
-      // Match tech stack OR job function
+      // Match jobs that contain the category in techStack OR in normalizedJobTitle
+      const categoryRegex = new RegExp(filters.category, 'i');
       match.$or = [
-        {
-          'parsedData.techStack': { $in: [new RegExp(filters.category, 'i')] },
-        },
-        { 'parsedData.jobFunction': new RegExp(filters.category, 'i') },
+        { 'parsedData.techStack': { $in: [categoryRegex] } },
+        { 'parsedData.normalizedJobTitle': categoryRegex },
       ];
     }
 
@@ -173,10 +168,68 @@ export class MarketInsightsStatsRepository {
    * TODO: Implement salary parsing and grouping
    */
   private async getSalaryBands(
-    _matchStage: FilterQuery<IJobDocument | IArchivedJobDocument>
-  ): Promise<Array<{ range: string; count: number }>> {
-    // Placeholder - implement salary parsing logic
-    return [];
+    matchStage: FilterQuery<IJobDocument | IArchivedJobDocument>
+  ): Promise<{ band: string; count: number }[]> {
+    const { Job: JobModel } = await import('@modules/job/job.model');
+    const { ArchivedJob: ArchivedJobModel } = await import('@modules/job/archived-job.model');
+
+    // Aggregate salary data from both collections
+    const activeResults = await JobModel.aggregate([
+      { $match: matchStage },
+      {
+        $match: {
+          'parsedData.salary': { $exists: true, $ne: null },
+        },
+      },
+      {
+        $project: {
+          salary: '$parsedData.salary',
+        },
+      },
+    ]);
+
+    const archivedResults = await ArchivedJobModel.aggregate([
+      { $match: matchStage },
+      {
+        $match: {
+          'parsedData.salary': { $exists: true, $ne: null },
+        },
+      },
+      {
+        $project: {
+          salary: '$parsedData.salary',
+        },
+      },
+    ]);
+
+    // Combine and parse salaries
+    const allSalaries = [...activeResults, ...archivedResults];
+    const parsedSalaries = allSalaries
+      .map((doc) => this.parseSalary(doc.salary))
+      .filter((amount): amount is number => amount !== null);
+
+    if (parsedSalaries.length === 0) {
+      return [];
+    }
+
+    // Group into bands
+    const bands = [
+      { min: 0, max: 1000, label: '$0-1k' },
+      { min: 1000, max: 2000, label: '$1k-2k' },
+      { min: 2000, max: 3000, label: '$2k-3k' },
+      { min: 3000, max: 4000, label: '$3k-4k' },
+      { min: 4000, max: 5000, label: '$4k-5k' },
+      { min: 5000, max: 7000, label: '$5k-7k' },
+      { min: 7000, max: 10000, label: '$7k-10k' },
+      { min: 10000, max: Infinity, label: '$10k+' },
+    ];
+
+    return bands
+      .map((band) => ({
+        band: band.label,
+        count: parsedSalaries.filter((s) => s >= band.min && s < band.max).length,
+      }))
+      .filter((b) => b.count > 0);
   }
 
   /**
@@ -249,9 +302,63 @@ export class MarketInsightsStatsRepository {
   /**
    * Compute average salary from salary bands
    */
-  private computeAvgSalary(_salaryBands: Array<{ range: string; count: number }>): string | null {
+  private computeAvgSalary(_salaryBands: Array<{ band: string; count: number }>): string | null {
     // Placeholder - implement salary calculation
     return null;
+  }
+
+  /**
+   * Parse salary string to monthly USD amount
+   * Examples:
+   * - "$5000" → 5000
+   * - "€3000-4000" → 3500 (average)
+   * - "200k RUB" → ~2100 (converted)
+   * - "$80/hour" → ~13,867 (monthly)
+   */
+  private parseSalary(salaryStr: string): number | null {
+    if (!salaryStr || typeof salaryStr !== 'string') return null;
+
+    const normalized = salaryStr.toLowerCase().trim();
+
+    // Extract numbers
+    const numbers = normalized.match(/\d+(?:,\d{3})*(?:\.\d+)?/g);
+    if (!numbers || numbers.length === 0) return null;
+
+    const amounts = numbers.map((n) => parseFloat(n.replace(/,/g, '')));
+
+    // Handle ranges (e.g., "3000-5000")
+    const averageAmount = amounts.reduce((sum, num) => sum + num, 0) / amounts.length;
+
+    // Detect currency and convert to USD monthly
+    let usdMonthly = averageAmount;
+
+    // Handle hourly rates (convert to monthly: hourly * 173 hours)
+    if (/hour|hr|ч|час/.test(normalized)) {
+      usdMonthly = averageAmount * 173; // Average 173 work hours/month
+    }
+    // Handle annual salaries (divide by 12)
+    else if (/year|yr|annual|год/.test(normalized) || /\d{6,}/.test(normalized)) {
+      usdMonthly = averageAmount / 12;
+    }
+
+    // Currency conversions (approximate rates)
+    if (/€|eur|euro/.test(normalized)) {
+      usdMonthly *= 1.1; // EUR to USD
+    } else if (/£|gbp|pound/.test(normalized)) {
+      usdMonthly *= 1.27; // GBP to USD
+    } else if (/₽|rub|руб/.test(normalized)) {
+      usdMonthly *= 0.011; // RUB to USD (~90 RUB = 1 USD)
+    } else if (/тг|kzt|tenge/.test(normalized)) {
+      usdMonthly *= 0.0022; // KZT to USD (~450 KZT = 1 USD)
+    }
+    // Default: assume USD if no currency specified
+
+    // Sanity check: monthly salary should be between $100 and $50,000
+    if (usdMonthly < 100 || usdMonthly > 50000) {
+      return null;
+    }
+
+    return Math.round(usdMonthly);
   }
 
   /**

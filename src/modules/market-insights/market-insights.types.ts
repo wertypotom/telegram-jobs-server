@@ -56,7 +56,7 @@ export interface MarketStats {
   jobsLast7Days: number; // Active jobs only (freshness signal)
   avgSalary: string | null;
   topSkills: { name: string; count: number }[];
-  salaryBands: { range: string; count: number }[];
+  salaryBands: { band: string; count: number }[];
   experienceLevels: { level: string; count: number }[];
   trendData: { date: string; jobs: number }[]; // Last 7 days posting volume
   updatedAt: string; // Relative time: "2 hours ago"

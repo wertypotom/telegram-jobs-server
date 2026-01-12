@@ -46,8 +46,8 @@ const initialPages: Partial<InsightsPageConfig>[] = [
         },
       ],
     },
-    priority: 9,
-    minJobCount: 50,
+    priority: 1,
+    minJobCount: 10,
   },
   {
     slug: 'europe',
@@ -68,8 +68,8 @@ const initialPages: Partial<InsightsPageConfig>[] = [
       },
     },
     faq: { en: [], ru: [] },
-    priority: 8,
-    minJobCount: 100,
+    priority: 1,
+    minJobCount: 10,
   },
   {
     slug: 'remote',
@@ -90,8 +90,8 @@ const initialPages: Partial<InsightsPageConfig>[] = [
       },
     },
     faq: { en: [], ru: [] },
-    priority: 9,
-    minJobCount: 30,
+    priority: 1,
+    minJobCount: 10,
   },
   {
     slug: 'python/europe',
@@ -112,8 +112,8 @@ const initialPages: Partial<InsightsPageConfig>[] = [
       },
     },
     faq: { en: [], ru: [] },
-    priority: 7,
-    minJobCount: 40,
+    priority: 1,
+    minJobCount: 5,
   },
 ];
 
