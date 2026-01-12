@@ -1,8 +1,14 @@
+// CRITICAL: Load .env FIRST before any other imports
+// NOW import everything else
 import { InsightsPageConfigModel } from '@modules/market-insights/market-insights.model';
 import { InsightsPageConfig } from '@modules/market-insights/market-insights.types';
 import { MarketInsightsStatsRepository } from '@modules/market-insights/market-insights-stats.repository';
 import { Logger } from '@utils/logger';
+import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import path from 'path';
+
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 /**
  * Seed Market Insights Pages
