@@ -525,6 +525,77 @@ GET  /api/stats/platform           # Get platform statistics (public)
 
 **Note**: `totalJobs` includes both active jobs and archived historical jobs.
 
+### SEO Market Insights
+
+```http
+GET  /api/market-insights/page/:slug       # Get insights page data by slug (public)
+GET  /api/market-insights/slugs            # Get all page slugs (public)
+```
+
+**Get Page Data:**
+
+```http
+GET /api/market-insights/page/python?locale=en
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "config": { "slug": "python", "template": "category-only" },
+    "meta": {
+      "h1": "Python Job Market Insights - Live Data from Telegram",
+      "title": "Python Jobs Worldwide - Market Stats & Trends | JobSniper",
+      "description": "Comprehensive Python job market analysis..."
+    },
+    "faq": [
+      {
+        "question": "What is the average Python developer salary?",
+        "answer": "Based on 300+ analyzed jobs..."
+      }
+    ],
+    "stats": {
+      "totalJobs": 72,
+      "jobsLast7Days": 66,
+      "avgSalary": null,
+      "topSkills": [{"skill": "Django", "count": 45}, ...],
+      "salaryBands": [{"range": "$3000-$4000", "count": 15}, ...],
+      "experienceLevels": [{"level": "Mid", "count": 35}, ...],
+      "trendData": [{"date": "2026-01-06", "jobs": 8}, ...],
+      "updatedAt": "0 minutes ago"
+    },
+    "jobs": [/* Recent job postings */]
+  }
+}
+```
+
+**Get All Slugs:**
+
+```http
+GET /api/market-insights/slugs
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "slugs": ["python", "javascript", "react", "node", ...]
+  }
+}
+```
+
+**Features:**
+
+- Public endpoints (no authentication)
+- Real-time statistics aggregation
+- Multi-locale support (en/ru)
+- 7-day trend analysis
+- ISR-friendly for Next.js client
+
 ## ⚙️ Setup & Configuration
 
 ### Prerequisites
