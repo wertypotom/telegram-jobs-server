@@ -7,6 +7,7 @@ import jobRoutes from './job/job.routes';
 import notificationRoutes from './notification/notification.routes';
 import paymentRoutes from './payment/payment.routes';
 import resumeRoutes from './resume/resume.routes';
+import marketInsightsRoutes from './seo-market-insights/market-insights.routes';
 import sniperRoutes from './sniper/sniper.routes';
 import statsRoutes from './stats/stats.routes';
 import userRoutes from './user/user.routes';
@@ -20,8 +21,9 @@ router.use('/feedback', feedbackRoutes);
 router.use('/channels', channelRoutes);
 router.use('/users', userRoutes);
 router.use('/bundles', bundleRoutes);
-router.use('/stats', statsRoutes); // Public stats endpoint
-router.use('/notifications', notificationRoutes); // Notification settings
-router.use('/payment', paymentRoutes); // Payment \u0026 subscription management
+router.use('/stats', statsRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/payment', paymentRoutes);
+router.use('/market-insights', marketInsightsRoutes);
 
 export default router;

@@ -35,23 +35,24 @@ export class JobParserService {
         return null;
       }
 
+      // Return null instead of undefined for missing fields (consistent with schema)
       return {
-        jobTitle: parsedData.jobTitle || undefined,
-        normalizedJobTitle: parsedData.normalizedJobTitle || parsedData.jobTitle || undefined,
-        company: parsedData.company || undefined,
+        jobTitle: parsedData.jobTitle || null,
+        normalizedJobTitle: parsedData.normalizedJobTitle || parsedData.jobTitle || null,
+        company: parsedData.company || null,
         techStack: parsedData.techStack || [],
-        salary: parsedData.salary || undefined,
-        contactInfo: parsedData.contactInfo || undefined,
-        isRemote: parsedData.isRemote || false,
-        level: parsedData.level || undefined,
-        employmentType: parsedData.employmentType || undefined,
-        location: parsedData.location || undefined,
+        salary: parsedData.salary || null,
+        contactInfo: parsedData.contactInfo || null,
+        isRemote: parsedData.isRemote ?? false,
+        level: parsedData.level || null,
+        employmentType: parsedData.employmentType || null,
+        location: parsedData.location || null,
         candidateLocation: parsedData.candidateLocation || 'Anywhere',
         responsibilities: parsedData.responsibilities || [],
         requiredQualifications: parsedData.requiredQualifications || [],
         preferredQualifications: parsedData.preferredQualifications || [],
         benefits: parsedData.benefits || [],
-        description: parsedData.description || undefined,
+        description: parsedData.description || null,
         experienceYears:
           parsedData.experienceYears !== undefined ? parsedData.experienceYears : null,
       };
@@ -86,31 +87,81 @@ CRITICAL RULES:
 
 EXTRACTION GUIDELINES:
 
-**Job Title Normalization:**
+**Job Title Normalization (CRITICAL - Not the same as level):**
 - Extract the raw job title as "jobTitle" (preserve original language)
 - Translate/normalize to standard English as "normalizedJobTitle"
-- Use these mappings for common Russian/Kazakh titles:
-  * "Фронтенд-разработчик", "Frontend-разработчик" → "Frontend Developer"
-  * "Фулстек-разработчик", "Fullstack-разработчик", "Full-stack разработчик" → "Fullstack Developer"
-  * "Бэкенд-разработчик", "Backend-разработчик" → "Backend Developer"
-  * "Мобильный разработчик" → "Mobile Developer"
-  * "Тимлид", "Team Lead" → "Team Lead"
-  * "Инженер данных", "Дата инженер" → "Data Engineer"
-  * "Тестировщик", "QA Engineer" → "QA Engineer"
+- normalizedJobTitle = THE JOB ROLE, NOT the seniority level
+- Include seniority prefix if it's part of the title
+- Common mappings:
+  * "Фронтенд-разработчик" → "Frontend Developer"
+  * "Фулстек-разработчик" → "Fullstack Developer"
+  * "Бэкенд-разработчик" → "Backend Developer"
+  * "Тимлид" → "Team Lead"
+  * "QA Engineer" → "QA Engineer"
   * "DevOps инженер" → "DevOps Engineer"
-- Match to closest standard English title from common tech roles
-- If already in English, preserve as-is
+  * "Product Manager" → "Product Manager"
+  * "VP of Engineering" → "VP of Engineering" (NOT "Lead")
+  * "CTO" → "CTO" (NOT "Lead")
 - Examples:
-  * "Senior Fullstack-разработчик" → "Senior Fullstack Developer"
-  * "React Developer" → "React Developer"
-  * "Инженер данных" → "Data Engineer"
-  * "Middle Frontend разработчик" → "Middle Frontend Developer"
+  * "Senior Backend Developer" → "Senior Backend Developer" (keep seniority)
+  * "VP of Engineering" → "VP of Engineering" (NOT "Lead" - that goes in level field)
+  * "Тимлид Backend" → "Team Lead Backend" (NOT just "Lead")
+  * "Middle QA" → "Middle QA" (or "QA Engineer" - keep it descriptive)
 
 **Contact Information:**
 - Extract Telegram usernames (format as @username)
 - Extract emails
 - Extract application URLs
 - Extract any other contact methods
+
+**isRemote (CRITICAL - Different from location):**
+- Can the candidate work remotely? (boolean: true/false)
+- Look for keywords: #удалёнка, #remote, "удаленная работа", "remote work", "fully remote", "100% remote"
+- Hybrid work = true (partial remote counts as remote)
+- "Гибрид" = true
+- Examples:
+  * "Офис в Берлине, можно удаленно" → true
+  * "Hybrid: 2-3 days in office" → true
+  * "Офисная работа в Москве" → false
+  * "Remote-first company" → true
+  * "Можно из любой точки мира" → true
+
+**location (Company office location - DETAILED EXTRACTION):**
+- Where is the company's physical office? (string or null)
+- Extract ONLY if explicitly mentioned
+- Look for patterns:
+  * Russian: "Офис в X", "Офис: X", "Локация: X", "Город: X"
+  * English: "Office: X", "Location: X", "Based in X"
+- If multiple offices, pick the first/primary mentioned
+- If fully remote (no office), set to null
+- Normalize city names to English: "Берлин" → "Berlin, Germany"
+- Examples:
+  * "Офис в Берлине" → "Berlin, Germany"
+  * "Локация: Лимассол, Кипр" → "Limassol, Cyprus"
+  * "Office: London, UK" → "London, UK"
+  * "Remote-first (no office)" → null
+  * "Офисы в Берлине и Лимассоле" → "Berlin, Germany" (first mentioned)
+  * "Гибрид: Москва/удаленно" → "Moscow, Russia"
+  * No location mentioned at all → null
+
+**level (Seniority level - UNIVERSAL EXTRACTION):**
+- Extract seniority level that works across ALL roles (developer, PM, QA, designer, etc.)
+- Look in job title first, then requirements
+- Common patterns:
+  * "Junior", "Джуниор", "Младший", "Начинающий" → "Junior"
+  * "Middle", "Миддл", "Средний" → "Middle"
+  * "Senior", "Сеньор", "Старший" → "Senior"
+  * "Lead", "Лид", "Тимлид", "Team Lead", "Tech Lead" → "Lead"
+  * "Principal", "Staff", "Architect" → "Senior" (very senior)
+  * "VP", "CTO", "CEO", "CПО", "Директор" → "Lead" (executive)
+- If no explicit level mentioned, return null (don't guess from years of experience)
+- Examples:
+  * "Senior Backend Developer" → "Senior"
+  * "Middle QA Engineer" → "Middle"
+  * "VP of Engineering" → "Lead"
+  * "Full-stack разработчик" (no level) → null
+  * "Product Manager" (no level) → null
+  * "CTO для стартапа" → "Lead"
 
 **Candidate Location:**
 - Where the candidate should be based (from hashtags like #удалёнка, #remote, or text)
@@ -139,8 +190,15 @@ EXTRACTION GUIDELINES:
 - Remove all emojis, hashtags, and formatting symbols
 - Keep it professional and readable
 
-**Tech Stack:**
+**Tech Stack (NORMALIZE VERSIONS):**
 - Extract programming languages, frameworks, tools
+- Normalize version suffixes: "JavaScript ES6+" → "JavaScript", "Python 3" → "Python"
+- Keep only the base technology name
+- Examples:
+  * "JavaScript ES6+" → "JavaScript"
+  * "TypeScript 4.5" → "TypeScript"
+  * "Python 3.9" → "Python"
+  * "React 18" → "React"
 - Return as array of strings
 
 **Experience Years (CRITICAL):**
