@@ -28,7 +28,6 @@ export class MarketInsightsController {
 
       const data = await this.insightsService.getPageData(slug, locale);
 
-      Logger.info('Data 💥', data);
       ApiResponse.success(res, data);
     } catch (error) {
       next(error);
