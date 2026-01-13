@@ -270,6 +270,7 @@ export class MarketInsightsStatsRepository {
   /**
    * Get 7-day trend data (active jobs only)
    * Shows recent posting velocity for market insights
+   * Fills missing days with zero counts for consistent chart rendering
    */
   private async getTrendData(
     matchStage: FilterQuery<IJobDocument | IArchivedJobDocument>
@@ -296,15 +297,66 @@ export class MarketInsightsStatsRepository {
       { $project: { date: '$_id', jobs: 1, _id: 0 } },
     ]);
 
-    return results;
+    // Create map of existing data
+    const dataMap = new Map<string, number>();
+    results.forEach(({ date, jobs }) => {
+      dataMap.set(date, jobs);
+    });
+
+    // Fill in all 7 days (missing days get 0 jobs)
+    const fullTrendData: Array<{ date: string; jobs: number }> = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+      const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      fullTrendData.push({
+        date: dateStr,
+        jobs: dataMap.get(dateStr) || 0,
+      });
+    }
+
+    return fullTrendData;
   }
 
   /**
    * Compute average salary from salary bands
+   * Uses weighted average based on band midpoints and counts
    */
-  private computeAvgSalary(_salaryBands: Array<{ band: string; count: number }>): string | null {
-    // Placeholder - implement salary calculation
-    return null;
+  private computeAvgSalary(salaryBands: Array<{ band: string; count: number }>): string | null {
+    if (!salaryBands || salaryBands.length === 0) {
+      return null;
+    }
+
+    // Map bands to midpoints
+    const bandMidpoints: Record<string, number> = {
+      '$0-1k': 500,
+      '$1k-2k': 1500,
+      '$2k-3k': 2500,
+      '$3k-4k': 3500,
+      '$4k-5k': 4500,
+      '$5k-7k': 6000,
+      '$7k-10k': 8500,
+      '$10k+': 12000, // Estimate for 10k+ band
+    };
+
+    let totalWeighted = 0;
+    let totalCount = 0;
+
+    salaryBands.forEach(({ band, count }) => {
+      const midpoint = bandMidpoints[band];
+      if (midpoint) {
+        totalWeighted += midpoint * count;
+        totalCount += count;
+      }
+    });
+
+    if (totalCount === 0) {
+      return null;
+    }
+
+    const avgSalary = Math.round(totalWeighted / totalCount);
+
+    // Format as readable string (e.g., "$4,500/mo")
+    return `$${avgSalary.toLocaleString()}/mo`;
   }
 
   /**

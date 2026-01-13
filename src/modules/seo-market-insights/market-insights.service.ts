@@ -1,20 +1,20 @@
-import { JobRepository } from '@modules/job/job.repository';
 import { NotFoundError } from '@utils/errors';
 import { Logger } from '@utils/logger';
 
 import { InsightsFilters, MarketStats } from './market-insights.types';
 import { MarketInsightsConfigRepository } from './market-insights-config.repository';
+import { MarketInsightsJobRepository } from './market-insights-job.repository';
 import { MarketInsightsStatsRepository } from './market-insights-stats.repository';
 
 export class MarketInsightsService {
   private configRepo: MarketInsightsConfigRepository;
   private statsRepo: MarketInsightsStatsRepository;
-  private jobRepo: JobRepository;
+  private jobRepo: MarketInsightsJobRepository;
 
   constructor() {
     this.configRepo = new MarketInsightsConfigRepository();
     this.statsRepo = new MarketInsightsStatsRepository();
-    this.jobRepo = new JobRepository();
+    this.jobRepo = new MarketInsightsJobRepository();
   }
 
   /**
@@ -28,9 +28,9 @@ export class MarketInsightsService {
       throw new NotFoundError(`Insights page not found: ${slug}`);
     }
 
-    const [stats, jobsResult] = await Promise.all([
+    const [stats, jobs] = await Promise.all([
       this.statsRepo.computeStats(config.filters),
-      this.jobRepo.findWithFilters({ ...config.filters, limit: 10, offset: 0 }),
+      this.jobRepo.findRecentJobs(config.filters, 5),
     ]);
 
     // Validate minimum job count
@@ -53,7 +53,7 @@ export class MarketInsightsService {
       meta: config.meta[validLocale],
       faq: config.faq[validLocale],
       stats,
-      jobs: jobsResult.jobs,
+      jobs,
     };
   }
 
