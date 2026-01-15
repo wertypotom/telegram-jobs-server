@@ -121,6 +121,117 @@ const initialPages: Partial<InsightsPageConfig>[] = [
     priority: 1,
     minJobCount: 5,
   },
+  {
+    slug: 'javascript',
+    template: 'category-only',
+    filters: { category: 'javascript' },
+    meta: {
+      en: {
+        h1: 'JavaScript Job Market Insights - Real-Time Data',
+        title: 'JavaScript Jobs - Market Stats | JobSniper',
+        description:
+          'JavaScript developer market analysis from exclusive Telegram channels. Frontend, backend, and full-stack opportunities with salary insights.',
+      },
+      ru: {
+        h1: 'Аналитика рынка JavaScript вакансий - Данные в реальном времени',
+        title: 'Вакансии JavaScript - Статистика рынка | JobSniper',
+        description:
+          'Анализ рынка разработчиков JavaScript из Telegram. Frontend, backend и full-stack позиции с аналитикой зарплат.',
+      },
+    },
+    faq: {
+      en: [
+        {
+          question: 'What is the demand for JavaScript developers?',
+          answer:
+            'JavaScript remains one of the most in-demand skills, with opportunities across frontend (React, Vue), backend (Node.js), and full-stack roles.',
+        },
+      ],
+      ru: [
+        {
+          question: 'Какой спрос на JavaScript разработчиков?',
+          answer:
+            'JavaScript остается одним из самых востребованных навыков с возможностями во frontend (React, Vue), backend (Node.js) и full-stack ролях.',
+        },
+      ],
+    },
+    priority: 1,
+    minJobCount: 10,
+  },
+  {
+    slug: 'react',
+    template: 'category-only',
+    filters: { category: 'react' },
+    meta: {
+      en: {
+        h1: 'React Developer Job Market - Live Analytics',
+        title: 'React Jobs - Trends & Salary | JobSniper',
+        description:
+          'React developer market insights from Telegram. Frontend and full-stack positions, salary ranges, and required skills.',
+      },
+      ru: {
+        h1: 'Рынок вакансий React разработчиков - Актуальная аналитика',
+        title: 'Вакансии React - Тренды и зарплаты | JobSniper',
+        description:
+          'Аналитика рынка React разработчиков из Telegram. Frontend и full-stack позиции, диапазоны зарплат, требуемые навыки.',
+      },
+    },
+    faq: {
+      en: [
+        {
+          question: 'What skills are required for React developers?',
+          answer:
+            'Beyond React, employers typically seek TypeScript, Next.js, state management (Redux/Zustand), and testing experience.',
+        },
+      ],
+      ru: [
+        {
+          question: 'Какие навыки требуются React разработчикам?',
+          answer:
+            'Помимо React, работодатели ищут TypeScript, Next.js, state management (Redux/Zustand) и опыт тестирования.',
+        },
+      ],
+    },
+    priority: 1,
+    minJobCount: 10,
+  },
+  {
+    slug: 'java',
+    template: 'category-only',
+    filters: { category: 'java' },
+    meta: {
+      en: {
+        h1: 'Java Developer Job Market - Enterprise Opportunities',
+        title: 'Java Jobs - Market Analysis | JobSniper',
+        description:
+          'Java developer market data from Telegram channels. Enterprise, microservices, and cloud-native positions with competitive salaries.',
+      },
+      ru: {
+        h1: 'Рынок вакансий Java разработчиков - Корпоративные возможности',
+        title: 'Вакансии Java - Анализ рынка и зарплаты | JobSniper',
+        description:
+          'Данные рынка Java разработчиков из Telegram. Enterprise, микросервисы и cloud-native позиции с конкурентными зарплатами.',
+      },
+    },
+    faq: {
+      en: [
+        {
+          question: 'What is the average Java developer salary?',
+          answer:
+            'Java developers, especially those with Spring Boot and microservices experience, command premium salaries in enterprise markets.',
+        },
+      ],
+      ru: [
+        {
+          question: 'Какая средняя зарплата Java разработчика?',
+          answer:
+            'Java разработчики, особенно с опытом Spring Boot и микросервисов, получают премиальные зарплаты в корпоративном секторе.',
+        },
+      ],
+    },
+    priority: 1,
+    minJobCount: 10,
+  },
 ];
 
 async function seedWithValidation() {
