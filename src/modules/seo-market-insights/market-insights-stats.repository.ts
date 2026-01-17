@@ -87,6 +87,10 @@ export class MarketInsightsStatsRepository {
       match['parsedData.isRemote'] = true;
     }
 
+    if (filters.level) {
+      match['parsedData.level'] = new RegExp(filters.level, 'i');
+    }
+
     return match;
   }
 

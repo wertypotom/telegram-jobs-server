@@ -16,6 +16,7 @@ export interface InsightsFilters {
   category?: string; // Tech stack or job function (e.g., "python", "react")
   region?: string; // Geographic region ('europe', 'worldwide', etc)
   remote?: boolean; // Remote-only filter
+  level?: string; // Experience level ('junior', 'senior', 'lead')
 }
 
 export interface InsightsPageMeta {
