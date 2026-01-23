@@ -551,7 +551,8 @@ const initialPages: Partial<InsightsPageConfig>[] = [
     minJobCount: 5,
   },
 
-  // === EXPERIENCE LEVEL PAGES ===
+  // === EXPERIENCE LEVEL PAGES (COMMENTED OUT FOR DEBUGGING) ===
+  /*
   {
     slug: 'senior',
     template: 'general-insight',
@@ -618,6 +619,7 @@ const initialPages: Partial<InsightsPageConfig>[] = [
     priority: 1,
     minJobCount: 10,
   },
+  */
 ];
 
 async function seedWithValidation() {
