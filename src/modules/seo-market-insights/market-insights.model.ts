@@ -38,6 +38,7 @@ const InsightsPageConfigSchema = new Schema<IInsightsPageConfigDocument>(
       category: String,
       region: String,
       remote: Boolean,
+      level: String, // Experience level (junior, senior, lead)
     },
     meta: {
       en: { type: MetaSchema, required: true },

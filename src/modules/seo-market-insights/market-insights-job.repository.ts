@@ -85,6 +85,10 @@ export class MarketInsightsJobRepository {
       query['parsedData.isRemote'] = true;
     }
 
+    if (filters.level) {
+      query['parsedData.level'] = new RegExp(filters.level, 'i');
+    }
+
     return query;
   }
 }
