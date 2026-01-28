@@ -3,6 +3,7 @@
 import { InsightsPageConfigModel } from '@modules/seo-market-insights/market-insights.model';
 import { InsightsPageConfig } from '@modules/seo-market-insights/market-insights.types';
 import { MarketInsightsStatsRepository } from '@modules/seo-market-insights/market-insights-stats.repository';
+import { envConfig } from '@shared/config/env.config';
 import { Logger } from '@utils/logger';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
@@ -551,8 +552,7 @@ const initialPages: Partial<InsightsPageConfig>[] = [
     minJobCount: 5,
   },
 
-  // === EXPERIENCE LEVEL PAGES (COMMENTED OUT FOR DEBUGGING) ===
-  /*
+  // === EXPERIENCE LEVEL PAGES ===
   {
     slug: 'senior',
     template: 'general-insight',
@@ -619,17 +619,11 @@ const initialPages: Partial<InsightsPageConfig>[] = [
     priority: 1,
     minJobCount: 10,
   },
-  */
 ];
 
 async function seedWithValidation() {
   try {
-    const mongoUri = process.env.MONGODB_URI;
-    if (!mongoUri) {
-      throw new Error('MONGODB_URI environment variable is not set');
-    }
-
-    await mongoose.connect(mongoUri);
+    await mongoose.connect(envConfig.mongodbUri);
     Logger.info('Connected to MongoDB');
     Logger.info('Starting market insights seeding with validation...');
 

@@ -13,7 +13,7 @@
     "migrate:status": "npm run migrate status",
     "channels:seed": "ts-node -r tsconfig-paths/register src/scripts/seed-channels.ts",
     "channels:extract": "ts-node -r tsconfig-paths/register src/scripts/extract-channel-info.ts",
-    "seed-market-insights": "ts-node -r tsconfig-paths/register src/scripts/seed-market-insights.ts",
+    "seed-market-insights": "ts-node -r dotenv/config -r tsconfig-paths/register src/scripts/seed-market-insights.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
