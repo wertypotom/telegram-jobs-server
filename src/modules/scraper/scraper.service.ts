@@ -1,10 +1,10 @@
+import { envConfig } from '@config/env.config';
 import { ChannelRepository } from '@modules/channel/channel.repository';
 import { JobService } from '@modules/job/job.service';
 import { TelegramClientService } from '@modules/telegram/services/telegram-client.service';
-import { envConfig } from '@config/env.config';
+import * as Sentry from '@sentry/node';
 import { JobQueueService } from '@shared/queue/job-queue.service';
 import { JobParsingPayload } from '@shared/queue/queue.types';
-import * as Sentry from '@sentry/node';
 import { Logger } from '@utils/logger';
 
 import { PageScraperService } from './page-scraper.service';

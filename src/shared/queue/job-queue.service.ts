@@ -1,9 +1,10 @@
-import { Queue, Worker, Job } from 'bullmq';
 import { envConfig } from '@config/env.config';
 import { JobService } from '@modules/job/job.service';
 import * as Sentry from '@sentry/node';
 import { Logger } from '@utils/logger';
-import { JobParsingPayload, QueueStats, QUEUE_NAMES } from './queue.types';
+import { Job, Queue, Worker } from 'bullmq';
+
+import { JobParsingPayload, QUEUE_NAMES, QueueStats } from './queue.types';
 
 /**
  * JobQueueService - Manages background job parsing queue

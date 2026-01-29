@@ -6,8 +6,8 @@ import { envConfig } from '@config/env.config';
 // CRITICAL: Initialize Sentry before any other imports
 import { initSentry } from '@config/sentry.config';
 import { TelegramService } from '@modules/telegram/telegram.service';
-import { JobQueueService } from '@shared/queue/job-queue.service';
 import * as Sentry from '@sentry/node';
+import { JobQueueService } from '@shared/queue/job-queue.service';
 import { Logger } from '@utils/logger';
 import { promises as fs } from 'fs';
 
