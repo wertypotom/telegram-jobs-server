@@ -1,7 +1,10 @@
+import { envConfig } from '@config/env.config';
 import { ChannelRepository } from '@modules/channel/channel.repository';
 import { JobService } from '@modules/job/job.service';
 import { TelegramClientService } from '@modules/telegram/services/telegram-client.service';
 import * as Sentry from '@sentry/node';
+import { JobQueueService } from '@shared/queue/job-queue.service';
+import { JobParsingPayload } from '@shared/queue/queue.types';
 import { Logger } from '@utils/logger';
 
 import { PageScraperService } from './page-scraper.service';
@@ -16,6 +19,7 @@ export class ScraperService {
   private telegramClient: TelegramClientService;
   private channelRepository: ChannelRepository;
   private jobService: JobService;
+  private jobQueueService: JobQueueService;
   private isRunning: boolean = false;
   private scrapeInterval: NodeJS.Timeout | null = null;
 
@@ -23,8 +27,6 @@ export class ScraperService {
   private readonly SCRAPE_INTERVAL_MS = 60 * 60 * 1000; // 1 hour (reduced to avoid rate limits)
   private readonly CHANNEL_CONCURRENCY = 1; // Sequential to avoid parallel API hits
   private readonly MESSAGE_LIMIT = 100; // Sufficient with incremental scraping (minId)
-  private readonly AI_BATCH_SIZE = 10; // Process 10 jobs per AI batch
-  private readonly BATCH_DELAY_MS = 500; // Delay between AI batches
   private readonly INTER_CHANNEL_DELAY_MS = 2000; // 2s delay between channels
 
   private pageScraperService: PageScraperService;
@@ -33,6 +35,7 @@ export class ScraperService {
     this.telegramClient = new TelegramClientService();
     this.channelRepository = new ChannelRepository();
     this.jobService = new JobService();
+    this.jobQueueService = JobQueueService.getInstance();
     this.pageScraperService = new PageScraperService();
   }
 
@@ -272,44 +275,33 @@ export class ScraperService {
 
       Logger.info(`${validMessages.length} messages passed pre-filter in ${channelUsername}`);
 
-      // Process in batches with AI parsing (increased for better throughput)
-      const BATCH_SIZE = this.AI_BATCH_SIZE;
-      let jobsFound = 0;
+      // Enqueue jobs for background processing (instant, non-blocking)
+      if (validMessages.length > 0) {
+        const payloads: JobParsingPayload[] = validMessages.map((msg) => ({
+          telegramMessageId: `${channelUsername}_${msg.id}`,
+          channelId: channelUsername,
+          senderUserId: msg.fromId?.userId?.toString() || msg.fromId?.toString(),
+          senderUsername: msg.sender?.username,
+          rawText: msg.text,
+          telegramMessageDate: new Date(msg.date * 1000),
+        }));
 
-      for (let i = 0; i < validMessages.length; i += BATCH_SIZE) {
-        const batch = validMessages.slice(i, i + BATCH_SIZE);
-
-        // Process batch in parallel using Promise.allSettled
-        const results = await Promise.allSettled(
-          batch.map((msg) => {
-            // Extract sender info
-            const senderUserId =
-              msg.fromId?.userId?.toString() || msg.fromId?.toString() || undefined;
-            const senderUsername = msg.sender?.username || undefined;
-
-            return this.jobService.createJobSync({
-              telegramMessageId: `${channelUsername}_${msg.id}`,
-              channelId: channelUsername,
-              senderUserId,
-              senderUsername,
-              rawText: msg.text,
-              telegramMessageDate: new Date(msg.date * 1000), // Convert Unix timestamp to Date
-            });
-          })
-        );
-
-        // Count successful jobs (createJobSync logs failures internally)
-        results.forEach((result, idx) => {
-          if (result.status === 'fulfilled') {
-            jobsFound++;
-          } else {
-            Logger.warn(`Batch job failed for message ${batch[idx].id}`, result.reason);
+        // Check if queue is enabled
+        if (envConfig.enableJobQueue) {
+          await this.jobQueueService.enqueueJobs(payloads);
+          Logger.info(
+            `Enqueued ${payloads.length} jobs for background processing in ${channelUsername}`
+          );
+        } else {
+          // Fallback: synchronous processing
+          Logger.warn('Queue disabled, falling back to sync processing');
+          for (const payload of payloads) {
+            try {
+              await this.jobService.createJobSync(payload);
+            } catch (error) {
+              Logger.error('Sync job creation failed:', error);
+            }
           }
-        });
-
-        // Add delay between batches to avoid overwhelming API
-        if (i + BATCH_SIZE < validMessages.length) {
-          await new Promise((resolve) => setTimeout(resolve, this.BATCH_DELAY_MS));
         }
       }
 
@@ -342,8 +334,6 @@ export class ScraperService {
               rawText: pageContent,
               telegramMessageDate: new Date(digest.date * 1000), // Convert Unix timestamp to Date
             });
-
-            jobsFound++;
           } catch (error) {
             Logger.warn('Failed to process digest URL', { url, error });
 
@@ -367,13 +357,11 @@ export class ScraperService {
         }
       }
 
-      Logger.info(`Found ${jobsFound} potential jobs in ${channelUsername}`);
-
       // Find highest message ID from all processed messages
       const allMessageIds = [...validMessages.map((m) => m.id), ...digestMessages.map((m) => m.id)];
       const highestMessageId = allMessageIds.length > 0 ? Math.max(...allMessageIds) : undefined;
 
-      return { jobsFound, highestMessageId };
+      return { jobsFound: validMessages.length + digestMessages.length, highestMessageId };
     } catch (error: any) {
       // Handle Telegram FloodWait error (rate limiting)
       if (error?.message?.includes('FloodWaitError') || error?.message?.includes('wait of')) {

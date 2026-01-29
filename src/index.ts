@@ -7,6 +7,7 @@ import { envConfig } from '@config/env.config';
 import { initSentry } from '@config/sentry.config';
 import { TelegramService } from '@modules/telegram/telegram.service';
 import * as Sentry from '@sentry/node';
+import { JobQueueService } from '@shared/queue/job-queue.service';
 import { Logger } from '@utils/logger';
 import { promises as fs } from 'fs';
 
@@ -56,6 +57,23 @@ const startServer = async (): Promise<void> => {
       Logger.info('Telegram scraper disabled (DISABLE_SCRAPER=true)');
     }
 
+    // Initialize job queue worker
+    let jobQueueService: JobQueueService | null = null;
+    if (envConfig.enableJobQueue) {
+      try {
+        jobQueueService = JobQueueService.getInstance();
+        jobQueueService.startWorker();
+        Logger.info('Job queue worker started');
+      } catch (error) {
+        Logger.error('Queue init failed, falling back to sync:', error);
+        Sentry.captureException(error, {
+          tags: { errorType: 'queue_init_failure' },
+        });
+      }
+    } else {
+      Logger.info('Job queue disabled (ENABLE_JOB_QUEUE=false)');
+    }
+
     // Start job cleanup service
     const { JobCleanupService } = await import('@modules/job/job-cleanup.service');
     const cleanupService = new JobCleanupService();
@@ -74,6 +92,16 @@ const startServer = async (): Promise<void> => {
     const shutdown = async () => {
       Logger.info('Shutting down server...');
 
+      // Stop queue worker first
+      if (jobQueueService) {
+        try {
+          await jobQueueService.stopWorker();
+          Logger.info('Queue worker stopped');
+        } catch (error) {
+          Logger.error('Error stopping queue worker:', error);
+        }
+      }
+
       if (scraperService) {
         scraperService.stop();
       }
@@ -81,10 +109,17 @@ const startServer = async (): Promise<void> => {
         await telegramService.stop();
       }
 
+      // Close server
       server.close(() => {
         Logger.info('HTTP server closed');
         process.exit(0);
       });
+
+      // Force exit after 10s
+      setTimeout(() => {
+        Logger.warn('Forcefully shutting down after timeout');
+        process.exit(1);
+      }, 10000);
     };
 
     // Global error handlers (CRITICAL: prevent crashes)
