@@ -1,7 +1,5 @@
-import { Queue, Worker } from 'bullmq';
-
 import { JobService } from '@modules/job/job.service';
-import { envConfig } from '@config/env.config';
+import { Queue, Worker } from 'bullmq';
 
 import { JobQueueService } from '../job-queue.service';
 import { JobParsingPayload } from '../queue.types';
