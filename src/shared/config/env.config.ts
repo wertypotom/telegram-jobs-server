@@ -35,6 +35,15 @@ export const envConfig = {
   // Application
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
 
+  // Redis (for BullMQ job queue)
+  redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+  enableJobQueue: process.env.ENABLE_JOB_QUEUE !== 'false', // Default: enabled
+
+  // Queue tuning
+  queueConcurrency: parseInt(process.env.QUEUE_CONCURRENCY || '3'),
+  queueRetryAttempts: parseInt(process.env.QUEUE_RETRY_ATTEMPTS || '3'),
+  queueRetryDelay: parseInt(process.env.QUEUE_RETRY_DELAY || '5000'), // 5s
+
   // LemonSqueezy Payment
   lemonsqueezyApiKey: process.env.LEMONSQUEEZY_API_KEY || '',
   lemonsqueezyStoreId: process.env.LEMONSQUEEZY_STORE_ID || '',

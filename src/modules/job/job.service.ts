@@ -94,6 +94,47 @@ export class JobService {
     }
   }
 
+  /**
+   * Process job from queue (called by worker)
+   * Throws on error - queue handles retries
+   */
+  async createJobFromQueue(data: CreateJobDto): Promise<void> {
+    // Idempotency: skip if already exists
+    const existing = await this.jobRepository.findByMessageId(data.telegramMessageId);
+    if (existing) {
+      Logger.debug('Job exists, skipping', { messageId: data.telegramMessageId });
+      return;
+    }
+
+    // Parse with AI (throws on failure → queue retries)
+    const parsedData = await this.jobParserService.parseJobText(data.rawText);
+
+    if (parsedData) {
+      const job = await this.jobRepository.create({
+        ...data,
+        parsedData,
+        status: 'parsed',
+      });
+      Logger.info('Job created from queue', { channelId: data.channelId });
+
+      // Async notification (non-blocking)
+      setImmediate(async () => {
+        try {
+          const { NotificationService } =
+            await import('@modules/notification/notification.service');
+          await new NotificationService().processNewJob(job as any);
+        } catch (error) {
+          Logger.error('Notification failed:', error);
+        }
+      });
+    } else {
+      Logger.debug('Message not a job, skipped', {
+        channelId: data.channelId,
+        preview: data.rawText.substring(0, 50),
+      });
+    }
+  }
+
   async getJobFeed(options: JobFilterOptions, userId?: string): Promise<JobFeedResponse> {
     // CRITICAL: Enforce subscription filtering
     let channelIds: string[] | undefined = options.channelIds;
